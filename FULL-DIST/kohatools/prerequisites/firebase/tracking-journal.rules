@@ -1,0 +1,18 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function accessDoc() { return /databases/$(database)/documents/journal_access/$(request.auth.uid); }
+    function approved() { return signedIn() && exists(accessDoc()) && get(accessDoc()).data.approved == true && get(accessDoc()).data.role in ['member','admin']; }
+    match /journal_access/{uid} {
+      allow read: if signedIn() && request.auth.uid == uid;
+      allow create: if signedIn() && request.auth.uid == uid
+        && request.resource.data.approved == false
+        && request.resource.data.role == 'pending';
+      allow update, delete: if false;
+    }
+    match /journals/{journalId}/entries/{entryId} { allow read, write: if approved(); }
+    match /journals/{journalId}/logs/{logId} { allow read, write: if approved(); }
+    match /{document=**} { allow read, write: if false; }
+  }
+}

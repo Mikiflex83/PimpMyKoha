@@ -1,0 +1,267 @@
+<div class="newsbody"><style>
+    .counter-container {
+        padding: 20px;
+        background: #f0f4f7;
+        border-radius: 10px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        max-width: 300px;
+        margin: 20px auto;
+        font-family: Arial, sans-serif;
+    }
+
+    .counter-item {
+        margin: 10px 0;
+        padding: 15px;
+        background: white;
+        border-radius: 8px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .counter-item > div {
+        text-align: right;
+    }
+
+    .counter-value {
+        font-weight: bold;
+        color: #2c3e50;
+        font-size: 1.2em;
+        display: block;
+    }
+
+    .yesterday-value {
+        font-size: 0.8em;
+        color: #7f8c8d;
+    }
+
+    .last-update {
+        text-align: center;
+        color: #7f8c8d;
+        font-size: 0.9em;
+        margin-top: 15px;
+        line-height: 1.4;
+    }
+
+    .error-message {
+        color: #dc3545;
+        background: #ffeef0;
+        padding: 10px;
+        border-radius: 5px;
+        margin-top: 15px;
+        text-align: center;
+        font-size: 0.9em;
+        display: none;
+    }
+
+    .people-present {
+        background: #e3f2fd !important;
+        border: 2px solid #2196f3;
+    }
+
+    .refresh-button {
+        display: block;
+        width: 100%;
+        padding: 10px;
+        margin-top: 15px;
+        background-color: #2196f3;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 1em;
+        transition: background-color 0.3s;
+    }
+
+    .refresh-button:hover {
+        background-color: #1976d2;
+    }
+
+    .refresh-button:disabled {
+        background-color: #90caf9;
+        cursor: not-allowed;
+    }
+</style>
+<div id="counter-container" class="counter-container">
+<h2>Fréquentation</h2>
+<div class="counter-item"><span>Entrées :</span>
+<div><span class="counter-value" id="entrees">0</span> <span class="yesterday-value" id="entrees-yesterday">(Hier : 0)</span></div>
+</div>
+<div class="counter-item"><span>Sorties :</span>
+<div><span class="counter-value" id="sorties">0</span> <span class="yesterday-value" id="sorties-yesterday">(Hier : 0)</span></div>
+</div>
+<div class="counter-item people-present"><span>Personnes présentes :<br>(Estimation)</span>
+<div><span class="counter-value" id="present">0</span> <!-- Suppression du comptage d'hier pour les personnes présentes --></div>
+</div>
+<div class="last-update" id="last-update">Aucune donnée historique disponible</div>
+<div class="error-message" id="error-message"></div>
+<button class="refresh-button" id="refresh-button" onclick="fetchAllCounts()"> Actualiser les données </button></div>
+<script>
+    // Configuration
+    const KT_COMPTAGE = window.KohaTools?.Config?.getCanonical?.('home-comptage')?.installation || {};
+    const RCR = String(KT_COMPTAGE.rcr || '');
+    const WORKER_URL = String(KT_COMPTAGE.workerUrl || '').replace(/\/$/,'');
+    const PERIOD = String(KT_COMPTAGE.period || 'DAY');
+
+    // Formatage de la date au format AAAAMMJJHHMMSS
+    function formatDate(date) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        const seconds = String(date.getSeconds()).padStart(2, '0');
+        return `${year}${month}${day}${hours}${minutes}${seconds}`;
+    }
+
+    // Génère les dates d'API en fonction d'une date cible.
+    // Pour aujourd'hui, de 1h jusqu'à maintenant ; sinon, pour hier, de 1h à 23h59.
+    function getAPIDatesForDay(targetDate, isToday) {
+        const start = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate(), 1, 0, 0);
+        let end;
+        if (isToday) {
+            end = new Date();
+        } else {
+            end = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate(), 23, 59, 59);
+        }
+        return {
+            start: formatDate(start),
+            end: formatDate(end)
+        };
+    }
+
+    // Récupère et affiche les données d'aujourd'hui et d'hier
+    async function fetchAllCounts() {
+        const button = document.getElementById('refresh-button');
+        try {
+            button.disabled = true;
+            button.textContent = 'Actualisation en cours...';
+
+            // Données d'aujourd'hui
+            const now = new Date();
+            const datesToday = getAPIDatesForDay(now, true);
+            const apiUrlToday = `${WORKER_URL}/CCinfo/${RCR}/${datesToday.start}/${datesToday.end}/${PERIOD}`;
+            const responseToday = await fetch(apiUrlToday);
+            if (!responseToday.ok) {
+                let errorMsg = `Erreur HTTP : ${responseToday.status}`;
+                if (responseToday.status === 401) errorMsg = "Clé API invalide";
+                else if (responseToday.status === 402) errorMsg = "Aucun RCR accessible";
+                throw new Error(errorMsg);
+            }
+            const dataToday = await responseToday.json();
+            const totalsToday = calculateTotals(dataToday);
+            updateDisplay(totalsToday.in, totalsToday.out, totalsToday.in - totalsToday.out);
+            saveToLocalStorage(totalsToday);
+            document.getElementById('last-update').innerHTML = `
+                Dernière actualisation API :<br>
+                ${now.toLocaleDateString()} ${now.toLocaleTimeString()}
+            `;
+
+            // Données d'hier
+            const yesterday = new Date();
+            yesterday.setDate(yesterday.getDate() - 1);
+            const datesYesterday = getAPIDatesForDay(yesterday, false);
+            const apiUrlYesterday = `${WORKER_URL}/CCinfo/${RCR}/${datesYesterday.start}/${datesYesterday.end}/${PERIOD}`;
+            const responseYesterday = await fetch(apiUrlYesterday);
+            if (!responseYesterday.ok) {
+                console.error("Erreur lors de la récupération des données d'hier :", responseYesterday.status);
+            } else {
+                const dataYesterday = await responseYesterday.json();
+                const totalsYesterday = calculateTotals(dataYesterday);
+                updateDisplayYesterday(totalsYesterday.in, totalsYesterday.out);
+            }
+
+            hideError();
+        } catch (error) {
+            showError(error.message);
+            console.error('Erreur:', error);
+        } finally {
+            button.disabled = false;
+            button.textContent = 'Actualiser les données';
+        }
+    }
+
+    function calculateTotals(data) {
+        let totalIn = 0;
+        let totalOut = 0;
+
+        if (!Array.isArray(data)) {
+            console.error("Données invalides : la réponse n'est pas un tableau");
+            return { in: 0, out: 0 };
+        }
+
+        data.forEach(site => {
+            if (site.CCINFO && Array.isArray(site.CCINFO)) {
+                site.CCINFO.forEach(zone => {
+                    if (zone.DATA && Array.isArray(zone.DATA)) {
+                        zone.DATA.forEach(entrance => {
+                            if (entrance.VALUES && Array.isArray(entrance.VALUES)) {
+                                entrance.VALUES.forEach(dateValues => {
+                                    Object.keys(dateValues).forEach(date => {
+                                        const values = dateValues[date];
+                                        if (values && typeof values === 'object') {
+                                            totalIn += values.IN || 0;
+                                            totalOut += values.OUT || 0;
+                                        }
+                                    });
+                                });
+                            }
+                        });
+                    }
+                });
+            }
+        });
+
+        return { in: totalIn, out: totalOut };
+    }
+
+    // Mise à jour de l'affichage pour les données du jour
+    function updateDisplay(inCount, outCount, presentCount) {
+        document.getElementById('entrees').textContent = inCount;
+        document.getElementById('sorties').textContent = outCount;
+        document.getElementById('present').textContent = presentCount;
+    }
+
+    // Mise à jour de l'affichage pour les données d'hier (sans les personnes présentes)
+    function updateDisplayYesterday(inCount, outCount) {
+        document.getElementById('entrees-yesterday').textContent = `(Hier : ${inCount})`;
+        document.getElementById('sorties-yesterday').textContent = `(Hier : ${outCount})`;
+    }
+
+    function loadFromLocalStorage() {
+        const saved = JSON.parse(localStorage.getItem('lastCount'));
+        const updateElement = document.getElementById('last-update');
+        if (saved) {
+            updateDisplay(saved.in, saved.out, saved.in - saved.out);
+            const date = new Date(saved.timestamp);
+            updateElement.innerHTML = `
+                Dernière actualisation :<br>
+                ${date.toLocaleDateString()} ${date.toLocaleTimeString()}
+            `;
+        } else {
+            updateElement.textContent = 'Aucune donnée historique disponible';
+        }
+    }
+
+    function showError(message) {
+        const errorEl = document.getElementById('error-message');
+        errorEl.textContent = message;
+        errorEl.style.display = 'block';
+    }
+
+    function saveToLocalStorage(totals) {
+        localStorage.setItem('lastCount', JSON.stringify({
+            ...totals,
+            timestamp: new Date().getTime()
+        }));
+    }
+
+    function hideError() {
+        document.getElementById('error-message').style.display = 'none';
+    }
+
+    // Initialisation au chargement
+    document.addEventListener('DOMContentLoaded', () => {
+        loadFromLocalStorage();
+    });
+</script></div>

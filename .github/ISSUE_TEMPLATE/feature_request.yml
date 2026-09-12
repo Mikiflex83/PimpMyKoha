@@ -1,0 +1,23 @@
+name: Proposer une amélioration
+description: Suggérer un module ou une amélioration de Pimp My Koha
+title: "[Idée] "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: need
+    attributes:
+      label: Besoin métier
+      description: Quel problème concret dans Koha souhaitez-vous résoudre ?
+    validations:
+      required: true
+  - type: textarea
+    id: current
+    attributes:
+      label: Fonctionnement actuel
+      description: Comment faites-vous aujourd’hui ?
+  - type: textarea
+    id: expected
+    attributes:
+      label: Résultat souhaité
+    validations:
+      required: true

@@ -1,0 +1,52 @@
+name: Signaler un problème
+description: Signaler une anomalie Pimp My Koha avec un diagnostic nettoyé
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Merci. Dans Pimp My Koha, utilisez **Maintenance → Exporter un diagnostic** puis joignez le fichier si possible. Le diagnostic ne contient pas les valeurs de configuration sensibles.
+  - type: input
+    id: pmk-version
+    attributes:
+      label: Version Pimp My Koha
+      placeholder: "3.42.0"
+    validations:
+      required: true
+  - type: input
+    id: koha-version
+    attributes:
+      label: Version Koha
+      placeholder: "25.11.04"
+    validations:
+      required: true
+  - type: input
+    id: module
+    attributes:
+      label: Module concerné
+      placeholder: "ex. quality-transfers"
+  - type: textarea
+    id: steps
+    attributes:
+      label: Étapes pour reproduire
+      description: Décrivez uniquement les actions nécessaires. Ne publiez aucune donnée lecteur ni information confidentielle.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Comportement attendu
+    validations:
+      required: true
+  - type: textarea
+    id: observed
+    attributes:
+      label: Comportement observé
+    validations:
+      required: true
+  - type: textarea
+    id: diagnostic
+    attributes:
+      label: Diagnostic / informations complémentaires
+      description: Glissez ici le fichier JSON de diagnostic ou joignez-le au ticket.

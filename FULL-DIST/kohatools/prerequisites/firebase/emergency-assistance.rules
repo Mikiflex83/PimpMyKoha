@@ -1,0 +1,17 @@
+{
+  "rules": {
+    "assistance_access": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && auth.uid === $uid && !data.exists() && newData.child('approved').val() === false && newData.child('role').val() === 'pending'"
+      }
+    },
+    "koha_urgency_alerts": {
+      ".read": "auth != null && root.child('assistance_access').child(auth.uid).child('approved').val() === true",
+      ".write": "auth != null && root.child('assistance_access').child(auth.uid).child('approved').val() === true",
+      ".indexOn": ["heure"]
+    },
+    ".read": false,
+    ".write": false
+  }
+}

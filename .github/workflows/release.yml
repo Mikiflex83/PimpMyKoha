@@ -1,0 +1,100 @@
+name: Publish Pimp My Koha release
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+      - name: Resolve version and channel
+        id: version
+        shell: bash
+        run: |
+          TAG='${{ github.event.release.tag_name }}'
+          VERSION="${TAG#v}"
+          CHANNEL="$(node -p "JSON.parse(require('fs').readFileSync('release/release.json','utf8')).channel || 'stable'")"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "channel=$CHANNEL" >> "$GITHUB_OUTPUT"
+      - name: Validate release channel
+        shell: bash
+        run: |
+          CHANNEL='${{ steps.version.outputs.channel }}'
+          PRERELEASE='${{ github.event.release.prerelease }}'
+          case "$CHANNEL" in
+            stable)
+              test "$PRERELEASE" = "false" || { echo "Stable must not be marked prerelease"; exit 1; }
+              ;;
+            canary|dev)
+              test "$PRERELEASE" = "true" || { echo "$CHANNEL must be marked prerelease"; exit 1; }
+              ;;
+            *) echo "Unsupported channel: $CHANNEL"; exit 1 ;;
+          esac
+      - name: Validate distribution and tag
+        run: node scripts/validate-dist.mjs --expected='${{ steps.version.outputs.version }}'
+      - name: Test Stable / Canary / Dev selector
+        run: node scripts/test-channel-loader.mjs
+      - name: Test access control
+        run: node scripts/test-access-control.mjs
+      - name: Build release archive
+        id: build
+        shell: bash
+        run: |
+          VERSION='${{ steps.version.outputs.version }}'
+          ZIP="/tmp/pimp-my-koha-${VERSION}.zip"
+          (cd FULL-DIST && zip -qr "$ZIP" kohatools)
+          SHA="$(sha256sum "$ZIP" | awk '{print $1}')"
+          echo "$SHA  pimp-my-koha-${VERSION}.zip" > "/tmp/pimp-my-koha-${VERSION}.zip.sha256"
+          echo "sha=$SHA" >> "$GITHUB_OUTPUT"
+      - name: Upload ZIP and SHA-256 to GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION='${{ steps.version.outputs.version }}'
+          gh release upload '${{ steps.version.outputs.tag }}' "/tmp/pimp-my-koha-${VERSION}.zip" "/tmp/pimp-my-koha-${VERSION}.zip.sha256" --clobber
+      - name: Calculate release impact
+        run: node scripts/release-impact.mjs '${{ steps.version.outputs.version }}' /tmp/release-impact.json
+      - name: Read previous release index
+        shell: bash
+        run: |
+          if git ls-remote --exit-code --heads origin gh-pages >/dev/null 2>&1; then
+            git fetch origin gh-pages:refs/remotes/origin/gh-pages
+            git show origin/gh-pages:latest.json > /tmp/previous-latest.json 2>/dev/null || true
+          fi
+      - name: Build GitHub Pages release tree
+        run: node scripts/build-pages-release.mjs '${{ github.repository }}' '${{ steps.version.outputs.version }}' '${{ steps.build.outputs.sha }}' /tmp/pimp-pages /tmp/release-impact.json /tmp/previous-latest.json
+      - name: Publish versioned runtime to gh-pages branch
+        shell: bash
+        run: |
+          VERSION='${{ steps.version.outputs.version }}'
+          cp -a /tmp/pimp-pages /tmp/pimp-pages-safe
+          if git ls-remote --exit-code --heads origin gh-pages >/dev/null 2>&1; then
+            git fetch origin gh-pages:gh-pages
+            git checkout gh-pages
+          else
+            git checkout --orphan gh-pages
+            git rm -rf . >/dev/null 2>&1 || true
+          fi
+          mkdir -p "releases/${VERSION}"
+          rm -rf "releases/${VERSION}"
+          cp -a "/tmp/pimp-pages-safe/releases/${VERSION}" "releases/${VERSION}"
+          cp /tmp/pimp-pages-safe/latest.json latest.json
+          cp /tmp/pimp-pages-safe/index.html index.html
+          cp /tmp/pimp-pages-safe/.nojekyll .nojekyll
+          if test -f /tmp/pimp-pages-safe/channel-loader.js; then cp /tmp/pimp-pages-safe/channel-loader.js channel-loader.js; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "releases/${VERSION}" latest.json index.html .nojekyll channel-loader.js
+          git commit -m "Publish Pimp My Koha ${VERSION} (${{ steps.version.outputs.channel }})" || true
+          git push origin gh-pages
