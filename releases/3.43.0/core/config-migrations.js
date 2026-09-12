@@ -1,0 +1,8 @@
+(function(global){"use strict";const KT=global.KohaTools;if(!KT)return;
+const migrators=new Map(),BACKUP="KohaTools.configMigrationBackups.v1";
+function clone(v){return typeof structuredClone==='function'?structuredClone(v):JSON.parse(JSON.stringify(v))}
+function register(moduleId,fromVersion,toVersion,fn){if(!moduleId||!Number.isFinite(Number(fromVersion))||!Number.isFinite(Number(toVersion))||typeof fn!=="function")throw new Error("migration-invalid");const xs=migrators.get(moduleId)||[];xs.push({from:Number(fromVersion),to:Number(toVersion),fn});xs.sort((a,b)=>a.from-b.from);migrators.set(moduleId,xs);return true}
+function backup(moduleId,cfg,from,to){try{const all=JSON.parse(localStorage.getItem(BACKUP)||"{}");all[moduleId]={at:new Date().toISOString(),from,to,config:clone(cfg)};localStorage.setItem(BACKUP,JSON.stringify(all));return true}catch(_){return false}}
+function backups(){try{return JSON.parse(localStorage.getItem(BACKUP)||"{}")}catch(_){return {}}}
+function migrateModule(id,cfg){const target=Number(cfg?.configSchemaVersion||1),current=Number(cfg?.storedConfigSchemaVersion||target);if(current>=target)return {config:cfg,changed:false,from:current,to:target};let copy=clone(cfg),v=current;backup(id,cfg,current,target);const steps=migrators.get(id)||[];while(v<target){const step=steps.find(x=>x.from===v&&x.to<=target);if(!step){v++;copy.storedConfigSchemaVersion=v;continue}const patch=step.fn(clone(copy));if(patch&&typeof patch==='object')copy={...copy,...patch};v=step.to;copy.storedConfigSchemaVersion=v}copy.storedConfigSchemaVersion=target;return {config:copy,changed:true,from:current,to:target}}
+KT.registerService("config-migrations",{register,migrateModule,backups});})(window);

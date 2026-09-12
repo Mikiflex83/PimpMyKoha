@@ -1,0 +1,130 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function accessPath() { return /databases/$(database)/documents/quality_access_requests/$(request.auth.uid); }
+    function approved() { return signedIn() && exists(accessPath()) && get(accessPath()).data.approved == true; }
+    function admin() { return approved() && get(accessPath()).data.role == 'admin'; }
+
+    // Liste fermée : aucun identifiant métier Koha, aucune donnée personnelle, aucun texte libre métier.
+    function safeContextKeys(m) {
+      return m is map && m.keys().hasOnly([
+        'primary_rule','severity','status','state','age_bucket','last_update_bucket','overdue_bucket','last_activity_bucket',
+        'renewals_bucket','unseen_renewals_bucket','item_level','expired','suspended','cancellation_requested','pickup_library_id',
+        'availability_bucket','patron_expired','has_return_claim','claim_age_bucket','item_lost','item_damaged','item_withdrawn',
+        'item_not_for_loan','home_library_id','holding_library_id','from_library_id','to_library_id','route_bucket','reason_code',
+        'transfer_age_bucket','field_block','issue_code','authority_type','record_type','item_type_id','collection_code','location',
+        'public_code','sub_location','module_state','decision_scope','has_hold','has_transfer','checkout_state','claim_state',
+        'activity_bucket','due_state','renewal_state','physical_state','route_from','route_to','waiting_state','processing_state','has_external_pivot',
+        'transfer_state','holding_mismatch','last_seen_bucket','last_checkout_bucket','duplicate_state','duplicate_confidence','has_items',
+        'format_block','identifier_state','framework_code','ghost_state','link_state','library_id','subscription_closed','subscription_state',
+        'expected_state','claims_bucket','serial_status','category_code','expiry_bucket','contact_state','has_checkouts','has_debt','has_guarantees',
+        'account_state','url_state','anomaly_group','data_state','periodicity_code','has_orders','has_subscription','has_serials','value_state','field_code'
+      ]);
+    }
+
+    // Les seuls réglages partageables sont les seuils techniques/métier connus des modules.
+    function safeSettingsKeys(m) {
+      return m is map && m.keys().hasOnly([
+        'module','updated_at',
+        'oldDays','veryOldDays','idleDays','waitingDays','waitingCriticalDays','transitDays','processingDays','cancelRequestDays','suspendIndefiniteDays','suspendOverdueDays',
+        'overdueDays','criticalOverdueDays','claimDays','claimCriticalDays','unseenRenewals',
+        'reportId','requestedWarnDays','requestedReviewDays','requestedCriticalDays','transitReviewDays','transitCriticalDays','routeLongDays','allowNativeCancel',
+        'lastSeenReviewDays','lastSeenAtypicalDays','lostReviewDays','damagedReviewDays','withdrawnReviewDays','minorityMinItems','minorityMajorityPct','allowApiDelete',
+        'duplicateTitleThreshold','signatureReportId','allowMerge','enableBnf',
+        'endPastReviewDays','endPastCriticalDays','claimReviewDays','inactivityAtypicalDays','inactivityReviewDays','overdueCriticalCount',
+        'expiredAtypicalDays','expiredReviewDays','deleteCandidateDays'
+      ]);
+    }
+
+    match /quality_access_requests/{uid} {
+      allow create: if signedIn()
+        && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['approved','role','created_at','client_version'])
+        && request.resource.data.approved == false
+        && request.resource.data.role == 'pending'
+        && request.resource.data.client_version is string;
+      allow read: if signedIn() && request.auth.uid == uid;
+      // L'approbation est faite manuellement dans la console Firebase (administration hors règles client).
+      allow update, delete: if false;
+    }
+
+    match /quality_rules/{ruleId} {
+      allow read: if approved();
+      allow create, update: if admin()
+        && request.resource.data.keys().hasOnly(['module','code','enabled','level','severity','conditions','exceptions','action','version','updated_at'])
+        && request.resource.data.module is string
+        && request.resource.data.code is string
+        && safeContextKeys(request.resource.data.conditions)
+        && safeContextKeys(request.resource.data.exceptions);
+      allow delete: if admin();
+    }
+
+    match /quality_settings/{moduleId} {
+      allow read: if approved();
+      allow create, update: if admin()
+        && safeSettingsKeys(request.resource.data)
+        && request.resource.data.module == moduleId;
+      allow delete: if admin();
+    }
+
+    match /quality_feedback/{feedbackId} {
+      allow read: if approved();
+      allow create: if approved()
+        && request.resource.data.keys().hasOnly(['module','rule_id','pattern_key','total','count_anomaly','count_normal','count_watch','count_ignore','last_seen_at','last_decision','last_context'])
+        && request.resource.data.module is string
+        && request.resource.data.rule_id is string
+        && request.resource.data.pattern_key is string
+        && request.resource.data.total == 1
+        && request.resource.data.last_decision in ['anomaly','normal','watch','ignore']
+        && safeContextKeys(request.resource.data.last_context);
+      allow update: if approved()
+        && request.resource.data.keys().hasOnly(['module','rule_id','pattern_key','total','count_anomaly','count_normal','count_watch','count_ignore','last_seen_at','last_decision','last_context'])
+        && request.resource.data.module == resource.data.module
+        && request.resource.data.rule_id == resource.data.rule_id
+        && request.resource.data.pattern_key == resource.data.pattern_key
+        && request.resource.data.total == resource.data.total + 1
+        && request.resource.data.last_decision in ['anomaly','normal','watch','ignore']
+        && safeContextKeys(request.resource.data.last_context);
+      allow delete: if admin();
+    }
+
+    match /quality_patterns/{patternId} {
+      allow read: if approved();
+      allow create: if approved()
+        && request.resource.data.keys().hasOnly(['module','pattern_key','occurrences','last_seen_at','sample_context'])
+        && request.resource.data.occurrences is int
+        && request.resource.data.occurrences >= 1
+        && request.resource.data.occurrences <= 1000
+        && safeContextKeys(request.resource.data.sample_context);
+      allow update: if approved()
+        && request.resource.data.keys().hasOnly(['module','pattern_key','occurrences','last_seen_at','sample_context'])
+        && request.resource.data.module == resource.data.module
+        && request.resource.data.pattern_key == resource.data.pattern_key
+        && request.resource.data.occurrences > resource.data.occurrences
+        && request.resource.data.occurrences <= resource.data.occurrences + 1000
+        && safeContextKeys(request.resource.data.sample_context);
+      allow delete: if admin();
+    }
+
+    match /quality_rule_candidates/{candidateId} {
+      allow read: if approved();
+      allow create, update: if approved()
+        && request.resource.data.keys().hasOnly(['module','code','level','conditions','proposed_action','status','proposed_at'])
+        && request.resource.data.status == 'candidate'
+        && safeContextKeys(request.resource.data.conditions);
+      allow delete: if admin();
+    }
+
+    match /quality_history/{historyId} {
+      allow read: if approved();
+      allow create: if admin()
+        && request.resource.data.keys().hasOnly(['module','code','enabled','level','severity','conditions','exceptions','action','version','updated_at','rule_id','archived_at'])
+        && safeContextKeys(request.resource.data.conditions)
+        && safeContextKeys(request.resource.data.exceptions);
+      allow update, delete: if false;
+    }
+
+    match /{document=**} { allow read, write: if false; }
+  }
+}

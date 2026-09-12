@@ -1,0 +1,2297 @@
+<style>
+        /* Styles généraux */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e0e6ed;
+        }
+
+        .header h1 {
+            color: #2c3e50;
+            font-size: 1.8rem;
+        }
+
+        .header-info {
+            font-size: 0.9rem;
+            color: #7f8c8d;
+        }
+
+        .tree-container {
+            margin: 20px;
+            padding: 25px;
+            max-width: 100%;
+            background: #ffffff;
+            border: 1px solid #e3e3e3;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        /* Masquage des éléments admin en mode normal */
+        body:not(.admin-mode) .admin-only {
+            display: none !important;
+        }
+
+        /* Structure de l'arbre */
+        .tree-node {
+            margin-left: 24px;
+            position: relative;
+        }
+        .tree-node:before {
+            content: '';
+            position: absolute;
+            left: -12px;
+            top: 18px;
+            width: 12px;
+            border-top: 1px solid #ddd;
+        }
+        .tree-node:after {
+            content: '';
+            
+            left: -12px;
+            height: calc(100% - -16px);
+            border-left: 1px solid #ddd;
+            top: 19px;
+        }
+
+        /* Éléments interactifs */
+        .node-label {
+            cursor: pointer;
+            padding: 10px 14px;
+            border-radius: 10px;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            margin: 6px 0;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+            font-weight: 600;
+            font-size: 15px;
+            position: relative;
+            background: #f0fffa;
+            border: 1px solid #d9f0e8;
+            color: #1e3a8a;
+        }
+        .node-label:hover {
+            background: #d9f0e8;
+            border-color: #d9f0e8;
+            color: #1e40af;
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.06);
+            transform: translateY(-1px);
+        }
+
+        /* Affichage de la cote */
+        .node-cote {
+            margin-left: 8px;
+            font-size: 0.85em;
+            color: #888;
+            font-weight: normal;
+            font-style: italic;
+        }
+
+        /* Icônes et contrôles */
+        .toggle-icon {
+            width: 18px;
+            height: 18px;
+            margin-right: 8px;
+            transition: transform 0.2s;
+            color: #6c757d;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .node-label.expanded .toggle-icon {
+            transform: rotate(90deg);
+        }
+
+        /* Conteneurs enfants */
+        .children-container {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+            margin-left: 24px;
+            position: relative;
+        }
+        .children-container.expanded {
+            max-height: none;
+        }
+
+        /* Styles spécifiques aux icônes */
+        .icon {
+            width: 20px;
+            height: 20px;
+            padding: 4px;
+            margin-left: 8px;
+            border-radius: 4px;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+        .icon.add { color: #0d6efd; background: #e7f1ff; }
+        .icon.edit { color: #198754; background: #e2f3eb; }
+        .icon.delete { color: #dc3545; background: #f8d7da; }
+        .icon.note { background: #fff3cd; color: #ffc107; }
+        .icon.note.has-note { background: #ffeeba; }
+        .icon.add-link { color: #0d6efd; background: #e7f1ff; }
+        .icon.copy-children { color: #6f42c1; background: #e2d9f3; }
+        .icon.duplicate { color: #17a2b8; background: #d1ecf1; }
+        .icon.move { color: #fd7e14; background: #ffe5d0; }
+        .icon.export { color: #6610f2; background: #e6dcfd; }
+        .icon.import { color: #20c997; background: #d1f7eb; }
+        .icon.cote { color: #6c757d; background: #f0f0f0; }
+        .icon:hover { filter: brightness(0.9); }
+
+        /* Conteneur extras */
+        .node-extras {
+            margin-top: 8px;
+            padding-left: 10px;
+            border-left: 3px solid transparent;
+        }
+
+        /* Notes - Nouveau design intégré */
+        .note-container {
+            display: flex;
+            align-items: flex-start;
+            background: #fffdf0;
+            border-left: 3px solid #ffc107 !important;
+            border-radius: 0 6px 6px 0;
+            margin: 5px 0;
+            padding: 10px;
+            position: relative;
+            width: 40%;
+            float: right;
+        }
+        .note-icon {
+            flex-shrink: 0;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #fff3cd;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            margin-right: 10px;
+        }
+        .note-content {
+            flex-grow: 1;
+            color: #5a4a00;
+            font-size: 14px;
+            line-height: 1.5;
+            width:40%;
+        }
+        .note-empty {
+            color: #a0a0a0;
+            font-style: italic;
+        }
+        .note-actions {
+            margin-top: 8px;
+            display: flex;
+            gap: 8px;
+        }
+
+        /* Liens - Nouveau design intégré */
+        .links-container {
+            margin: 5px 0;
+            padding: 10px;
+            background: #f0f8ff;
+            border-left: 3px solid #0d6efd !important;
+            border-radius: 0 6px 6px 0;
+            width: 40%;
+            display: none; /* Masqué par défaut */
+        }
+        .links-title {
+            display: flex;
+            align-items: center;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #0d6efd;
+        }
+        .links-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 10px;
+        }
+        .link-item {
+            display: flex;
+            align-items: center;
+            padding: 8px;
+            background: white;
+            border-radius: 6px;
+            border: 1px solid #dee2e6;
+            transition: all 0.2s;
+        }
+        .link-item:hover {
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+        }
+        .link-icon {
+            margin-right: 8px;
+            color: #0d6efd;
+            font-size: 16px;
+            min-width: 24px;
+        }
+        .link-text {
+            flex-grow: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .link-remove {
+            margin-left: 8px;
+            color: #dc3545;
+            cursor: pointer;
+        }
+        .link-comment {
+            flex: 1;
+            margin-left: 32px; /* align with link text */
+            color: #6c757d;
+        }
+
+        /* Modales */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 0 25px rgba(0,0,0,0.25);
+            z-index: 1001;
+            min-width: 300px;
+            max-width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .modal h3 {
+            margin-top: 0;
+            color: #2c3e50;
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+        .modal textarea, .modal input[type="text"], .modal select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-size: 16px;
+            font-family: inherit;
+        }
+        .modal textarea {
+            height: 150px;
+            resize: vertical;
+        }
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 20px;
+        }
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+
+        /* Gestion des flags */
+        .flags-management {
+            margin: 20px;
+            padding: 20px;
+            background: #fff;
+            border: 1px solid #e3e3e3;
+            border-radius: 8px;
+            max-width: 950px;
+        }
+        .flag-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+        #flags-list { margin-top: 15px; }
+        .flag-checkbox { margin: 0 5px; cursor: pointer; }
+
+        /* Formulaires */
+        #add-node-form,
+        #add-flag-form {
+            margin: 10px;
+            padding: 15px;
+            border: 1px solid #ccc;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            border-radius: 8px;
+            background: #f8f9fa;
+        }
+        input[type="text"] {
+            padding: 10px 15px;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            flex-grow: 1;
+            font-size: 16px;
+        }
+        button {
+            padding: 10px 18px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        button[type="submit"] {
+            background: #0d6efd;
+            color: white;
+        }
+        button[type="submit"]:hover { background: #0b5ed7; }
+        button.secondary {
+            background: #6c757d;
+            color: white;
+        }
+        button.secondary:hover { background: #5a6268; }
+        button.success {
+            background: #198754;
+            color: white;
+        }
+        button.success:hover { background: #157347; }
+        button.warning {
+            background: #ffc107;
+            color: #333;
+        }
+        button.warning:hover { background: #e0a800; }
+        button.danger {
+            background: #dc3545;
+            color: white;
+        }
+        button.danger:hover { background: #bd2130; }
+
+        /* Accordéon */
+        .accordion-container {
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            overflow: hidden;
+            max-width: 550px;
+            margin-bottom: 10px;
+        }
+        .accordion-header {
+            background-color: #007bff;
+            color: white;
+            padding: 12px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: bold;
+            border: none;
+            font-size: 16px;
+        }
+        .accordion-content {
+            display: none;
+            padding: 15px;
+            background: #f9f9f9;
+        }
+        .accordion-content.show { display: block; }
+
+        /* Styles pour la recherche */
+        .search-container {
+            margin: 20px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #e3e3e3;
+            max-width: 100%;
+        }
+        .search-controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        .search-controls input, .search-controls select {
+            flex-grow: 1;
+            padding: 12px 15px;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            font-size: 16px;
+            min-width: 200px;
+        }
+        .search-results {
+            margin-top: 15px;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .search-results h3 {
+            margin-top: 0;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        .search-result-item {
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .search-result-item:hover {
+            background: #e9f7ff;
+        }
+        .search-result-item:last-child {
+            border-bottom: none;
+        }
+        .highlighted {
+            background-color: #fff9c4 !important;
+            border: 2px solid #ffd54f !important;
+        }
+        .no-results {
+            padding: 15px;
+            text-align: center;
+            color: #6c757d;
+            font-style: italic;
+        }
+
+        /* Contrôles supérieurs */
+        .top-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .top-controls .control-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        /* Styles responsive */
+        @media (max-width: 768px) {
+            .tree-node {
+                margin-left: 15px;
+            }
+
+            .node-label {
+                padding: 8px;
+                flex-wrap: wrap;
+            }
+
+            .icon {
+                margin: 4px;
+                font-size: 0.9em;
+            }
+
+            .top-controls {
+                flex-direction: column;
+            }
+
+            .search-controls {
+                flex-direction: column;
+            }
+
+            .modal {
+                width: 95%;
+                padding: 15px;
+            }
+
+            button {
+                padding: 8px 12px;
+                font-size: 14px;
+            }
+
+            .links-list {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 10px;
+            }
+
+            .tree-container, .search-container, .flags-management {
+                margin: 10px 0;
+                padding: 15px;
+            }
+
+            .node-label {
+                font-size: 14px;
+            }
+
+            .icon {
+                width: 18px;
+                height: 18px;
+                padding: 3px;
+            }
+        }
+    </style>
+<div class="header">
+<h1>Arborescence des collections</h1>
+<div class="header-info"></div>
+</div>
+<!-- Contrôles supérieurs -->
+<div class="top-controls"><!-- Bouton Mode Admin -->
+<div class="control-group"><button id="mode-admin-toggle" type="button" class="warning">Passer en mode Admin</button></div>
+<!-- Contrôles d'expansion -->
+<div class="control-group"><button id="expand-all" type="button">Tout d&eacute;velopper</button> <button id="collapse-all" type="button">Tout r&eacute;tracter</button></div>
+<!-- Contrôles d'export/import -->
+<div class="control-group admin-only"><button id="export-btn" class="export">Exporter</button> <button id="import-btn" class="import">Importer</button></div>
+</div>
+<!-- Styles pour le menu Rapports -->
+<style>
+    /* Styles pour le menu déroulant */
+    .dropdown {
+        position: relative;
+        display: inline-block;
+        z-index: 10;
+    }
+    
+    .dropbtn {
+        background-color: #3498db;
+        color: white;
+        padding: 10px 18px;
+        border: none;
+        cursor: pointer;
+        border-radius: 6px;
+        font-weight: 600;
+        font-size: 14px;
+        transition: background-color 0.3s;
+    }
+    
+    .dropbtn:hover {
+        background-color: #2980b9;
+    }
+    
+    .dropdown-content {
+        display: none;
+        position: absolute;
+        background-color: #f9f9f9;
+        min-width: 400px;
+        box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+        z-index: 1000;
+        max-height: 80vh;
+        overflow-y: auto;
+        border-radius: 6px;
+        padding: 10px;
+    }
+    
+    .dropdown:hover .dropdown-content {
+        display: block;
+    }
+    
+    .dropdown-section {
+        margin-bottom: 15px;
+        border-bottom: 1px solid #eee;
+        padding-bottom: 10px;
+    }
+    
+    .dropdown-section:last-child {
+        border-bottom: none;
+        margin-bottom: 0;
+        padding-bottom: 0;
+    }
+    
+    .dropdown-header {
+        font-weight: bold;
+        margin-bottom: 8px;
+        color: #2c3e50;
+        font-size: 1.1em;
+        padding: 5px 0;
+        border-bottom: 1px solid #ddd;
+    }
+    
+    .report-item {
+        padding: 10px;
+        margin: 5px 0;
+        border-radius: 5px;
+        transition: all 0.2s;
+        background: white;
+        border: 1px solid #eee;
+    }
+    
+    .report-item:hover {
+        background-color: #f0f8ff;
+        border-color: #cde;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+    }
+    
+    .report-title {
+        font-weight: 600;
+        color: #2980b9;
+        margin-bottom: 5px;
+        font-size: 14px;
+    }
+    
+    .report-description {
+        font-size: 12px;
+        color: #666;
+        line-height: 1.4;
+    }
+    
+    .dropdown-content a {
+        text-decoration: none;
+        display: block;
+        color: inherit;
+    }
+</style>
+<style>
+    /* ==========================================================
+       Rafraîchissement VISUEL uniquement
+       - aucune logique Firebase / CRUD / recherche modifiée
+       - différenciation forte Recherche / Création en mode admin
+       ========================================================== */
+
+    :root {
+        --arbo-ink: #24364b;
+        --arbo-muted: #6b7b8f;
+        --arbo-line: #d9e2ec;
+        --arbo-blue: #2563eb;
+        --arbo-blue-soft: #eff6ff;
+        --arbo-blue-border: #bfdbfe;
+        --arbo-green-soft: #f1f8f5;
+        --arbo-green-border: #cfe6da;
+        --arbo-admin: #b45309;
+        --arbo-admin-soft: #fffbeb;
+        --arbo-admin-border: #f6cf7a;
+        --arbo-danger: #b91c1c;
+        --arbo-surface: #ffffff;
+        --arbo-page: #f6f8fb;
+        --arbo-shadow: 0 8px 24px rgba(36, 54, 75, 0.08);
+    }
+
+    body {
+        background: var(--arbo-page);
+        color: var(--arbo-ink);
+    }
+
+    /* En-tête */
+    .header {
+        margin: 18px 20px 8px;
+        padding: 18px 20px;
+        background: linear-gradient(135deg, #ffffff 0%, #f3f7fb 100%);
+        border: 1px solid #dfe7ef;
+        border-bottom: 1px solid #dfe7ef;
+        border-radius: 12px;
+        box-shadow: var(--arbo-shadow);
+    }
+
+    .header h1 {
+        color: #17324d;
+        font-size: 1.7rem;
+        letter-spacing: -0.02em;
+    }
+
+    /* Bandeau des commandes générales */
+    .top-controls {
+        margin: 14px 20px 18px;
+        padding: 12px;
+        gap: 10px;
+        border: 1px solid #dfe7ef;
+        border-radius: 12px;
+        box-shadow: 0 4px 14px rgba(36, 54, 75, 0.06);
+        background: rgba(255,255,255,.96);
+    }
+
+    .top-controls .control-group {
+        gap: 8px;
+    }
+
+    .top-controls button {
+        min-height: 38px;
+        padding: 9px 14px;
+        border: 1px solid #d7e0ea;
+        background: #fff;
+        color: #334155;
+        box-shadow: 0 1px 2px rgba(15,23,42,.04);
+    }
+
+    .top-controls button:hover:not(:disabled) {
+        background: #f8fafc;
+        border-color: #b8c6d6;
+        transform: translateY(-1px);
+    }
+
+    #mode-admin-toggle {
+        background: #fff7ed;
+        border-color: #fed7aa;
+        color: #9a3412;
+    }
+
+    body.admin-mode .top-controls {
+        border-left: 5px solid #f59e0b;
+    }
+
+    body.admin-mode #mode-admin-toggle,
+    body.admin-mode #mode-admin-toggle:disabled {
+        background: #166534;
+        border-color: #166534;
+        color: #fff;
+        opacity: 1;
+        cursor: default;
+    }
+
+    /* ----------------------------------------------------------
+       RECHERCHE : zone bleue, consultation / navigation
+       ---------------------------------------------------------- */
+    .search-container {
+        position: relative;
+        margin: 20px;
+        padding: 54px 18px 18px;
+        max-width: none;
+        background: linear-gradient(180deg, #f8fbff 0%, #ffffff 100%);
+        border: 1px solid var(--arbo-blue-border);
+        border-left: 5px solid var(--arbo-blue);
+        border-radius: 12px;
+        box-shadow: 0 5px 18px rgba(37,99,235,.06);
+    }
+
+    .search-container::before {
+        content: "🔎  Recherche dans l’arborescence";
+        position: absolute;
+        top: 15px;
+        left: 18px;
+        color: #1e3a8a;
+        font-size: 15px;
+        font-weight: 700;
+        letter-spacing: .01em;
+    }
+
+    .search-container::after {
+        content: "CONSULTATION";
+        position: absolute;
+        top: 15px;
+        right: 18px;
+        padding: 4px 8px;
+        border-radius: 999px;
+        background: #dbeafe;
+        color: #1d4ed8;
+        font-size: 10px;
+        font-weight: 800;
+        letter-spacing: .08em;
+    }
+
+    .search-controls {
+        margin-bottom: 12px;
+        gap: 8px;
+    }
+
+    .search-controls input,
+    .search-controls select {
+        min-height: 42px;
+        background: #fff;
+        border: 1px solid #cbd8e6;
+        border-radius: 8px;
+        box-shadow: inset 0 1px 2px rgba(15,23,42,.03);
+    }
+
+    .search-controls input:focus,
+    .search-controls select:focus {
+        outline: none;
+        border-color: #60a5fa;
+        box-shadow: 0 0 0 3px rgba(59,130,246,.14);
+    }
+
+    #search-button {
+        min-height: 42px;
+        background: var(--arbo-blue);
+        color: #fff;
+        border: 1px solid var(--arbo-blue);
+        padding-inline: 20px;
+    }
+
+    #search-button:hover {
+        background: #1d4ed8;
+    }
+
+    .search-results {
+        border: 1px solid #dbe6f1;
+        border-radius: 9px;
+        background: rgba(255,255,255,.92);
+    }
+
+    .search-result-item {
+        border-radius: 7px;
+        border-bottom: 0;
+        margin: 4px 0;
+    }
+
+    .search-result-item:hover {
+        background: #eff6ff;
+    }
+
+    /* ----------------------------------------------------------
+       CRÉATION RACINE : volontairement très différente de la recherche
+       ---------------------------------------------------------- */
+    #add-node-form {
+        position: relative;
+        margin: 20px;
+        padding: 54px 18px 18px;
+        gap: 8px;
+        align-items: center;
+        background: linear-gradient(180deg, var(--arbo-admin-soft) 0%, #fffdf7 100%);
+        border: 1px solid var(--arbo-admin-border);
+        border-left: 5px solid #f59e0b;
+        border-radius: 12px;
+        box-shadow: 0 5px 18px rgba(180,83,9,.06);
+    }
+
+    #add-node-form::before {
+        content: "＋  Créer un nœud RACINE";
+        position: absolute;
+        top: 15px;
+        left: 18px;
+        color: #92400e;
+        font-size: 15px;
+        font-weight: 800;
+        letter-spacing: .01em;
+    }
+
+    #add-node-form::after {
+        content: "ADMINISTRATION";
+        position: absolute;
+        top: 15px;
+        right: 18px;
+        padding: 4px 8px;
+        border-radius: 999px;
+        background: #fef3c7;
+        color: #92400e;
+        font-size: 10px;
+        font-weight: 800;
+        letter-spacing: .08em;
+    }
+
+    #add-node-form input[type="text"] {
+        min-height: 42px;
+        background: #fff;
+        border: 1px solid #e8c98b;
+    }
+
+    #add-node-form input[type="text"]:focus {
+        outline: none;
+        border-color: #f59e0b;
+        box-shadow: 0 0 0 3px rgba(245,158,11,.14);
+    }
+
+    #add-node-form button[type="submit"] {
+        min-height: 42px;
+        background: #b45309;
+        color: #fff;
+        border: 1px solid #b45309;
+        padding-inline: 20px;
+    }
+
+    #add-node-form button[type="submit"]:hover {
+        background: #92400e;
+    }
+
+    /* Gestion des flags : admin, même famille visuelle que la création */
+    .accordion-container.admin-only {
+        margin: 0 20px 12px;
+        max-width: none;
+        border: 1px solid #f0d9a5;
+        border-radius: 10px;
+        background: #fffdf7;
+    }
+
+    .accordion-container .accordion-header {
+        background: #7c5a13;
+        border-radius: 0;
+    }
+
+    /* ----------------------------------------------------------
+       ARBORESCENCE : hiérarchie plus lisible, structure conservée
+       ---------------------------------------------------------- */
+    .tree-container {
+        margin: 20px;
+        padding: 22px 20px 28px;
+        max-width: none;
+        background: var(--arbo-surface);
+        border: 1px solid #dfe7ef;
+        border-radius: 14px;
+        box-shadow: var(--arbo-shadow);
+        overflow: visible;
+    }
+
+    .tree-node {
+        margin-left: 20px;
+        position: relative;
+    }
+
+    /* Trait horizontal vers chaque nœud */
+    .tree-node::before {
+        left: -12px;
+        top: 24px;
+        width: 12px;
+        border-top: 1px solid var(--arbo-line);
+    }
+
+    /* Ligne verticale de hiérarchie */
+    .tree-node::after {
+        content: "";
+        position: absolute;
+        left: -12px;
+        top: -8px;
+        bottom: -8px;
+        border-left: 1px solid var(--arbo-line);
+        pointer-events: none;
+    }
+
+    .tree-container > .tree-node {
+        margin-left: 0;
+    }
+
+    .tree-container > .tree-node::before,
+    .tree-container > .tree-node::after {
+        display: none;
+    }
+
+    .children-container {
+        margin-left: 18px;
+    }
+
+    .node-label {
+        min-height: 44px;
+        margin: 6px 0;
+        padding: 8px 10px;
+        border-radius: 9px;
+        background: #fbfcfd;
+        border: 1px solid #dfe7ef;
+        color: #263f59;
+        box-shadow: 0 1px 2px rgba(15,23,42,.035);
+        font-size: 14px;
+        font-weight: 650;
+        transform: none;
+    }
+
+    .node-label:hover {
+        background: #f4f8fb;
+        border-color: #c7d5e3;
+        color: #17324d;
+        box-shadow: 0 3px 9px rgba(15,23,42,.06);
+        transform: none;
+    }
+
+    /* Nœuds racine : plus structurants */
+    .tree-container > .tree-node > .node-label {
+        margin-top: 10px;
+        padding: 10px 12px;
+        background: linear-gradient(180deg, #eef6f2 0%, #f7fbf9 100%);
+        border-color: #cfe2d8;
+        border-left: 4px solid #4f7f69;
+        color: #244737;
+        font-size: 15px;
+        box-shadow: 0 2px 7px rgba(43,84,65,.07);
+    }
+
+    .tree-container > .tree-node > .node-label:hover {
+        background: #edf7f2;
+        border-color: #bcd7c9;
+    }
+
+    .toggle-icon {
+        width: 20px;
+        height: 20px;
+        margin-right: 7px;
+        border-radius: 5px;
+        background: #edf2f7;
+        color: #53657a;
+        font-size: 10px;
+    }
+
+    .node-label.expanded .toggle-icon {
+        background: #e2e8f0;
+        color: #334155;
+    }
+
+    .node-cote {
+        margin-left: 10px;
+        padding: 2px 7px;
+        border-radius: 999px;
+        background: #eef2f6;
+        color: #64748b;
+        font-size: .78em;
+        font-style: normal;
+        white-space: nowrap;
+    }
+
+    /* Actions admin : compactes et clairement secondaires */
+    body.admin-mode .node-label {
+        padding-right: 8px;
+    }
+
+    body.admin-mode .icon {
+        border: 1px solid rgba(15,23,42,.08);
+        box-shadow: 0 1px 2px rgba(15,23,42,.04);
+    }
+
+    .icon {
+        width: 28px;
+        height: 28px;
+        margin-left: 5px;
+        padding: 4px;
+        border-radius: 7px;
+        flex: 0 0 auto;
+    }
+
+    .icon:hover {
+        filter: none;
+        transform: translateY(-1px);
+        box-shadow: 0 3px 8px rgba(15,23,42,.10);
+    }
+
+    /* Les notes et liens restent fonctionnels mais visuellement intégrés */
+    .links-container {
+        width: min(720px, calc(100% - 30px));
+        margin: 6px 0 10px 34px;
+        padding: 12px;
+        background: #f8fbff;
+        border: 1px solid #d7e6f5;
+        border-left: 4px solid #3b82f6 !important;
+        border-radius: 8px;
+    }
+
+    .link-item {
+        box-shadow: none;
+    }
+
+    .link-item:hover {
+        transform: none;
+        border-color: #bfd5ea;
+        box-shadow: 0 2px 6px rgba(15,23,42,.05);
+    }
+
+    .highlighted {
+        background: #fff7cc !important;
+        border: 2px solid #f0bf2e !important;
+        box-shadow: 0 0 0 3px rgba(240,191,46,.14) !important;
+    }
+
+    /* Modales homogénéisées, comportement inchangé */
+    .modal {
+        border: 1px solid #dfe7ef;
+        border-radius: 12px;
+        box-shadow: 0 24px 70px rgba(15,23,42,.24);
+    }
+
+    .modal-overlay {
+        background: rgba(15,23,42,.46);
+        backdrop-filter: blur(2px);
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .header,
+        .top-controls,
+        .search-container,
+        #add-node-form,
+        .tree-container,
+        .accordion-container.admin-only {
+            margin-left: 10px;
+            margin-right: 10px;
+        }
+
+        #add-node-form,
+        .search-container {
+            padding-top: 58px;
+        }
+
+        #add-node-form::after,
+        .search-container::after {
+            display: none;
+        }
+
+        .tree-node {
+            margin-left: 14px;
+        }
+
+        .children-container {
+            margin-left: 12px;
+        }
+
+        .node-label {
+            align-items: flex-start;
+        }
+    }
+</style>
+<!-- Gestion des Flags (admin seulement) -->
+<div class="accordion-container admin-only"><button class="accordion-header" id="toggle-flags"> Gestion des Flags <span>+</span> </button>
+<div class="accordion-content" id="flags-container">
+<div class="flags-management">
+<h3>Gestion des Flags</h3>
+<form id="add-flag-form"><input type="text" id="flag-name" placeholder="Nom du nouveau flag" required="" /> <button type="submit">Cr&eacute;er Flag</button></form>
+<div id="flags-list"></div>
+</div>
+</div>
+</div>
+<!-- Formulaire ajout nœud racine (admin seulement) --><form id="add-node-form" class="admin-only"><input type="text" id="node-name" placeholder="Nom du n&oelig;ud racine" required="" /> <input type="text" id="node-cote" placeholder="Cote (optionnel)" /> <button type="submit">Ajouter</button></form><!-- Contrôle de recherche -->
+<div class="search-container">
+<div class="search-controls"><input type="text" id="search-input" placeholder="Rechercher" /><select id="flag-filter">
+<option value="">Tous les flags</option>
+</select><button id="search-button">Rechercher</button></div>
+<div class="search-results" id="search-results">
+<h3>R&eacute;sultats de recherche</h3>
+<div class="no-results">Aucune recherche effectu&eacute;e</div>
+</div>
+</div>
+<!-- Conteneur de l'arbre -->
+<div id="tree-container" class="tree-container"><!-- L'arborescence sera générée ici --></div>
+<!-- Modales -->
+<div id="note-modal" class="modal">
+<h3>&Eacute;diter la note</h3>
+<textarea id="note-editor" placeholder="Saisissez votre note ici..."></textarea>
+<div class="modal-buttons"><button type="button" class="secondary" onclick="closeNoteModal()">Annuler</button> <button type="button" class="success" onclick="saveNote()">Enregistrer</button></div>
+</div>
+<div id="note-overlay" class="modal-overlay"></div>
+<div id="cote-modal" class="modal">
+<h3>&Eacute;diter la cote</h3>
+<input type="text" id="cote-editor" placeholder="Saisissez la cote ici..." />
+<div class="modal-buttons"><button type="button" class="secondary" onclick="closeCoteModal()">Annuler</button> <button type="button" class="success" onclick="saveCote()">Enregistrer</button></div>
+</div>
+<div id="cote-overlay" class="modal-overlay"></div>
+<div id="copy-modal" class="modal">
+<h3>Copier les enfants</h3>
+<div class="copy-modal-content">
+<p>Copier tous les enfants de <strong id="copy-source-name"></strong> vers :</p>
+<div style="margin: 15px 0;"><select id="copy-destination" style="width: 100%; padding: 10px; border-radius: 6px;"></select></div>
+<div class="copy-progress">
+<div class="copy-progress-bar" id="copy-progress-bar"></div>
+</div>
+<div class="copy-status" id="copy-status">Pr&ecirc;t &agrave; copier</div>
+</div>
+<div class="modal-buttons"><button type="button" class="secondary" onclick="closeCopyModal()">Annuler</button> <button type="button" class="success" onclick="startCopyChildren()">Copier</button></div>
+</div>
+<div id="copy-overlay" class="modal-overlay"></div>
+<div id="move-modal" class="modal">
+<h3>D&eacute;placer le n&oelig;ud</h3>
+<div class="move-modal-content">
+<p>D&eacute;placer <strong id="move-source-name"></strong> vers :</p>
+<div style="margin: 15px 0;"><select id="move-destination" style="width: 100%; padding: 10px; border-radius: 6px;"></select></div>
+</div>
+<div class="modal-buttons"><button type="button" class="secondary" onclick="closeMoveModal()">Annuler</button> <button type="button" class="success" onclick="confirmMoveNode()">D&eacute;placer</button></div>
+</div>
+<div id="move-overlay" class="modal-overlay"></div>
+<div id="import-modal" class="modal">
+<h3>Importer une arborescence</h3>
+<div class="import-modal-content">
+<p>S&eacute;lectionnez un fichier JSON :</p>
+<input type="file" id="import-file" accept=".json" />
+<div class="import-status" id="import-status" style="margin-top: 15px;"></div>
+</div>
+<div class="modal-buttons"><button type="button" class="secondary" onclick="closeImportModal()">Annuler</button> <button type="button" class="success" onclick="importTreeData()">Importer</button></div>
+</div>
+<div id="import-overlay" class="modal-overlay"></div>
+<script type="module">
+        import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-app.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-auth.js";
+        import {
+            getFirestore, collection, addDoc, deleteDoc, doc,
+            onSnapshot, getDocs, getDoc, setDoc, updateDoc, writeBatch, query, where, serverTimestamp
+        } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-firestore.js";
+
+        // Connexion Firebase propre au module (aucun registre de connexion partagé).
+        const MODULE_ID = 'collections-tree';
+        const firebaseMeta = window.KohaTools?.getService?.('firebase-module')?.require?.(MODULE_ID);
+        if (!firebaseMeta) throw new Error('Connexion Firebase du module Arborescence non configurée.');
+        const firebaseConfig = window.KohaTools.getService('firebase-module').publicConfig(MODULE_ID, firebaseMeta, { throwOnError: true });
+        const firebaseAppName = firebaseMeta.appName || 'KohaToolsCollectionsTree';
+        const app = getApps().find(a => a.name === firebaseAppName) || initializeApp(firebaseConfig, firebaseAppName);
+        const db = firebaseMeta.databaseId && firebaseMeta.databaseId !== '(default)' ? getFirestore(app, firebaseMeta.databaseId) : getFirestore(app);
+        const auth = getAuth(app);
+        const firebaseUser = auth.currentUser || (await signInAnonymously(auth)).user;
+        const accessRef = doc(db, 'collections_tree_access', firebaseUser.uid);
+        let accessSnap = await getDoc(accessRef);
+        if (!accessSnap.exists()) {
+            await setDoc(accessRef, { approved:false, role:'pending', createdAt:serverTimestamp(), clientVersion:'3.43.0' });
+            accessSnap = await getDoc(accessRef);
+        }
+        const accessRole = accessSnap.data()?.approved === true ? String(accessSnap.data()?.role || 'member') : 'pending';
+        if (accessRole === 'pending') {
+            const host = document.querySelector('.tree-container') || document.getElementById('kt-module-content');
+            if (host) host.innerHTML = `<div class="alert alert-warning"><strong>Accès Arborescence en attente.</strong><br>Approuver cet UID dans <code>collections_tree_access</code> : <code>${firebaseUser.uid}</code></div>`;
+            throw new Error(`Accès Arborescence en attente · UID ${firebaseUser.uid}`);
+        }
+        const ktBudget = window.KohaTools?.getService?.('firebase-budget');
+        const budget = (op,n=1) => { try { ktBudget?.record?.(firebaseConfig.projectId,op,n,{kind:'firestore'}); } catch (_) {} };
+        const treeCollection = collection(db, "treeData");
+
+        // Variables globales
+        let flagsList = [];
+        const expandedNodes = {};
+        let currentEditingNode = null;
+        let currentEditingCoteNode = null;
+        let currentDocs = [];
+        let isAdminMode = false;
+        let treeStructure = { children: [] };
+        let searchResults = [];
+        let searchResultsSet = new Set();
+        let currentCopySource = null;
+        let currentMoveNode = null;
+        let allNodes = {};
+        let linkContainers = {}; // Stocke les conteneurs de liens par nœud
+
+        // Fonctions utilitaires
+        function getFullPath(node) {
+            return node.parentPath ? `${node.parentPath}/${node.name}` : node.name;
+        }
+
+        function buildTree(data) {
+            const nodeMap = {};
+            const root = { children: [] };
+
+            data.forEach(ds => {
+                const item = ds.data();
+                if (item.deleted) return;  // Exclure les noeuds supprimés
+                const path = item.parentPath ? `${item.parentPath}/${item.name}` : item.name;
+                nodeMap[path] = {
+                    id: ds.id,
+                    name: item.name,
+                    cote: item.cote || "",
+                    parentPath: item.parentPath,
+                    flags: item.flags || {},
+                    note: item.note || "",
+                    links: item.links || [],
+                    children: []
+                };
+            });
+
+            data.forEach(ds => {
+                const item = ds.data();
+                if (item.deleted) return;  // Exclure les noeuds supprimés
+                const path = item.parentPath ? `${item.parentPath}/${item.name}` : item.name;
+                if (item.parentPath === "") {
+                    root.children.push(nodeMap[path]);
+                } else if (nodeMap[item.parentPath]) {
+                    nodeMap[item.parentPath].children.push(nodeMap[path]);
+                }
+            });
+
+            function sortNodes(node) {
+                if (node.children?.length) {
+                    node.children.sort((a, b) => a.name.localeCompare(b.name));
+                    node.children.forEach(sortNodes);
+                }
+            }
+            sortNodes(root);
+
+            // Mettre à jour la liste complète des nœuds
+            allNodes = {};
+            data.forEach(ds => {
+                const item = ds.data();
+                if (item.deleted) return;  // Exclure les noeuds supprimés
+                const path = item.parentPath ? `${item.parentPath}/${item.name}` : item.name;
+                allNodes[path] = { ...item, id: ds.id };
+            });
+
+            return root;
+        }
+
+        function renderTree(tree) {
+            const container = document.getElementById("tree-container");
+            container.innerHTML = "";
+            tree.children.forEach(child => container.appendChild(createNode(child)));
+        }
+
+        function updateFlagsUI() {
+            const div = document.getElementById("flags-list");
+            div.innerHTML = flagsList.map(f => `
+                <div class="flag-item">
+                    <span>${f}</span>
+                    <button class="admin-only" onclick="deleteFlag('${f}')">×</button>
+                </div>
+            `).join("");
+
+            // Mettre à jour le filtre de recherche
+            const flagFilter = document.getElementById("flag-filter");
+            flagFilter.innerHTML = '<option value="">Tous les flags</option>';
+            flagsList.forEach(flag => {
+                const option = document.createElement("option");
+                option.value = flag;
+                option.textContent = flag;
+                flagFilter.appendChild(option);
+            });
+        }
+
+        // Création des nœuds dans l'UI
+        function createNode(nodeData) {
+            const nodeEl = document.createElement("div");
+            nodeEl.className = "tree-node";
+            nodeEl.id = `node-${nodeData.id}`;
+            if (!nodeData.name) return nodeEl;
+
+            const label = document.createElement("div");
+            label.className = "node-label";
+
+            if (searchResultsSet.has(nodeData.id)) {
+                label.classList.add('highlighted');
+            }
+
+            // Toggle enfants
+            if (nodeData.children.length) {
+                const t = document.createElement("span");
+                t.className = "toggle-icon";
+                t.textContent = "▶";
+                label.appendChild(t);
+            }
+
+            // Libellé principal
+            const txt = document.createElement("span");
+            txt.textContent = `${nodeData.name} (${nodeData.children.length})`;
+            label.appendChild(txt);
+
+            // Affichage de la cote
+            if (nodeData.cote) {
+                const coteSpan = document.createElement("span");
+                coteSpan.className = "node-cote";
+                coteSpan.textContent = nodeData.cote;
+                label.appendChild(coteSpan);
+            }
+
+            // Flags
+            const fc = document.createElement("div");
+            fc.style.display = "flex";
+            fc.style.gap = "8px";
+            fc.style.marginLeft = "auto";
+            flagsList.forEach(f => {
+                const w = document.createElement("div");
+                w.style.display = "flex";
+                w.style.alignItems = "center";
+
+                const cb = document.createElement("input");
+                cb.type = "checkbox";
+                cb.checked = nodeData.flags[f] || false;
+                cb.disabled = !isAdminMode;
+                cb.onchange = e => {
+                    const nf = { ...nodeData.flags, [f]: e.target.checked };
+                    updateDoc(doc(db, "treeData", nodeData.id), { flags: nf });
+                };
+
+                w.append(cb, document.createTextNode(f));
+                fc.appendChild(w);
+            });
+            label.appendChild(fc);
+
+            // Note (icône seulement dans le label) - visible uniquement en mode admin
+            if (isAdminMode) {
+                const ni = document.createElement("span");
+                ni.className = `icon note ${nodeData.note ? "has-note" : ""}`;
+                ni.textContent = "📝";
+                ni.title = nodeData.note ? "Voir/modifier la note" : "Ajouter une note";
+                ni.onclick = e => {
+                    e.stopPropagation();
+                    openNoteModal(nodeData);
+                };
+                label.appendChild(ni);
+            }
+
+            // Cote (icône d'édition) - visible uniquement en mode admin
+            if (isAdminMode) {
+                const ci = document.createElement("span");
+                ci.className = "icon cote";
+                ci.textContent = "📋";
+                ci.title = nodeData.cote ? "Modifier la cote" : "Ajouter une cote";
+                ci.onclick = e => {
+                    e.stopPropagation();
+                    openCoteModal(nodeData);
+                };
+                label.appendChild(ci);
+            }
+
+            // Bouton pour afficher les liens
+            if (nodeData.links && nodeData.links.length > 0) {
+                const linksIndicator = document.createElement("span");
+                linksIndicator.className = "icon add-link";
+                linksIndicator.textContent = "🔗";
+                linksIndicator.title = "Afficher les liens";
+                linksIndicator.onclick = (e) => {
+                    e.stopPropagation();
+                    toggleLinksContainer(nodeData.id);
+                };
+                label.appendChild(linksIndicator);
+            }
+
+            // Actions admin - masquées en mode non-admin
+            if (isAdminMode) {
+                const actions = [
+                    { cls: "icon add", title: "Ajouter un noeud", symbol: "➕", handler: () => {
+                        const n = prompt("Nom du nouvel enfant :");
+                        if (n) {
+                            const c = prompt("Cote (optionnel) :", "");
+                            addChild(n, getFullPath(nodeData), c);
+                        }
+                    }},
+                    { cls: "icon edit", title: "Modifier un nœud", symbol: "✏️", handler: () => editNode(nodeData) },
+                    { cls: "icon delete", title: "Supprimer le noeud", symbol: "❌", handler: () => confirmDeleteNode(nodeData) },
+                    { cls: "icon add-link", title: "Ajouter un lien", symbol: "🔗+", handler: () => addLink(nodeData) },
+                    { cls: "icon duplicate", title: "Dupliquer le nœud", symbol: "⎘", handler: () => duplicateNode(nodeData) },
+                    { cls: "icon move", title: "Déplacer le nœud", symbol: "⇄", handler: () => openMoveModal(nodeData) }
+                ];
+
+                // Ajouter l'action de copie des enfants si le nœud a des enfants
+                if (nodeData.children.length > 0) {
+                    actions.push({
+                        cls: "icon copy-children",
+                        title: "Copier les enfants vers un autre nœud",
+                        symbol: "⎘",
+                        handler: () => openCopyModal(nodeData)
+                    });
+                }
+
+                actions.forEach(a => {
+                    const sp = document.createElement("span");
+                    sp.className = a.cls;
+                    sp.title = a.title;
+                    sp.textContent = a.symbol;
+                    sp.onclick = e => {
+                        e.stopPropagation();
+                        a.handler();
+                    };
+                    label.appendChild(sp);
+                });
+            }
+
+            nodeEl.appendChild(label);
+
+            // Création du conteneur pour les liens
+            if (nodeData.links && nodeData.links.length > 0) {
+                const linksContainer = document.createElement("div");
+                linksContainer.className = "links-container";
+                linksContainer.id = `links-${nodeData.id}`;
+                linksContainer.style.display = "none"; // Masqué par défaut
+
+                const linksTitle = document.createElement("div");
+                linksTitle.className = "links-title";
+                linksTitle.textContent = "🔗 Liens associés";
+                linksContainer.appendChild(linksTitle);
+
+                const linksList = document.createElement("div");
+                linksList.className = "links-list";
+
+                nodeData.links.forEach((link, index) => {
+                    const linkItem = document.createElement("div");
+                    linkItem.className = "link-item";
+
+                    const linkIcon = document.createElement("span");
+                    linkIcon.className = "link-icon";
+                    linkIcon.textContent = "🔗";
+                    linkItem.appendChild(linkIcon);
+
+                    const linkText = document.createElement("div");
+                    linkText.className = "link-text";
+
+                    // Création du lien avec le label comme texte
+                    const linkAnchor = document.createElement("a");
+                    linkAnchor.href = link.url;
+                    linkAnchor.target = "_blank";
+                    linkAnchor.textContent = link.label || "Lien sans titre";
+                    linkText.appendChild(linkAnchor);
+
+                    linkItem.appendChild(linkText);
+
+                    // Afficher le commentaire si présent
+                    if (link.comment) {
+                        const linkComment = document.createElement("div");
+                        linkComment.className = "link-comment";
+                        linkComment.textContent = link.comment;
+                        linkItem.appendChild(linkComment);
+                    }
+
+                    if (isAdminMode) {
+                        const removeLink = document.createElement("span");
+                        removeLink.className = "link-remove";
+                        removeLink.textContent = "×";
+                        removeLink.title = "Supprimer le lien";
+                        removeLink.onclick = (e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            removeNodeLink(nodeData, index);
+                        };
+                        linkItem.appendChild(removeLink);
+                    }
+
+                    linksList.appendChild(linkItem);
+                });
+
+                linksContainer.appendChild(linksList);
+                nodeEl.appendChild(linksContainer);
+
+                // Stocker la référence du conteneur
+                linkContainers[nodeData.id] = linksContainer;
+            }
+
+            // Gestion des enfants
+            if (nodeData.children.length) {
+                const cc = document.createElement("div");
+                cc.className = "children-container";
+                if (expandedNodes[nodeData.id]) {
+                    cc.classList.add("expanded");
+                    label.classList.add("expanded");
+                }
+                nodeData.children.forEach(c => cc.appendChild(createNode(c)));
+                label.addEventListener("click", () => {
+                    cc.classList.toggle("expanded");
+                    label.classList.toggle("expanded");
+                    expandedNodes[nodeData.id] = !expandedNodes[nodeData.id];
+                });
+                nodeEl.appendChild(cc);
+            }
+
+            return nodeEl;
+        }
+
+        // Fonction pour afficher/cacher les liens
+        function toggleLinksContainer(nodeId) {
+            const linksContainer = document.getElementById(`links-${nodeId}`);
+            if (linksContainer) {
+                if (linksContainer.style.display === "none") {
+                    linksContainer.style.display = "block";
+                } else {
+                    linksContainer.style.display = "none";
+                }
+            }
+        }
+
+        // Fonction pour supprimer un lien
+        async function removeNodeLink(node, index) {
+            if (!isAdminMode) {
+                alert("Action interdite en mode consultation");
+                return;
+            }
+            if (!confirm("Êtes-vous sûr de vouloir supprimer ce lien ?")) return;
+
+            const newLinks = [...node.links];
+            newLinks.splice(index, 1);
+
+            await updateDoc(doc(db, "treeData", node.id), { links: newLinks });
+        }
+
+        // Fonction de recherche avancée
+        function performSearch() {
+            console.log("performSearch function called");
+            const searchTerm = document.getElementById('search-input').value.trim().toLowerCase();
+            const flagFilter = document.getElementById('flag-filter').value;
+
+            console.log("searchTerm:", searchTerm);
+            console.log("flagFilter:", flagFilter);
+
+            if (!searchTerm && !flagFilter) {
+                console.log("No search term or flag filter provided");
+                searchResults = [];
+                searchResultsSet.clear();
+                document.getElementById('search-results').innerHTML = '<div class="no-results">Veuillez saisir un terme de recherche ou sélectionner un filtre</div>';
+                renderTree(treeStructure);
+                return;
+            }
+
+            searchResults = [];
+            searchResultsSet.clear();
+
+            const nodesByPath = {};
+            currentDocs.forEach(doc => {
+                const node = doc.data();
+                // Exclure les noeuds supprimés
+                if (node.deleted) return;
+                const path = getFullPath(node);
+                nodesByPath[path] = { ...node, id: doc.id };
+            });
+
+            console.log("nodesByPath:", nodesByPath);
+
+            currentDocs.forEach(doc => {
+                const node = doc.data();
+                // Exclure les noeuds supprimés
+                if (node.deleted) return;
+                let matches = true;
+
+                // Filtre par texte
+                if (searchTerm && !node.name.toLowerCase().includes(searchTerm)) {
+                    matches = false;
+                }
+
+                // Filtre par flag
+                if (flagFilter && !node.flags[flagFilter]) {
+                    matches = false;
+                }
+
+                if (matches) {
+                    searchResults.push({ ...node, id: doc.id });
+                    searchResultsSet.add(doc.id);
+
+                    let parentPath = node.parentPath;
+                    while (parentPath) {
+                        const parentNode = nodesByPath[parentPath];
+                        if (parentNode) {
+                            expandedNodes[parentNode.id] = true;
+                            parentPath = parentNode.parentPath;
+                        } else {
+                            break;
+                        }
+                    }
+                }
+            });
+
+            console.log("searchResults:", searchResults);
+
+            displaySearchResults();
+            renderTree(treeStructure);
+
+            if (searchResults.length > 0) {
+                const firstResultId = searchResults[0].id;
+                const nodeElement = document.getElementById(`node-${firstResultId}`);
+                if (nodeElement) {
+                    nodeElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }
+        }
+
+        // Affichage des résultats de recherche
+        function displaySearchResults() {
+            console.log("displaySearchResults function called");
+            const resultsContainer = document.getElementById('search-results');
+
+            if (searchResults.length === 0) {
+                resultsContainer.innerHTML = '<div class="no-results">Aucun résultat trouvé</div>';
+                return;
+            }
+
+            let html = '<h3>Résultats de recherche</h3>';
+
+            searchResults.forEach(result => {
+                html += `<div class="search-result-item" data-id="${result.id}">`;
+                // Construction du chemin affiché
+                if (result.parentPath) {
+                    html += `<div>${result.parentPath}/<strong>${result.name}</strong></div>`;
+                } else {
+                    html += `<div><strong>${result.name}</strong></div>`;
+                }
+
+                // Afficher la cote si elle existe
+                if (result.cote) {
+                    html += `<div style="color: #888; margin-top: 4px; font-size: 0.9em;">Cote: ${result.cote}</div>`;
+                }
+
+                // Afficher les flags
+                if (flagsList.length) {
+                    html += '<div style="margin-top: 5px; font-size: 0.9em;">';
+                    flagsList.forEach(flag => {
+                        if (result.flags[flag]) {
+                            html += `<span style="background: #e2d9f3; padding: 2px 6px; border-radius: 4px; margin-right: 5px;">${flag}</span>`;
+                        }
+                    });
+                    html += '</div>';
+                }
+
+                html += '</div>';
+            });
+
+            resultsContainer.innerHTML = html;
+
+            document.querySelectorAll('.search-result-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    const nodeId = this.getAttribute('data-id');
+                    const nodeElement = document.getElementById(`node-${nodeId}`);
+                    if (nodeElement) {
+                        const nodeLabel = nodeElement.querySelector('.node-label');
+                        if (nodeLabel && !nodeLabel.classList.contains('expanded')) {
+                            nodeLabel.click();
+                        }
+                        nodeElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        nodeLabel.classList.add('highlighted');
+                        setTimeout(() => {
+                            nodeLabel.classList.remove('highlighted');
+                        }, 3000);
+                    }
+                });
+            });
+        }
+
+        // Gestion du mode Admin — le rôle est validé par Firestore, jamais par un secret navigateur.
+        document.getElementById("mode-admin-toggle").addEventListener("click", () => {
+            if (accessRole === 'admin') {
+                isAdminMode = true;
+                document.body.classList.add('admin-mode');
+                const btn = document.getElementById("mode-admin-toggle");
+                btn.textContent = "Mode Admin activé";
+                btn.disabled = true;
+                renderTree(treeStructure);
+            } else {
+                alert(`Ce navigateur est autorisé en lecture mais pas en administration. UID : ${firebaseUser.uid}`);
+            }
+        });
+
+        // Événements Firestore
+        const budgetListenerStop = ktBudget?.listenerStart?.(firebaseConfig.projectId,'treeData-page','firestore') || null;
+        const unsubscribeTree = onSnapshot(treeCollection, snap => {
+            budget('reads', snap.size);
+            currentDocs = snap.docs;
+            flagsList = Object.keys(currentDocs[0]?.data().flags || {});
+            updateFlagsUI();
+            treeStructure = buildTree(currentDocs);
+            renderTree(treeStructure);
+            try { window.KohaTools?.getService?.('taxonomy')?.prime?.(MODULE_ID, currentDocs.map(d => ({ id:d.id, ...d.data() }))); } catch (_) {}
+        });
+        try { window.KohaTools?.getService?.('module-host')?.onUnmount?.('collections-tree', () => { unsubscribeTree(); try { budgetListenerStop?.(); } catch (_) {} }); } catch (_) {}
+
+        // Gestion des formulaires
+        document.getElementById("add-node-form").addEventListener("submit", async e => {
+            e.preventDefault();
+            if (!isAdminMode) {
+                alert("Action interdite en mode consultation");
+                return;
+            }
+            const n = document.getElementById("node-name").value.trim();
+            if (!n) return;
+            const c = document.getElementById("node-cote").value.trim();
+            await addDoc(treeCollection, {
+                name: n,
+                cote: c || "",
+                parentPath: "",
+                flags: {},
+                note: "",
+                links: []
+            }); budget('writes',1);
+            document.getElementById("node-name").value = "";
+            document.getElementById("node-cote").value = "";
+        });
+
+        document.getElementById("add-flag-form").addEventListener("submit", async e => {
+            e.preventDefault();
+            if (!isAdminMode) {
+                alert("Action interdite en mode consultation");
+                return;
+            }
+            const fn = document.getElementById("flag-name").value.trim();
+            if (!fn || flagsList.includes(fn)) {
+                alert(fn ? "Ce flag existe déjà !" : "Nom obligatoire");
+                return;
+            }
+            const batch = writeBatch(db);
+            const docs = await getDocs(treeCollection);
+            docs.forEach(d => batch.update(d.ref, { flags: { ...d.data().flags, [fn]: false }}));
+            await batch.commit();
+            document.getElementById("flag-name").value = "";
+        });
+
+        // Fonctions CRUD
+        async function deleteFlag(flagName) {
+            if (!confirm(`Supprimer le flag "${flagName}" de tous les nœuds ?`)) return;
+            const batch = writeBatch(db);
+            const docs = await getDocs(treeCollection);
+            docs.forEach(d => {
+                const f = { ...d.data().flags };
+                delete f[flagName];
+                batch.update(d.ref, { flags: f });
+            });
+            await batch.commit();
+        }
+
+        async function addChild(name, parentPath, cote = "") {
+            await addDoc(treeCollection, {
+                name,
+                cote: cote || "",
+                parentPath,
+                flags: {},
+                note: "",
+                links: []
+            });
+        }
+
+        async function editNode(node) {
+            const newName = prompt("Nouveau nom :", node.name);
+            if (!newName) return;
+            const newCote = prompt("Nouvelle cote :", node.cote || "");
+            const newParent = prompt("Nouveau chemin parent (laisser vide pour racine)", node.parentPath || "");
+            if (newParent === null) return;
+
+            const oldPath = getFullPath(node);
+            const newPath = newParent ? `${newParent}/${newName}` : newName;
+
+            await updateDoc(doc(db, "treeData", node.id), {
+                name: newName,
+                cote: newCote || "",
+                parentPath: newParent
+            });
+
+            const q = query(
+                treeCollection,
+                where("parentPath", ">=", oldPath),
+                where("parentPath", "<", oldPath + "\\uF8FF")
+            );
+
+            const ds = await getDocs(q);
+            const batch = writeBatch(db);
+            ds.forEach(d => {
+                const data = d.data();
+                const updated = data.parentPath.replace(oldPath, newPath);
+                batch.update(d.ref, { parentPath: updated });
+            });
+            await batch.commit();
+        }
+
+        async function confirmDeleteNode(node) {
+            const q = query(treeCollection, where("parentPath", "==", getFullPath(node)));
+            const snap = await getDocs(q);
+            if (!snap.empty) {
+                alert("Ce nœud contient des enfants.");
+                return;
+            }
+            if (confirm("Êtes-vous sûr ?")) {
+                await updateDoc(doc(db, "treeData", node.id), { deleted: true });
+            }
+        }
+
+        function addLink(node) {
+            const label = prompt("Nom du lien :");
+            if (!label) return;
+            const url = prompt("URL du lien :");
+            if (!url) return;
+            const comment = prompt("Commentaire sur le lien (optionnel) :", "");
+            const upd = [...(node.links || []), { label, url, comment }];
+            updateDoc(doc(db, "treeData", node.id), { links: upd });
+        }
+
+        // Gestion des notes
+        function openNoteModal(node) {
+            currentEditingNode = node;
+            document.getElementById("note-editor").value = node.note;
+            document.getElementById("note-modal").style.display = "block";
+            document.getElementById("note-overlay").style.display = "block";
+        }
+
+        function closeNoteModal() {
+            currentEditingNode = null;
+            document.getElementById("note-modal").style.display = "none";
+            document.getElementById("note-overlay").style.display = "none";
+        }
+
+        async function saveNote() {
+            const val = document.getElementById("note-editor").value;
+            if (currentEditingNode) {
+                await updateDoc(doc(db, "treeData", currentEditingNode.id), { note: val });
+            }
+            closeNoteModal();
+        }
+
+        // Gestion des cotes
+        function openCoteModal(node) {
+            currentEditingCoteNode = node;
+            document.getElementById("cote-editor").value = node.cote || "";
+            document.getElementById("cote-modal").style.display = "block";
+            document.getElementById("cote-overlay").style.display = "block";
+        }
+
+        function closeCoteModal() {
+            currentEditingCoteNode = null;
+            document.getElementById("cote-modal").style.display = "none";
+            document.getElementById("cote-overlay").style.display = "none";
+        }
+
+        async function saveCote() {
+            const val = document.getElementById("cote-editor").value;
+            if (currentEditingCoteNode) {
+                await updateDoc(doc(db, "treeData", currentEditingCoteNode.id), { cote: val });
+            }
+            closeCoteModal();
+        }
+
+        // Fonction pour copier les enfants vers un autre nœud
+        function openCopyModal(sourceNode) {
+            if (!sourceNode.children.length) {
+                alert("Ce nœud n'a pas d'enfants à copier.");
+                return;
+            }
+
+            currentCopySource = sourceNode;
+            document.getElementById("copy-source-name").textContent = sourceNode.name;
+
+            // Remplir la liste des destinations possibles
+            const destinationSelect = document.getElementById("copy-destination");
+            destinationSelect.innerHTML = "";
+
+            // Ajouter l'option "Racine"
+            const rootOption = document.createElement("option");
+            rootOption.value = "";
+            rootOption.textContent = "Racine";
+            destinationSelect.appendChild(rootOption);
+
+            // Ajouter tous les autres nœuds (triés alphabétiquement)
+            let sortedNodes = Object.entries(allNodes).filter(([path, node]) => {
+                return !path.startsWith(getFullPath(sourceNode) + '/') && node.id !== sourceNode.id;
+            });
+            sortedNodes.sort((a, b) => a[0].localeCompare(b[0]));
+            sortedNodes.forEach(([path, node]) => {
+                const option = document.createElement("option");
+                option.value = getFullPath(node);
+                option.textContent = path;
+                destinationSelect.appendChild(option);
+            });
+
+            // Réinitialiser la barre de progression
+            document.getElementById("copy-progress-bar").style.width = "0%";
+            document.getElementById("copy-status").textContent = "Prêt à copier";
+
+            // Afficher la modale
+            document.getElementById("copy-modal").style.display = "block";
+            document.getElementById("copy-overlay").style.display = "block";
+        }
+
+        function closeCopyModal() {
+            currentCopySource = null;
+            document.getElementById("copy-modal").style.display = "none";
+            document.getElementById("copy-overlay").style.display = "none";
+        }
+
+        async function startCopyChildren() {
+            if (!currentCopySource) return;
+
+            const destinationPath = document.getElementById("copy-destination").value;
+            const destinationName = destinationPath.split('/').pop() || "Racine";
+
+            if (!confirm(`Copier tous les enfants de "${currentCopySource.name}" vers "${destinationName}"?`)) {
+                return;
+            }
+
+            const childrenToCopy = [...currentCopySource.children];
+            const totalChildren = childrenToCopy.length;
+            let copied = 0;
+
+            document.getElementById("copy-status").textContent = `Copie en cours (0/${totalChildren})...`;
+
+            // Fonction récursive pour copier un nœud et ses enfants
+            async function copyNode(node, parentPath) {
+                // Créer une copie du nœud
+                const newNodeRef = await addDoc(treeCollection, {
+                    name: node.name,
+                    cote: node.cote || "",
+                    parentPath: parentPath,
+                    flags: { ...node.flags },
+                    note: node.note,
+                    links: [...node.links]
+                });
+
+                // Copier les enfants récursivement
+                for (const child of node.children) {
+                    await copyNode(child, getFullPath({...node, id: newNodeRef.id, parentPath}));
+                }
+            }
+
+            // Copier chaque enfant du nœud source
+            for (const child of childrenToCopy) {
+                try {
+                    await copyNode(child, destinationPath);
+                    copied++;
+
+                    // Mettre à jour la barre de progression
+                    const progress = Math.round((copied / totalChildren) * 100);
+                    document.getElementById("copy-progress-bar").style.width = `${progress}%`;
+                    document.getElementById("copy-status").textContent = `Copie en cours (${copied}/${totalChildren})...`;
+                } catch (error) {
+                    console.error("Erreur lors de la copie:", error);
+                    alert(`Erreur lors de la copie de ${child.name}: ${error.message}`);
+                }
+            }
+
+            document.getElementById("copy-status").textContent = `Copie terminée! ${copied} enfants copiés.`;
+            setTimeout(closeCopyModal, 2000);
+        }
+
+        // Fonction pour dupliquer un nœud
+        async function duplicateNode(node) {
+            const withChildren = confirm("Voulez-vous dupliquer les enfants aussi ?");
+            const newName = prompt("Nom du nouveau nœud :", `${node.name} (copie)`);
+            if (!newName) return;
+            const newCote = prompt("Cote du nouveau nœud :", node.cote || "");
+
+            // Créer le nouveau nœud
+            const newNodeRef = await addDoc(treeCollection, {
+                name: newName,
+                cote: newCote || "",
+                parentPath: node.parentPath,
+                flags: { ...node.flags },
+                note: node.note,
+                links: [...node.links]
+            });
+
+            if (withChildren && node.children.length) {
+                for (const child of node.children) {
+                    await copyNode(child, getFullPath({
+                        ...node,
+                        id: newNodeRef.id,
+                        name: newName,
+                        parentPath: node.parentPath
+                    }));
+                }
+            }
+
+            alert(`Nœud "${node.name}" dupliqué avec succès!`);
+        }
+
+        // Fonction pour déplacer un nœud
+        function openMoveModal(sourceNode) {
+            currentMoveNode = sourceNode;
+            document.getElementById("move-source-name").textContent = sourceNode.name;
+
+            // Remplir la liste des destinations possibles
+            const destinationSelect = document.getElementById("move-destination");
+            destinationSelect.innerHTML = "";
+
+            // Ajouter l'option "Racine"
+            const rootOption = document.createElement("option");
+            rootOption.value = "";
+            rootOption.textContent = "Racine";
+            destinationSelect.appendChild(rootOption);
+
+            // Ajouter tous les autres nœuds (triés alphabétiquement)
+            let sortedMoveNodes = Object.entries(allNodes).filter(([path, node]) => {
+                return !path.startsWith(getFullPath(sourceNode) + '/') && node.id !== sourceNode.id;
+            });
+            sortedMoveNodes.sort((a, b) => a[0].localeCompare(b[0]));
+            sortedMoveNodes.forEach(([path, node]) => {
+                const option = document.createElement("option");
+                option.value = getFullPath(node);
+                option.textContent = path;
+                destinationSelect.appendChild(option);
+            });
+
+            // Afficher la modale
+            document.getElementById("move-modal").style.display = "block";
+            document.getElementById("move-overlay").style.display = "block";
+        }
+
+        function closeMoveModal() {
+            currentMoveNode = null;
+            document.getElementById("move-modal").style.display = "none";
+            document.getElementById("move-overlay").style.display = "none";
+        }
+
+        async function confirmMoveNode() {
+            if (!currentMoveNode) return;
+
+            const destinationPath = document.getElementById("move-destination").value;
+            const destinationName = destinationPath.split('/').pop() || "Racine";
+
+            if (confirm(`Déplacer "${currentMoveNode.name}" vers "${destinationName}"?`)) {
+                const oldPath = getFullPath(currentMoveNode);
+                const newPath = destinationPath ? `${destinationPath}/${currentMoveNode.name}` : currentMoveNode.name;
+
+                // Vérifier qu'on ne déplace pas un nœud dans ses propres descendants
+                if (newPath.startsWith(oldPath + '/')) {
+                    alert("Impossible de déplacer un nœud dans ses propres descendants");
+                    return;
+                }
+
+                await updateDoc(doc(db, "treeData", currentMoveNode.id), {
+                    parentPath: destinationPath
+                });
+
+                const q = query(
+                    treeCollection,
+                    where("parentPath", ">=", oldPath),
+                    where("parentPath", "<", oldPath + "\\uF8FF")
+                );
+
+                const ds = await getDocs(q);
+                const batch = writeBatch(db);
+                ds.forEach(d => {
+                    const data = d.data();
+                    const updated = data.parentPath.replace(oldPath, newPath);
+                    batch.update(d.ref, { parentPath: updated });
+                });
+                await batch.commit();
+
+                alert("Nœud déplacé avec succès!");
+                closeMoveModal();
+            }
+        }
+
+        // Fonction pour exporter l'arborescence
+        async function exportTree() {
+            try {
+                const docs = await getDocs(treeCollection);
+                const data = docs.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+                const exportData = {
+                    nodes: data,
+                    flags: flagsList,
+                    timestamp: new Date().toISOString()
+                };
+
+                const dataStr = JSON.stringify(exportData, null, 2);
+                const blob = new Blob([dataStr], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `arborescence-${new Date().toISOString().split('T')[0]}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+
+                alert("Exportation réussie!");
+            } catch (error) {
+                console.error("Erreur lors de l'exportation:", error);
+                alert("Erreur lors de l'exportation: " + error.message);
+            }
+        }
+
+        // Fonction pour importer l'arborescence
+        function openImportModal() {
+            document.getElementById("import-modal").style.display = "block";
+            document.getElementById("import-overlay").style.display = "block";
+            document.getElementById("import-status").textContent = "";
+        }
+
+        function closeImportModal() {
+            document.getElementById("import-modal").style.display = "none";
+            document.getElementById("import-overlay").style.display = "none";
+        }
+
+        async function importTreeData() {
+            const fileInput = document.getElementById("import-file");
+            const status = document.getElementById("import-status");
+
+            if (!fileInput.files.length) {
+                status.textContent = "Veuillez sélectionner un fichier";
+                status.style.color = "red";
+                return;
+            }
+
+            const file = fileInput.files[0];
+            const reader = new FileReader();
+
+            reader.onload = async (event) => {
+                try {
+                    const content = event.target.result;
+                    const importData = JSON.parse(content);
+
+                    if (!importData.nodes || !Array.isArray(importData.nodes)) {
+                        throw new Error("Format de fichier invalide");
+                    }
+
+                    status.textContent = "Importation en cours...";
+                    status.style.color = "blue";
+
+                    // Supprimer toutes les données existantes
+                    const existingDocs = await getDocs(treeCollection);
+                    const batch = writeBatch(db);
+                    existingDocs.forEach(doc => {
+                        batch.delete(doc.ref);
+                    });
+                    await batch.commit();
+
+                    // Ajouter les nouveaux nœuds
+                    for (const node of importData.nodes) {
+                        await addDoc(treeCollection, {
+                            name: node.name,
+                            cote: node.cote || "",
+                            parentPath: node.parentPath,
+                            flags: node.flags || {},
+                            note: node.note || "",
+                            links: node.links || []
+                        });
+                    }
+
+                    status.textContent = "Importation réussie!";
+                    status.style.color = "green";
+
+                    setTimeout(() => {
+                        closeImportModal();
+                        alert("Arborescence importée avec succès!");
+                    }, 1500);
+                } catch (error) {
+                    console.error("Erreur lors de l'importation:", error);
+                    status.textContent = "Erreur: " + error.message;
+                    status.style.color = "red";
+                }
+            };
+
+            reader.readAsText(file);
+        }
+
+        // Événements divers
+        document.getElementById("note-overlay").addEventListener("click", closeNoteModal);
+        document.getElementById("cote-overlay").addEventListener("click", closeCoteModal);
+        document.getElementById("copy-overlay").addEventListener("click", closeCopyModal);
+        document.getElementById("move-overlay").addEventListener("click", closeMoveModal);
+        document.getElementById("import-overlay").addEventListener("click", closeImportModal);
+
+        document.getElementById("expand-all").addEventListener("click", () => {
+            document.querySelectorAll(".children-container").forEach(cc => {
+                cc.classList.add("expanded");
+                cc.previousElementSibling.classList.add("expanded");
+            });
+        });
+
+        document.getElementById("collapse-all").addEventListener("click", () => {
+            document.querySelectorAll(".children-container").forEach(cc => {
+                cc.classList.remove("expanded");
+                cc.previousElementSibling.classList.remove("expanded");
+            });
+        });
+
+        document.getElementById("toggle-flags").addEventListener("click", function() {
+            const c = document.getElementById("flags-container");
+            c.classList.toggle("show");
+            this.querySelector("span").textContent = c.classList.contains("show") ? "−" : "+";
+        });
+
+        // Événements de recherche
+        document.getElementById('search-button').addEventListener('click', () => {
+            console.log("Search button clicked");
+            performSearch();
+        });
+
+        document.getElementById('search-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                console.log("Enter key pressed in search input");
+                performSearch();
+            }
+        });
+
+        // Événements export/import
+        document.getElementById('export-btn').addEventListener('click', exportTree);
+        document.getElementById('import-btn').addEventListener('click', openImportModal);
+
+        // Exposer les fonctions au scope global
+        window.openNoteModal = openNoteModal;
+        window.closeNoteModal = closeNoteModal;
+        window.saveNote = saveNote;
+        window.openCoteModal = openCoteModal;
+        window.closeCoteModal = closeCoteModal;
+        window.saveCote = saveCote;
+        window.deleteFlag = deleteFlag;
+        window.startCopyChildren = startCopyChildren;
+        window.closeCopyModal = closeCopyModal;
+        window.closeMoveModal = closeMoveModal;
+        window.confirmMoveNode = confirmMoveNode;
+        window.closeImportModal = closeImportModal;
+        window.importTreeData = importTreeData;
+        window.toggleLinksContainer = toggleLinksContainer;
+
+    </script>
