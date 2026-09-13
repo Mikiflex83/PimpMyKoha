@@ -6529,7 +6529,7 @@
       "appearance": {}
     }
   },
-  "suiteVersion": "3.43.1",
+  "suiteVersion": "3.43.2",
   "diagnostics": {
     "enabled": false,
     "showPanel": false,
@@ -6539,6 +6539,7 @@
     "allowLocalOverrides": true,
     "browserCanary": {
       "enabled": true,
+      "allowFreshInstallDeveloperTest": true,
       "storageKey": "KohaTools.browserCanary.v1",
       "requireReload": true,
       "safety": {

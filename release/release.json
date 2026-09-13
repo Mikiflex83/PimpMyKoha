@@ -1,38 +1,33 @@
 {
   "schema": "pimp-my-koha.release-metadata.v1",
-  "version": "3.43.1",
+  "version": "3.43.2",
   "channel": "stable",
-  "releasedAt": "2026-09-12",
-  "summary": "Distribution GitHub multi-canaux et contrôle d’accès : Stable / Canary / Dev, outils DEV réservés explicitement, Canary module isolé par compte Koha et modules filtrés par audience.",
+  "releasedAt": "2026-09-13",
+  "summary": "Navigation fiable : menus idempotents, socle chargé dans le bon ordre et aucun lien d’application proposé tant que ses prérequis obligatoires ne sont pas satisfaits.",
   "highlights": [
-    "Ajout d’un contrôle d’accès Pimp My Koha avec rôles staff, manager, admin et developer.",
-    "Le rôle developer est fail-closed : sans username explicitement autorisé, personne n’accède au DEV.",
-    "Les modules peuvent déclarer une audience minimale et sont bloqués au chargement, au routeur et dans la navigation lorsqu’ils ne sont pas autorisés.",
-    "Les outils DEV ne sont chargés que sur le canal Dev et pour un compte développeur autorisé.",
-    "Le Canary module historique est réservé au développeur et son état est désormais isolé par compte Koha.",
-    "GitHub Pages publie trois canaux distincts : Stable, Canary et Dev, sans mise à jour silencieuse de la production épinglée.",
-    "Un channel-loader destiné aux sandbox sélectionne Dev/Canary pour les comptes autorisés et retombe automatiquement sur Stable sinon.",
-    "Les GitHub prereleases alimentent Canary/Dev sans déplacer le canal Stable.",
-    "L’administration affiche le canal effectif et une section Développement uniquement lorsque le contexte DEV est réellement autorisé.",
-    "Documentation clic par clic ajoutée pour GitHub, GitHub Pages, Koha sandbox, releases et rollback."
+    "Le chargeur initialise le contrôle d’accès avant de filtrer les modules canoniques.",
+    "Le menu Mes outils reste unique après les rafraîchissements et rechargements Koha.",
+    "Les modules désactivés, interdits ou bloqués par un prérequis obligatoire ne sont plus affichés dans les menus.",
+    "Les sous-menus devenus vides ne sont plus rendus.",
+    "Le raccourci Tableau de bord est masqué tant que son loader d’installation n’est pas configuré.",
+    "Le Centre qualité remplace les ouvertures sans effet par un état À configurer explicite.",
+    "La console sépare les modules disponibles des 105 groupes historiques de migration et affiche des compteurs cohérents.",
+    "Les 98 groupes historiques disposant d’une candidate complète peuvent être testés individuellement sur le navigateur du développeur en installation neuve, sans affecter les autres postes.",
+    "Un test CI couvre la disponibilité des modules, les prérequis, les droits, le tableau de bord et l’anti-duplication."
   ],
   "changedModules": [
-    "core/access-control",
-    "core/canary",
-    "core/update-service",
-    "core/module-host",
     "core/navigation",
+    "core/canary",
     "loader",
     "admin/panel",
-    "admin/launcher",
-    "dev/developer-tools",
-    "distribution/channel-loader",
-    "distribution/github-release"
+    "apps/quality/quality-center",
+    "ci/navigation-test",
+    "ci/fresh-install-canary-test"
   ],
   "breaking": false,
   "kohaCompatibility": {
-    "branches": ["25.11"],
-    "tested": [],
-    "targeted": ["25.11.04"]
+    "branches": ["25.11", "26.06"],
+    "tested": ["26.06.00"],
+    "targeted": ["25.11.04", "26.06"]
   }
 }

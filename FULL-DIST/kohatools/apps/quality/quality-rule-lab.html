@@ -6,7 +6,7 @@
 (function(){
 'use strict';
 const root=document.getElementById('dqlab-app');if(!root||root.dataset.ready)return;root.dataset.ready='1';
-const CFG={VERSION:'1.5.0',MEMORY:'__KOHATOOLS_ASSET_ROOT__apps/quality/shared/quality-memory-firebase.js?ktv=3.43.1',SETTINGS_KEY:'dq_rule_lab_v1'};
+const CFG={VERSION:'1.5.0',MEMORY:'__KOHATOOLS_ASSET_ROOT__apps/quality/shared/quality-memory-firebase.js?ktv=3.43.2',SETTINGS_KEY:'dq_rule_lab_v1'};
 const MODULES=[['authorities','Autorités'],['reservations','Réservations'],['loans','Prêts & litiges'],['transfers','Transferts'],['items','Exemplaires'],['biblios','Notices'],['serials','Périodiques'],['patrons','Lecteurs']];
 const state={module:'reservations',tab:'feedback',feedback:[],candidates:[],rules:[],memory:null,settings:loadSettings(),selectedFeedback:null};
 function loadSettings(){try{return{minSamples:10,minDays:3,confirmPct:90,falsePositivePct:30,...JSON.parse(localStorage.getItem(CFG.SETTINGS_KEY)||'{}')}}catch(_){return{minSamples:10,minDays:3,confirmPct:90,falsePositivePct:30}}}

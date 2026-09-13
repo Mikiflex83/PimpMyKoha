@@ -1,4 +1,4 @@
-# Pimp My Koha / KohaTools — V3.43.1
+# Pimp My Koha / KohaTools — V3.43.2
 
 Distribution pré-plugin multi-installations.
 
@@ -15,6 +15,6 @@ Le mode `fresh-install` ne charge jamais silencieusement un module legacy. Un pr
 
 ## Distribution, accès et mises à jour
 
-V3.43.1 ajoute la distribution GitHub **Stable / Canary / Dev** et une couche d’accès Pimp My Koha. Le rôle `developer` doit toujours être explicitement associé à un username Koha ; les outils DEV ne sont chargés que sur le canal Dev. Le Canary module local est également réservé au développeur et stocké par compte Koha.
+V3.43.2 ajoute la distribution GitHub **Stable / Canary / Dev** et une couche d’accès Pimp My Koha. Le rôle `developer` doit toujours être explicitement associé à un username Koha ; les outils DEV ne sont chargés que sur le canal Dev. Le Canary module local est également réservé au développeur et stocké par compte Koha.
 
 Une release n’est jamais installée silencieusement : la production GitHub Pages reste épinglée à une version et l’auto-hébergement conserve la maîtrise de ses fichiers. Voir `docs/UPDATE.md`, `docs/ACCESS-CONTROL.md` et `docs/CHANNELS.md`.

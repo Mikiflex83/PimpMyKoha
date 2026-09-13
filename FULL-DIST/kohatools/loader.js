@@ -1,10 +1,10 @@
 (function(global){
 "use strict";
-if(global.__KohaToolsV3431Loaded)return;
-global.__KohaToolsV3431Loaded=true;
+if(global.__KohaToolsV3432Loaded)return;
+global.__KohaToolsV3432Loaded=true;
 global.__KohaToolsBootStarted=performance.now();
 
-const VERSION="3.43.1";
+const VERSION="3.43.2";
 const BOOT=(global.KohaToolsBootstrap&&typeof global.KohaToolsBootstrap==="object")?global.KohaToolsBootstrap:{};
 const ROOT=String(BOOT.assetRoot||new URL("./",document.currentScript?.src||location.href).href).replace(/\/?$/,"/");
 const MANIFEST_URL=BOOT.manifestUrl||null,DEFAULTS_URL=BOOT.defaultsUrl||null;
@@ -129,8 +129,9 @@ async function boot(){
  const loaded=new Set();
  for(const mod of manifest.modules){
    const mode=KohaTools.Config.modeForManifestModule?KohaTools.Config.modeForManifestModule(mod.id):KohaTools.Config.mode(mod.id);
-   if(KohaTools.deploymentMode==="fresh-install"&&mod.freshInstall?.supported!==true)continue; if(!mod.nextModule||!["shadow","live"].includes(mode))continue;
    const moduleCfg=KohaTools.Config.getModule(mod.id)?.config||{},canonicalId=moduleCfg.canonicalModule,canonicalCfg=canonicalId?KohaTools.Config.getCanonical(canonicalId):null;
+   const freshCanary=KohaTools.deploymentMode==="fresh-install"&&canonicalId&&KohaTools.getService("canary")?.shouldRunLive?.(canonicalId)===true;
+   if(KohaTools.deploymentMode==="fresh-install"&&mod.freshInstall?.supported!==true&&!freshCanary)continue; if(!mod.nextModule||!["shadow","live"].includes(mode))continue;
    if(canonicalId&&!KohaTools.getService("access-control")?.moduleAllowed?.(canonicalId)){KohaTools.record?.({module:mod.id,level:"info",kind:"module-blocked-access",canonicalId});continue;}
    const effectiveScope=canonicalCfg?.general?.scope||moduleCfg.scope||mod.scope||{include:["*"]}; if(KohaTools.deploymentMode==="fresh-install"&&canonicalId){const gate=KohaTools.getService("prerequisites")?.status?.(canonicalId);if(gate&&!gate.ok){KohaTools.record?.({module:mod.id,level:"info",kind:"module-blocked-prerequisites",blocking:gate.blocking.map(x=>x.id)});continue;}}
    if(!scopeAllows(effectiveScope))continue;
@@ -171,5 +172,5 @@ async function boot(){
  global.__KohaToolsBootTelemetry={startedAtMs:global.__KohaToolsBootStarted,finishedAtMs:performance.now(),durationMs:Math.round((performance.now()-global.__KohaToolsBootStarted)*10)/10,at:new Date().toISOString()};KohaTools.emit("koha-tools:ready",{version:KohaTools.version});
  setTimeout(()=>KohaTools.getService("health")?.scanCurrentPage?.({passive:true}),1200);
 }
-boot().catch(e=>{document.documentElement.dataset.kohaToolsV3431BootError="1";console.error("KohaTools boot",e)});
+boot().catch(e=>{document.documentElement.dataset.kohaToolsV3432BootError="1";console.error("KohaTools boot",e)});
 })(window);

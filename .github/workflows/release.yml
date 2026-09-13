@@ -47,6 +47,10 @@ jobs:
         run: node scripts/test-channel-loader.mjs
       - name: Test access control
         run: node scripts/test-access-control.mjs
+      - name: Test navigation and prerequisites
+        run: node scripts/test-navigation.mjs
+      - name: Test fresh-install candidate sandbox
+        run: node scripts/test-fresh-install-canary.mjs
       - name: Build release archive
         id: build
         shell: bash

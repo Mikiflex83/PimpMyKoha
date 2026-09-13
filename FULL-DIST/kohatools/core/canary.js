@@ -27,13 +27,18 @@ function handshake(){
 function bootstrapMap(canonicalId){
  return global.__KohaToolsProductionBootstrap?.modules?.[canonicalId]||null;
 }
+function stableStringify(v){if(v===null||typeof v!=="object")return JSON.stringify(v);if(Array.isArray(v))return "["+v.map(stableStringify).join(",")+"]";return "{"+Object.keys(v).sort().map(k=>JSON.stringify(k)+":"+stableStringify(v[k])).join(",")+"}"}
+function tinyHash(s){let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}return (h>>>0).toString(16).padStart(8,"0")}
+function freshInstallDeveloperTest(){return KT.deploymentMode==="fresh-install"&&developerAllowed()&&cfg().allowFreshInstallDeveloperTest===true}
+function freshInstallMap(canonicalId){if(!freshInstallDeveloperTest())return null;const maps=mapped(canonicalId),legacyFiles=maps.map(m=>m.legacyFile).filter(Boolean),nextModules=[...new Set(maps.map(m=>m.nextModule).filter(Boolean))];if(!maps.length||!nextModules.length)return null;return {runtimeId:canonicalId,runtimeContractSafe:true,legacyFiles,nextModules,mappingHash:"fresh-"+tinyHash(stableStringify({canonicalId,legacyFiles:[...legacyFiles].sort(),nextModules:[...nextModules].sort()}))}}
+function resolvedMap(canonicalId){return bootstrapMap(canonicalId)||freshInstallMap(canonicalId)}
 function sameArray(a,b){
  if(!Array.isArray(a)||!Array.isArray(b)||a.length!==b.length)return false;
  const aa=[...a].sort(),bb=[...b].sort();
  return aa.every((x,i)=>x===bb[i]);
 }
 function entryMatchesBootstrap(canonicalId,entry){
- const map=bootstrapMap(canonicalId);
+ const map=resolvedMap(canonicalId);
  if(!map||!entry||entry.active!==true)return false;
  if(!entry.mappingHash||entry.mappingHash!==map.mappingHash)return false;
  if(!sameArray(entry.legacyFiles,map.legacyFiles||[]))return false;
@@ -46,8 +51,9 @@ function eligible(canonicalId){
  if(KT.getService("production")?.isLive(canonicalId))return {ok:false,reason:"already-production",maps};
  const life=KT.getService("lifecycle")?.status?.(canonicalId);
  if(life&&(life.disabled||life.archived))return {ok:false,reason:"module-inactive",maps,lifecycle:life};
- if(!handshake())return {ok:false,reason:"legacy-loader-handshake-missing",maps};
- const bmap=bootstrapMap(canonicalId);
+ const freshTest=freshInstallDeveloperTest();
+ if(!freshTest&&!handshake())return {ok:false,reason:"legacy-loader-handshake-missing",maps};
+ const bmap=resolvedMap(canonicalId);
  if(!bmap)return {ok:false,reason:"production-bootstrap-mapping-missing",maps};
  if(bmap.runtimeContractSafe!==true||bmap.runtimeId!==canonicalId)return {ok:false,reason:"runtime-contract-mismatch",maps,runtimeId:bmap.runtimeId||null};
  if(maps.some(m=>m.canaryCapable!==true))return {ok:false,reason:"canary-not-authorized",maps};
@@ -71,7 +77,7 @@ function activate(canonicalId){
  const e=eligible(canonicalId),cc=KT.Config.getCanonical(canonicalId);
  if(!e.ok)return {ok:false,reason:e.reason};
  if(!cc||cc.enabled===false)return {ok:false,reason:"canonical-disabled"};
- const bmap=bootstrapMap(canonicalId);
+ const bmap=resolvedMap(canonicalId);
  if(!bmap)return {ok:false,reason:"production-bootstrap-mapping-missing"};
  const s=read();s.user=currentUser();s.modules=s.modules||{};
  s.modules[canonicalId]={
@@ -97,5 +103,5 @@ function shouldSkipLegacyFile(file){
 }
 function effectiveMode(canonicalId,baseMode){return shouldRunLive(canonicalId)?"live":baseMode}
 function init(m,d){manifest=m;defaults=d;sanitize()}
-KT.registerService("canary",{init,read,status,activate,deactivate,clear,mapped,eligible,handshake,sanitize,shouldRunLive,shouldSkipLegacyFile,effectiveMode,entryMatchesBootstrap,bootstrapMap,currentUser,developerAllowed});
+KT.registerService("canary",{init,read,status,activate,deactivate,clear,mapped,eligible,handshake,sanitize,shouldRunLive,shouldSkipLegacyFile,effectiveMode,entryMatchesBootstrap,bootstrapMap,freshInstallMap,currentUser,developerAllowed});
 })(window);

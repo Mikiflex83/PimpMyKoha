@@ -30,7 +30,7 @@ La distribution fournit notamment :
 Cette méthode évite d'héberger soi-même les fichiers Pimp My Koha. Chaque release stable reste disponible sous une URL versionnée :
 
 ```text
-https://VOTRE-COMPTE.github.io/VOTRE-DEPOT/releases/3.43.1/
+https://VOTRE-COMPTE.github.io/VOTRE-DEPOT/releases/3.43.2/
 ```
 
 Dans `IntranetUserJS`, ajouter un bootstrap minimal :
@@ -43,7 +43,7 @@ window.KohaToolsBootstrap = {
 
 (function () {
   var s = document.createElement("script");
-  s.src = "https://VOTRE-COMPTE.github.io/VOTRE-DEPOT/releases/3.43.1/bootstrap.js";
+  s.src = "https://VOTRE-COMPTE.github.io/VOTRE-DEPOT/releases/3.43.2/bootstrap.js";
   s.async = false;
   document.head.appendChild(s);
 })();
@@ -51,7 +51,7 @@ window.KohaToolsBootstrap = {
 
 Le runtime détecte automatiquement le `latest.json` publié à la racine GitHub Pages et peut signaler qu'une nouvelle release est disponible.
 
-**Pour mettre à jour tous les postes**, remplacer uniquement le numéro de version dans l'URL de `IntranetUserJS`, par exemple `3.43.1` → `3.44.0`, après avoir lu la release et effectué la recette souhaitée.
+**Pour mettre à jour tous les postes**, remplacer uniquement le numéro de version dans l'URL de `IntranetUserJS`, par exemple `3.43.2` → `3.44.0`, après avoir lu la release et effectué la recette souhaitée.
 
 Avantages :
 
