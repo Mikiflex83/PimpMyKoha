@@ -1,0 +1,1184 @@
+<style>
+  body { font-family: Arial, Helvetica, sans-serif; margin: 1.5em 2em; color:#222; }
+  h1 { margin-bottom:.1em; font-size:1.4em; }
+  .uds-sub { color:#666; margin-top:0; margin-bottom:1.2em; font-size:.9em; }
+  fieldset { border:1px solid #ccc; border-radius:4px; margin-bottom:1em; padding:.8em 1em; }
+  legend { font-weight:bold; font-size:.9em; color:#444; }
+  #uds-scanbar { display:flex; gap:.5em; align-items:flex-start; margin-bottom:1em; flex-wrap:wrap; }
+  button, .uds-btn { padding:.5em 1em; border:none; border-radius:3px; color:#fff; cursor:pointer; font-size:.9em; }
+  .uds-btn--restore { background:#59C134; }
+  .uds-btn--issue   { background:#028CB5; }
+  .uds-btn--return  { background:#8258A5; }
+  .uds-btn--batch   { background:#333; }
+  .uds-btn--load    { background:#E6A817; }
+  .uds-btn[disabled] { background:#bbb !important; cursor:not-allowed; }
+  #uds-message { font-weight:bold; min-height:1.4em; }
+  #uds-message.uds-error { color:#B90E0A; }
+  #uds-message.uds-info  { color:#028CB5; }
+  #uds-cache-info { font-size:.85em; color:#666; margin-bottom:.8em; }
+  #uds-hint { font-size:.85em; color:#666; background:#f7f7f7; border-left:3px solid #59C134; padding:.6em .8em; margin-bottom:1em; }
+  #uds-hint code { font-size:.92em; }
+  table#uds-table { border-collapse:collapse; width:100%; background:#fff; }
+  table#uds-table th, table#uds-table td { border:1px solid #ddd; padding:.5em .6em; font-size:.88em; vertical-align:top; }
+  table#uds-table th { background:#ECECEC; text-align:left; }
+  .uds-status { display:inline-block; padding:.15em .6em; border-radius:10px; font-size:.8em; color:#fff; background:#999; }
+  .uds-status--wait  { background:#999; }
+  .uds-status--ok    { background:#59C134; }
+  .uds-status--busy  { background:#E6A817; }
+  .uds-status--error { background:#B90E0A; }
+  .uds-log { max-height:70px; overflow:auto; font-size:.72em; color:#555; margin-top:.3em; }
+  .uds-conflict { color:#B90E0A; font-weight:bold; font-size:.85em; }
+  .uds-actions { display:flex; gap:.3em; flex-wrap:wrap; }
+  pre.uds-sql { background:#fff; border:1px solid #ddd; padding:.6em; overflow:auto; font-size:.75em; margin:.5em 0 0; }
+  .uds-mode { display:flex; gap:.5em; flex-wrap:wrap; margin-bottom:1em; }
+  .uds-mode label {
+    display:flex; align-items:center; gap:.4em; padding:.45em .8em;
+    border:1px solid #ccc; border-radius:3px; cursor:pointer; background:#fafafa; font-size:.9em;
+  }
+  .uds-mode input { margin:0; }
+  .uds-mode label.uds-mode-active { border-color:#028CB5; background:#e8f6fb; }
+  .uds-daterange { display:flex; gap:.8em; flex-wrap:wrap; align-items:end; margin-bottom:.6em; }
+  .uds-daterange label { display:flex; flex-direction:column; gap:.25em; font-size:.85em; color:#444; }
+  .uds-daterange input { padding:.45em .55em; border:1px solid #999; border-radius:3px; font-size:1em; }
+  #uds-app[hidden], #uds-denied[hidden], #uds-panel-barcode[hidden], #uds-panel-dates[hidden] { display:none !important; }
+  #uds-denied {
+    border:1px solid #B90E0A; background:#fdf2f2; color:#B90E0A;
+    padding:1em 1.2em; border-radius:4px; margin-top:1em;
+  }
+  #uds-auth-status { font-size:.85em; color:#666; margin-bottom:1em; }
+</style>
+<h1>Restauration d'exemplaires par scan</h1>
+<p class="uds-sub">Recherche par <strong>code-barres</strong> ou par <strong>plage de dates</strong> &mdash; restauration via <strong>API Koha native (26.05+)</strong> ou <strong>UndeleteRecords</strong> sur les versions ant&eacute;rieures &mdash; pr&ecirc;t / retour via le compte technique configur&eacute; pour cette installation.</p>
+<div id="uds-auth-status">V&eacute;rification de la session Koha&hellip;</div>
+<div id="uds-denied" hidden=""><strong>Acc&egrave;s refus&eacute;.</strong> Votre compte Koha n&rsquo;est pas autoris&eacute; &agrave; utiliser cet outil sur cette installation.</div>
+<div id="uds-app" hidden="">
+<div id="uds-hint">Choisissez un mode de recherche. Les pr&ecirc;ts/retours utilisent le compte technique configur&eacute; pour cette installation.</div>
+<fieldset><legend>Mode de recherche</legend>
+<div class="uds-mode" id="uds-mode"><label class="uds-mode-active"> <input type="radio" name="uds-search-mode" value="barcode" checked="checked" /> Par code-barres </label> <label> <input type="radio" name="uds-search-mode" value="dates" /> Par plage de dates de suppression </label></div>
+</fieldset><fieldset><legend>Recherche</legend>
+<div id="uds-panel-barcode">
+<div id="uds-scanbar"><textarea id="uds-barcode-input" rows="3" style="flex: 1; min-width: 300px; padding: .55em; font-size: 1.05em; border: 1px solid #999; border-radius: 3px;" placeholder="Scannez (chaque code suivi d'Entr&eacute;e) ou collez une liste de codes-barres, un par ligne"></textarea>
+<div style="display: flex; flex-direction: column; gap: .4em;"><button id="uds-search" class="uds-btn uds-btn--load">Rechercher</button></div>
+</div>
+</div>
+<div id="uds-panel-dates" hidden="">
+<div class="uds-daterange"><label>Du <input type="date" id="uds-from-date" /> </label> <label>Au <input type="date" id="uds-to-date" /> </label> <button id="uds-search-dates" class="uds-btn uds-btn--load">Charger les supprim&eacute;s</button></div>
+<p style="font-size: .85em; color: #666; margin: .2em 0 .8em;">Utilise le rapport SQL <strong>5231</strong> (export CSV), comme le 5230 pour les codes-barres.</p>
+</div>
+<div id="uds-cache-info">Choisissez un mode puis lancez une recherche.</div>
+<div id="uds-actionsbar" style="display: flex; gap: .5em; flex-wrap: wrap; margin-top: .6em;"><button id="uds-select-all" class="uds-btn" style="background: #666;">Tout cocher</button> <button id="uds-batch-restore" class="uds-btn uds-btn--batch">Restaurer la s&eacute;lection</button> <button id="uds-batch-pipeline" class="uds-btn uds-btn--batch">Restaurer + pr&ecirc;ter + retourner la s&eacute;lection</button></div>
+<p id="uds-message"></p>
+<table id="uds-table">
+<thead>
+<tr>
+<th></th>
+<th>Code-barres</th>
+<th>Titre / Auteur</th>
+<th>ISBN / ISSN</th>
+<th>Notice</th>
+<th>Supprim&eacute; le</th>
+<th>Statut</th>
+<th>Statut perdu</th>
+<th>Traitement</th>
+<th>Actions</th>
+</tr>
+</thead>
+<tbody id="uds-table-body"></tbody>
+</table>
+</fieldset></div>
+<script>
+(function () {
+  "use strict";
+
+  /* ======================================================================
+   * CONFIGURATION — à adapter à votre établissement
+   * ==================================================================== */
+  const CONFIG = {
+    // Accès : seuls ces usernames Koha (data-loggedinusername) voient le formulaire
+    allowedUsernames: Array.isArray(window.KohaTools?.Config?.getCanonical?.('restoration')?.installation?.allowedUsernames) ? window.KohaTools.Config.getCanonical('restoration').installation.allowedUsernames : [],
+
+    // Carte lecteur pour les prêts (cardnumber Koha) — résolue en patron_id via l'API REST
+    patronCardnumber: String(window.KohaTools?.Config?.getCanonical?.('restoration')?.installation?.patronCardnumber || ''),
+
+    // Plugin UndeleteRecords (restauration uniquement)
+    pluginClass: "Koha::Plugin::UndeleteRecords",
+    runUrl: "/cgi-bin/koha/plugins/run.pl",
+
+    // Rapport SQL Koha
+    reportIdBarcode: Number(window.KohaTools?.Config?.getCanonical?.('restoration')?.installation?.reports?.barcodeId || 0), // recherche par code-barres
+    reportIdDates: Number(window.KohaTools?.Config?.getCanonical?.('restoration')?.installation?.reports?.datesId || 0),   // recherche par plage de dates
+    reportUrl: "/cgi-bin/koha/reports/guided_reports.pl",
+    reportParamName: "barcode|list",
+    reportDateFromParam: "Du|date",
+    reportDateToParam: "Au|date",
+    reportBatchSize: 100,
+
+    // Plage de dates par défaut (mode dates)
+    defaultLookbackDays: 90,
+
+    // API REST Koha (prêt / résolution de la carte)
+    restBase: "/api/v1",
+    libraryId: null, // ex. "BP" si besoin ; null = biblio de la session staff
+  };
+
+  // IMPORTANT : même domaine que Koha + session staff ouverte.
+
+  const rows = new Map();
+
+  function esc(str) {
+    if (str === null || str === undefined) return "";
+    return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+
+  function txt(node) {
+    return node ? node.textContent.replace(/\s+/g, " ").trim() : "";
+  }
+
+  function showMessage(text, kind) {
+    const el = document.getElementById("uds-message");
+    el.textContent = text;
+    el.className = kind ? "uds-" + kind : "";
+  }
+
+  function setStatus(barcode, label, kind) {
+    const row = rows.get(barcode);
+    if (!row) return;
+    const badge = row.el.querySelector(".uds-status");
+    badge.textContent = label;
+    badge.className = "uds-status uds-status--" + (kind || "wait");
+  }
+
+  function log(barcode, message) {
+    const row = rows.get(barcode);
+    if (!row) return;
+    const logEl = row.el.querySelector(".uds-log");
+    const line = document.createElement("div");
+    line.textContent = message;
+    logEl.appendChild(line);
+    logEl.scrollTop = logEl.scrollHeight;
+  }
+
+  function extractErrorSnippet(html) {
+    try {
+      const doc = new DOMParser().parseFromString(html, "text/html");
+      const pre = doc.querySelector("pre");
+      const h1 = doc.querySelector("h1");
+      const title = doc.querySelector("title");
+      const source = (pre && pre.textContent)
+        || (h1 && h1.textContent)
+        || (title && title.textContent)
+        || (doc.body ? doc.body.textContent : html);
+      return source.replace(/\s+/g, " ").trim().slice(0, 400);
+    } catch (e) {
+      return String(html).replace(/\s+/g, " ").trim().slice(0, 400);
+    }
+  }
+
+  function looksLikeLoginPage(html) {
+    return /name=["']userid["']/i.test(html) || /opac-auth|intranet-auth|Log in to Koha/i.test(html);
+  }
+
+  function runUrl(params) {
+    const url = new URL(CONFIG.runUrl, window.location.origin);
+    url.searchParams.set("class", CONFIG.pluginClass);
+    url.searchParams.set("method", "tool");
+    Object.keys(params || {}).forEach((k) => url.searchParams.set(k, params[k]));
+    return url.toString();
+  }
+
+  /* ======================================================================
+   * 1) RECHERCHE PAR CB — guided_reports.pl (export CSV)
+   *    Même contrat que l'URL qui marche :
+   *    ?id=5230&param_name=barcode|list&sql_params=...&op=run
+   *    Ici : op=export&format=csv pour parser le résultat.
+   *    (svc/report avec param_names ne renvoie pas les mêmes résultats
+   *    sur cette instance.)
+   * ==================================================================== */
+  function normalizeReportRow(row) {
+    const pickObj = (obj, ...keys) => {
+      for (const k of keys) {
+        if (obj[k] !== undefined && obj[k] !== null && String(obj[k]) !== "") return obj[k];
+      }
+      return "";
+    };
+
+    if (Array.isArray(row)) {
+      // Ordre conseillé du SELECT :
+      // itemnumber, barcode, title, author, isbn, issn, biblionumber, timestamp,
+      // conflict, notforloan/statut, itemlost/statut_perdu
+      return {
+        itemnumber: String(row[0] ?? ""),
+        barcode: String(row[1] ?? ""),
+        title: String(row[2] ?? ""),
+        author: String(row[3] ?? ""),
+        isbn: String(row[4] ?? ""),
+        issn: String(row[5] ?? ""),
+        biblionumber: String(row[6] ?? ""),
+        timestamp: String(row[7] ?? ""),
+        conflict: !!(row[8] && String(row[8]) !== "0"),
+        statut: String(row[9] ?? ""),
+        statut_perdu: String(row[10] ?? ""),
+      };
+    }
+
+    const conflictRaw = pickObj(row, "conflict", "Conflict");
+    return {
+      itemnumber: String(pickObj(row, "itemnumber", "Itemnumber")),
+      barcode: String(pickObj(row, "barcode", "Barcode")),
+      title: String(pickObj(row, "title", "Title")),
+      author: String(pickObj(row, "author", "Author")),
+      isbn: String(pickObj(row, "isbn", "Isbn", "ISBN")),
+      issn: String(pickObj(row, "issn", "Issn", "ISSN")),
+      biblionumber: String(pickObj(row, "biblionumber", "Biblionumber")),
+      timestamp: String(pickObj(row, "timestamp", "Timestamp")),
+      conflict: !!(conflictRaw && String(conflictRaw) !== "0"),
+      statut: String(pickObj(row, "statut", "status", "notforloan", "Notforloan", "withdrawn", "Withdrawn")),
+      statut_perdu: String(pickObj(row, "statut_perdu", "itemlost", "Itemlost", "lost", "lost_status", "Lost")),
+    };
+  }
+
+  function chunkArray(arr, size) {
+    const out = [];
+    const n = Math.max(1, size || arr.length || 1);
+    for (let i = 0; i < arr.length; i += n) out.push(arr.slice(i, i + n));
+    return out;
+  }
+
+  /** Parse CSV Koha (délimiteur , ou ; ; gère guillemets et BOM). */
+  function parseCsv(text) {
+    let raw = String(text || "").replace(/^\uFEFF/, "");
+    if (!raw.trim()) return [];
+
+    // Erreurs d'export éventuelles en fin de fichier
+    raw = raw.replace(/^# ERROR:.*$/gm, "").trim();
+    if (!raw) return [];
+
+    const firstLine = raw.split(/\r?\n/, 1)[0] || "";
+    const delimiter = (firstLine.split(";").length > firstLine.split(",").length) ? ";" : ",";
+
+    const rows = [];
+    let i = 0;
+    let field = "";
+    let row = [];
+    let inQuotes = false;
+
+    while (i < raw.length) {
+      const c = raw[i];
+      if (inQuotes) {
+        if (c === '"') {
+          if (raw[i + 1] === '"') { field += '"'; i += 2; continue; }
+          inQuotes = false; i++; continue;
+        }
+        field += c; i++; continue;
+      }
+      if (c === '"') { inQuotes = true; i++; continue; }
+      if (c === delimiter) { row.push(field); field = ""; i++; continue; }
+      if (c === "\n" || (c === "\r" && raw[i + 1] === "\n")) {
+        if (c === "\r") i++;
+        row.push(field); field = "";
+        if (row.some((cell) => String(cell).trim() !== "")) rows.push(row);
+        row = []; i++; continue;
+      }
+      if (c === "\r") {
+        row.push(field); field = "";
+        if (row.some((cell) => String(cell).trim() !== "")) rows.push(row);
+        row = []; i++; continue;
+      }
+      field += c; i++;
+    }
+    row.push(field);
+    if (row.some((cell) => String(cell).trim() !== "")) rows.push(row);
+    return rows;
+  }
+
+  function rowsFromCsv(text) {
+    const table = parseCsv(text);
+    if (table.length === 0) return [];
+
+    const header = table[0].map((h) => String(h).trim().toLowerCase());
+    const looksLikeHeader = header.some((h) =>
+      /itemnumber|barcode|title|author|biblionumber|timestamp|conflict|itemlost|notforloan|statut|withdrawn|lost/.test(h)
+    );
+    const dataRows = looksLikeHeader ? table.slice(1) : table;
+
+    if (looksLikeHeader) {
+      return dataRows.map((cells) => {
+        const obj = {};
+        header.forEach((h, idx) => { obj[h] = cells[idx] ?? ""; });
+        // aliases courants
+        if (obj.itemnumber === undefined && cells[0] !== undefined) obj.itemnumber = cells[0];
+        if (obj.barcode === undefined && cells[1] !== undefined) obj.barcode = cells[1];
+        return normalizeReportRow(obj);
+      }).filter((r) => r.barcode);
+    }
+
+    return dataRows.map((cells) => normalizeReportRow(cells)).filter((r) => r.barcode);
+  }
+
+  async function lookupBarcodeBatch(barcodes) {
+    // guided_reports.pl?id=<ID_CONFIGURE>&param_name=barcode|list&sql_params=...&op=export&format=csv
+    const url = new URL(CONFIG.reportUrl, window.location.origin);
+    url.searchParams.set("id", String(CONFIG.reportIdBarcode));
+    url.searchParams.set("op", "export");
+    url.searchParams.set("format", "csv");
+    url.searchParams.append("param_name", CONFIG.reportParamName);
+    url.searchParams.append("sql_params", barcodes.join("\r\n"));
+
+    const resp = await fetch(url.toString(), {
+      method: "GET",
+      credentials: "same-origin",
+      headers: { Accept: "text/csv,application/csv,text/plain,*/*" },
+    });
+    const raw = await resp.text();
+
+    if (resp.status === 401 || looksLikeLoginPage(raw)) {
+      throw new Error("Session Koha absente — reconnectez-vous sur l'intranet.");
+    }
+    if (!resp.ok) {
+      throw new Error("guided_reports export HTTP " + resp.status + " — " + extractErrorSnippet(raw));
+    }
+    if (looksLikeLoginPage(raw) || /<html[\s>]/i.test(raw)) {
+      throw new Error(
+        "Export CSV refusé (page HTML reçue). Vérifiez la session staff et réessayez. " +
+        "URL test : " + url.toString()
+      );
+    }
+
+    return rowsFromCsv(raw);
+  }
+
+  async function lookupByBarcodes(barcodes) {
+    const batches = chunkArray(barcodes, CONFIG.reportBatchSize);
+    const items = [];
+    for (let i = 0; i < batches.length; i++) {
+      document.getElementById("uds-cache-info").textContent =
+        "Appel rapport 5230 (CSV) — lot " + (i + 1) + "/" + batches.length +
+        " (" + batches[i].length + " CB)…";
+      const batchItems = await lookupBarcodeBatch(batches[i]);
+      items.push.apply(items, batchItems);
+    }
+
+    const foundSet = new Set(items.map((it) => it.barcode));
+    const notFound = barcodes.filter((b) => !foundSet.has(b));
+    return { items, not_found: notFound };
+  }
+
+  /* ======================================================================
+   * 1b) RECHERCHE PAR DATES — rapport SQL 5231
+   * ==================================================================== */
+  function todayISO() {
+    return new Date().toISOString().slice(0, 10);
+  }
+
+  function daysAgoISO(days) {
+    const d = new Date();
+    d.setUTCDate(d.getUTCDate() - days);
+    return d.toISOString().slice(0, 10);
+  }
+
+  async function lookupByDateRange(fromDate, toDate) {
+    // guided_reports.pl?id=<ID_CONFIGURE>&param_name=Du|date&sql_params=...&param_name=Au|date&sql_params=...
+    const url = new URL(CONFIG.reportUrl, window.location.origin);
+    url.searchParams.set("id", String(CONFIG.reportIdDates));
+    url.searchParams.set("op", "export");
+    url.searchParams.set("format", "csv");
+    url.searchParams.append("param_name", CONFIG.reportDateFromParam);
+    url.searchParams.append("sql_params", fromDate);
+    url.searchParams.append("param_name", CONFIG.reportDateToParam);
+    url.searchParams.append("sql_params", toDate);
+
+    document.getElementById("uds-cache-info").textContent =
+      "Appel rapport 5231 (CSV) — " + fromDate + " → " + toDate + "…";
+
+    const resp = await fetch(url.toString(), {
+      method: "GET",
+      credentials: "same-origin",
+      headers: { Accept: "text/csv,application/csv,text/plain,*/*" },
+    });
+    const raw = await resp.text();
+
+    if (resp.status === 401 || looksLikeLoginPage(raw)) {
+      throw new Error("Session Koha absente — reconnectez-vous sur l'intranet.");
+    }
+    if (!resp.ok) {
+      throw new Error("guided_reports export HTTP " + resp.status + " — " + extractErrorSnippet(raw));
+    }
+    if (looksLikeLoginPage(raw) || /<html[\s>]/i.test(raw)) {
+      throw new Error(
+        "Export CSV refusé (page HTML reçue). Vérifiez la session staff. " +
+        "URL test : " + url.toString()
+      );
+    }
+
+    return rowsFromCsv(raw);
+  }
+
+  /* ======================================================================
+   * 2) RESTAURATION — moteur automatique
+   *    Koha 26.05+ : API REST native
+   *    Koha < 26.05 : plugin UndeleteRecords si confirmé
+   * ==================================================================== */
+  function restorationCfg() {
+    return window.KohaTools?.Config?.getCanonical?.("restoration") || {};
+  }
+
+  function kohaVersionCompare(a, b) {
+    const parse = (v) => {
+      const m = String(v || "").match(/(\d{2})\.(\d{2})(?:\.(\d{1,2}))?/);
+      return m ? [Number(m[1]), Number(m[2]), Number(m[3] || 0)] : null;
+    };
+    const x = parse(a), y = parse(b);
+    if (!x || !y) return null;
+    for (let i = 0; i < 3; i++) {
+      if (x[i] !== y[i]) return x[i] < y[i] ? -1 : 1;
+    }
+    return 0;
+  }
+
+  function detectedKohaVersion() {
+    return window.KohaTools?.getService?.("health")?.kohaVersion?.()
+      || window.KohaTools?.getService?.("recipe")?.currentKohaVersion?.()
+      || null;
+  }
+
+  function restoreEngine() {
+    const c = restorationCfg();
+    const requested = String(c.installation?.restoreEngine || "auto").toLowerCase();
+    const minimum = String(c.installation?.nativeRestoreMinKohaVersion || "26.05");
+    const version = detectedKohaVersion();
+    const cmp = kohaVersionCompare(version, minimum);
+    const nativeAvailable = cmp !== null && cmp >= 0;
+    if (requested === "native") return { engine: nativeAvailable ? "native" : "unavailable", version, minimum };
+    if (requested === "plugin") return { engine: "plugin", version, minimum };
+    if (nativeAvailable) return { engine: "native", version, minimum };
+    return { engine: "plugin", version, minimum };
+  }
+
+  function restoreCapabilityStatus() {
+    return window.KohaTools?.getService?.("prerequisites")?.statusFor?.("restoration", "restore")
+      || { ok: true, blocking: [] };
+  }
+
+  function pipelineCapabilityStatus() {
+    return window.KohaTools?.getService?.("prerequisites")?.statusFor?.("restoration", "pipeline")
+      || { ok: true, blocking: [] };
+  }
+
+  function canCirculate() {
+    const access = window.KohaTools?.getService?.("access-control");
+    return access?.hasKohaCapability?.("circulate") === true || access?.isSuperlibrarian?.() === true;
+  }
+
+  function prerequisiteReason(status, fallback) {
+    const labels = (status?.blocking || []).map((x) => x.label || x.id).filter(Boolean);
+    return labels.length ? labels.join(", ") : fallback;
+  }
+
+  async function restoreViaNative(itemnumbers) {
+    const headers = await restHeaders();
+    const confirmations = [];
+    for (const itemnumber of itemnumbers) {
+      const url = new URL(
+        CONFIG.restBase + "/deleteditems/" + encodeURIComponent(String(itemnumber)) + "/restore",
+        window.location.origin
+      );
+      const resp = await fetch(url.toString(), {
+        method: "POST",
+        credentials: "same-origin",
+        headers,
+      });
+      const raw = await resp.text();
+      if (!resp.ok) {
+        const err = new Error(
+          "Restauration native Koha refusée : HTTP " + resp.status +
+          (raw ? " — " + raw.slice(0, 350) : "")
+        );
+        err.status = resp.status;
+        throw err;
+      }
+      confirmations.push("Exemplaire " + itemnumber + " restauré via l’API native Koha.");
+    }
+    return confirmations;
+  }
+
+  async function restoreViaPlugin(itemnumbers) {
+    const csrf_token = await fetchFreshCsrfToken();
+
+    const body = new URLSearchParams();
+    body.set("class", CONFIG.pluginClass);
+    body.set("method", "tool");
+    body.set("action", "merge");
+    body.set("confirm", "confirm");
+    body.set("Type", "Items");
+    body.set("target", "");
+    body.set("csrf_token", csrf_token);
+    itemnumbers.forEach((n) => body.append("selected_itemnumbers[]", n));
+
+    const resp = await fetch(runUrl({}), {
+      method: "POST",
+      credentials: "same-origin",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        Accept: "text/html,application/xhtml+xml",
+      },
+      body: body.toString(),
+    });
+
+    const html = await resp.text();
+    if (!resp.ok) {
+      throw new Error("Plugin UndeleteRecords : HTTP " + resp.status + " — " + extractErrorSnippet(html));
+    }
+    if (looksLikeLoginPage(html)) {
+      throw new Error("Session Koha absente — reconnectez-vous sur l'intranet.");
+    }
+    const text = new DOMParser().parseFromString(html, "text/html").body?.textContent || html;
+    if (/error|failed|impossible|cannot restore|not restored/i.test(text) &&
+        !/success|restored|merged|réussi|restaur/i.test(text)) {
+      throw new Error("UndeleteRecords n’a pas confirmé la restauration — " + extractErrorSnippet(html));
+    }
+    const confirmations = itemnumbers.map((n) => "Exemplaire " + n + " restauré via UndeleteRecords.");
+    return confirmations;
+  }
+
+  async function restoreItemnumbers(itemnumbers) {
+    const gate = restoreCapabilityStatus();
+    if (!gate.ok) {
+      const labels = (gate.blocking || []).map((x) => x.label || x.id).join(", ");
+      throw new Error(
+        "La restauration n’est pas disponible sur cette version/configuration de Koha" +
+        (labels ? " : " + labels : ".")
+      );
+    }
+
+    const selected = restoreEngine();
+    if (selected.engine === "unavailable") {
+      throw new Error(
+        "Le moteur natif de restauration nécessite Koha " + selected.minimum +
+        " ou supérieur."
+      );
+    }
+    if (selected.engine === "native") {
+      try {
+        return await restoreViaNative(itemnumbers);
+      } catch (e) {
+        const cfg = restorationCfg();
+        const canFallback = cfg.installation?.undeletePluginConfirmed === true
+          && [404, 405, 501].includes(Number(e?.status));
+        if (!canFallback) throw e;
+        return restoreViaPlugin(itemnumbers);
+      }
+    }
+    return restoreViaPlugin(itemnumbers);
+  }
+
+  /* ======================================================================
+   * 3) PRÊT / RETOUR — API REST uniquement
+   * ==================================================================== */
+  let cachedPatronId = null;
+  let cachedCsrf = null;
+
+  async function fetchFreshCsrfToken() {
+    // Jeton CSRF intranet (plugin ou page d'accueil) pour les POST REST / plugin
+    const candidates = [
+      runUrl({}),
+      "/cgi-bin/koha/mainpage.pl",
+    ];
+    let lastErr = null;
+    for (const url of candidates) {
+      try {
+        const resp = await fetch(url, { credentials: "same-origin" });
+        const html = await resp.text();
+        if (!resp.ok) {
+          lastErr = new Error("HTTP " + resp.status + " — " + extractErrorSnippet(html));
+          continue;
+        }
+        if (looksLikeLoginPage(html)) {
+          throw new Error("Session Koha absente — reconnectez-vous sur l'intranet.");
+        }
+        const doc = new DOMParser().parseFromString(html, "text/html");
+        const input = doc.querySelector('input[name="csrf_token"]');
+        const meta = doc.querySelector('meta[name="csrf-token"]');
+        const token = (input && input.value) || (meta && meta.getAttribute("content")) || "";
+        if (token) {
+          cachedCsrf = token;
+          return token;
+        }
+        lastErr = new Error("Pas de csrf_token dans " + url);
+      } catch (e) {
+        lastErr = e;
+        if (/Session Koha absente/.test(String(e.message))) throw e;
+      }
+    }
+    throw lastErr || new Error("Impossible de récupérer un jeton CSRF.");
+  }
+
+  async function restHeaders() {
+    const csrf = cachedCsrf || await fetchFreshCsrfToken();
+    return {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+      "x-koha-csrf-token": csrf,
+    };
+  }
+
+  async function resolvePatronId() {
+    if (cachedPatronId) return cachedPatronId;
+    const url = new URL(CONFIG.restBase + "/patrons", window.location.origin);
+    url.searchParams.set("cardnumber", CONFIG.patronCardnumber);
+    const resp = await fetch(url.toString(), {
+      method: "GET",
+      credentials: "same-origin",
+      headers: { Accept: "application/json" },
+    });
+    const raw = await resp.text();
+    if (!resp.ok) {
+      throw new Error(
+        "Impossible de résoudre la carte " + CONFIG.patronCardnumber +
+        " (HTTP " + resp.status + ") — " + extractErrorSnippet(raw)
+      );
+    }
+    let data;
+    try { data = JSON.parse(raw); } catch (e) {
+      throw new Error("Réponse patrons non-JSON — " + extractErrorSnippet(raw));
+    }
+    const list = Array.isArray(data) ? data : (data && data.patrons) || [];
+    if (!list.length) {
+      throw new Error("Aucun adhérent trouvé pour la carte " + CONFIG.patronCardnumber);
+    }
+    const patronId = list[0].patron_id ?? list[0].borrowernumber;
+    if (patronId === undefined || patronId === null) {
+      throw new Error("Réponse patrons sans patron_id pour " + CONFIG.patronCardnumber);
+    }
+    cachedPatronId = Number(patronId);
+    return cachedPatronId;
+  }
+
+  async function fetchCheckoutAvailability(patronId, itemnumber) {
+    const url = new URL(CONFIG.restBase + "/checkouts/availability", window.location.origin);
+    url.searchParams.set("patron_id", String(patronId));
+    url.searchParams.set("item_id", String(itemnumber));
+    const resp = await fetch(url.toString(), {
+      method: "GET",
+      credentials: "same-origin",
+      headers: { Accept: "application/json" },
+    });
+    const raw = await resp.text();
+    if (!resp.ok) {
+      throw new Error(
+        "API REST availability a refusé : " + resp.status + " " + raw.slice(0, 300)
+      );
+    }
+    try {
+      return JSON.parse(raw);
+    } catch (e) {
+      throw new Error("Réponse availability non-JSON — " + raw.slice(0, 200));
+    }
+  }
+
+  async function postCheckout(payload, confirmationToken) {
+    const url = new URL(CONFIG.restBase + "/checkouts", window.location.origin);
+    if (confirmationToken) url.searchParams.set("confirmation", confirmationToken);
+
+    const doPost = async () => {
+      const resp = await fetch(url.toString(), {
+        method: "POST",
+        credentials: "same-origin",
+        headers: await restHeaders(),
+        body: JSON.stringify(payload),
+      });
+      const raw = await resp.text();
+      return { resp, raw };
+    };
+
+    let { resp, raw } = await doPost();
+    if (!resp.ok && resp.status === 403 && /csrf/i.test(raw)) {
+      cachedCsrf = null;
+      ({ resp, raw } = await doPost());
+    }
+    return { resp, raw };
+  }
+
+  async function issueItem(itemnumber, barcode) {
+    const patronId = await resolvePatronId();
+    const payload = {
+      patron_id: patronId,
+      item_id: Number(itemnumber),
+    };
+    if (CONFIG.libraryId) payload.library_id = CONFIG.libraryId;
+
+    // 1) Disponibilité + éventuel jeton de confirmation (ex. exemplaire perdu)
+    let availability = null;
+    try {
+      availability = await fetchCheckoutAvailability(patronId, itemnumber);
+    } catch (e) {
+      // Anciennes versions sans /availability : on tente le prêt direct
+      console.warn("availability indisponible, prêt direct :", e);
+    }
+
+    if (availability) {
+      const blockers = availability.blockers || {};
+      const blockerKeys = Object.keys(blockers);
+      if (blockerKeys.length) {
+        throw new Error(
+          "Prêt bloqué par Koha : " + blockerKeys.join(", ") +
+          " — " + JSON.stringify(blockers).slice(0, 200)
+        );
+      }
+    }
+
+    const confirms = (availability && availability.confirms) || {};
+    const confirmKeys = Object.keys(confirms);
+    const token = availability && availability.confirmation_token;
+
+    // 2) POST avec jeton si des confirmations sont requises (412 sinon)
+    let { resp, raw } = await postCheckout(payload, confirmKeys.length ? token : null);
+
+    // Si 412 sans avoir pu passer par availability, récupérer le token puis réessayer
+    if (resp.status === 412) {
+      availability = await fetchCheckoutAvailability(patronId, itemnumber);
+      const blockers = availability.blockers || {};
+      const blockerKeys = Object.keys(blockers);
+      if (blockerKeys.length) {
+        throw new Error(
+          "Prêt bloqué par Koha : " + blockerKeys.join(", ") +
+          " — " + JSON.stringify(blockers).slice(0, 200)
+        );
+      }
+      const retryToken = availability.confirmation_token;
+      if (!retryToken) {
+        throw new Error("Confirmation requise (412) mais aucun confirmation_token reçu.");
+      }
+      ({ resp, raw } = await postCheckout(payload, retryToken));
+    }
+
+    if (!resp.ok) {
+      throw new Error("API REST checkouts a refusé : " + resp.status + " " + raw.slice(0, 300));
+    }
+
+    return {
+      via: "rest",
+      patron_id: patronId,
+      confirms: Object.keys((availability && availability.confirms) || {}),
+    };
+  }
+
+  async function returnItem(itemnumber, barcode) {
+    // /api/v1/checkin n'existe pas encore sur la plupart des Koha.
+    // L'intranet utilise /cgi-bin/koha/svc/checkin (JSON + session staff).
+    const patronId = await resolvePatronId();
+    const csrf = await fetchFreshCsrfToken();
+
+    const attempts = [
+      // Koha récent : op cud-checkin obligatoire
+      {
+        itemnumber: String(itemnumber),
+        borrowernumber: String(patronId),
+        op: "cud-checkin",
+        csrf_token: csrf,
+      },
+      // Koha plus ancien : sans op
+      {
+        itemnumber: String(itemnumber),
+        borrowernumber: String(patronId),
+        csrf_token: csrf,
+      },
+    ];
+
+    let lastErr = null;
+    for (const params of attempts) {
+      const body = new URLSearchParams(params);
+      const resp = await fetch("/cgi-bin/koha/svc/checkin", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          Accept: "application/json",
+        },
+        body: body.toString(),
+      });
+      const raw = await resp.text();
+
+      if (!raw || !raw.trim()) {
+        lastErr = new Error("svc/checkin : réponse vide (droits circulate / op ?)");
+        continue;
+      }
+      if (looksLikeLoginPage(raw) || /<html[\s>]/i.test(raw)) {
+        lastErr = new Error("svc/checkin a renvoyé du HTML — " + extractErrorSnippet(raw));
+        continue;
+      }
+
+      let data;
+      try {
+        data = JSON.parse(raw);
+      } catch (e) {
+        lastErr = new Error("svc/checkin non-JSON — " + raw.slice(0, 200));
+        continue;
+      }
+
+      if (data.returned) {
+        return { via: "svc/checkin", data };
+      }
+      lastErr = new Error(
+        "Retour refusé par Koha (returned=false)" +
+        (data.itemnumber ? " pour item " + data.itemnumber : "")
+      );
+    }
+
+    throw lastErr || new Error("Échec du retour via svc/checkin");
+  }
+
+  /* ======================================================================
+   * INTERFACE
+   * ==================================================================== */
+  function parseBarcodes(raw) {
+    return raw
+      .split(/[\r\n,;\t]+/)
+      .map((b) => b.trim())
+      .filter((b) => b.length > 0);
+  }
+
+  async function handleSearch() {
+    const textarea = document.getElementById("uds-barcode-input");
+    const barcodes = parseBarcodes(textarea.value);
+    if (barcodes.length === 0) {
+      showMessage("Saisissez ou scannez au moins un code-barres.", "error");
+      return;
+    }
+
+    showMessage("Recherche par code-barres (guided_reports)…", "info");
+    document.getElementById("uds-cache-info").textContent =
+      "Appel guided_reports export CSV pour " + barcodes.length + " code(s)…";
+
+    let data;
+    try {
+      data = await lookupByBarcodes(barcodes);
+    } catch (e) {
+      showMessage("Erreur pendant la recherche : " + e.message, "error");
+      document.getElementById("uds-cache-info").textContent = "Échec de la recherche.";
+      return;
+    }
+
+    let found = 0;
+    (data.items || []).forEach((item) => {
+      addRow(item.barcode, item);
+      found++;
+    });
+
+    const notFound = data.not_found || [];
+    textarea.value = "";
+    document.getElementById("uds-cache-info").textContent =
+      found + " exemplaire(s) trouvé(s) via le rapport SQL (recherche par CB).";
+
+    if (notFound.length === 0) {
+      showMessage(found + " exemplaire(s) trouvé(s) et ajouté(s) à la liste.", "info");
+    } else {
+      showMessage(
+        found + " trouvé(s). Introuvable(s) dans deleteditems : " + notFound.join(", "),
+        found > 0 ? "info" : "error"
+      );
+    }
+  }
+
+  async function handleDateSearch() {
+    const fromEl = document.getElementById("uds-from-date");
+    const toEl = document.getElementById("uds-to-date");
+    const fromDate = fromEl.value;
+    const toDate = toEl.value;
+    if (!fromDate || !toDate) {
+      showMessage("Indiquez une date de début et une date de fin.", "error");
+      return;
+    }
+    if (fromDate > toDate) {
+      showMessage("La date de début est postérieure à la date de fin.", "error");
+      return;
+    }
+
+    showMessage("Chargement des exemplaires supprimés…", "info");
+    let items;
+    try {
+      items = await lookupByDateRange(fromDate, toDate);
+    } catch (e) {
+      showMessage("Erreur pendant le chargement : " + e.message, "error");
+      document.getElementById("uds-cache-info").textContent = "Échec du chargement par dates.";
+      return;
+    }
+
+    // Remplace la liste courante pour ce mode
+    document.getElementById("uds-table-body").innerHTML = "";
+    rows.clear();
+
+    items.forEach((item) => addRow(item.barcode, item));
+    document.getElementById("uds-cache-info").textContent =
+      items.length + " exemplaire(s) supprimé(s) (" + fromDate + " → " + toDate + ").";
+    showMessage(
+      items.length
+        ? items.length + " exemplaire(s) chargé(s) pour la plage sélectionnée."
+        : "Aucun exemplaire supprimé sur cette plage.",
+      items.length ? "info" : "error"
+    );
+  }
+
+  function getSearchMode() {
+    const checked = document.querySelector('input[name="uds-search-mode"]:checked');
+    return (checked && checked.value) || "barcode";
+  }
+
+  function updateModeUI() {
+    const mode = getSearchMode();
+    document.querySelectorAll("#uds-mode label").forEach((label) => {
+      const input = label.querySelector('input[type="radio"]');
+      label.classList.toggle("uds-mode-active", !!(input && input.checked));
+    });
+    document.getElementById("uds-panel-barcode").hidden = mode !== "barcode";
+    document.getElementById("uds-panel-dates").hidden = mode !== "dates";
+    document.getElementById("uds-cache-info").textContent =
+      mode === "barcode"
+        ? `Mode code-barres — rapport SQL ${CONFIG.reportIdBarcode || "à configurer"}.`
+        : `Mode dates — rapport SQL ${CONFIG.reportIdDates || "à configurer"}.`;
+  }
+
+  /* ======================================================================
+   * CONTRÔLE D'ACCÈS — liste optionnelle propre à l'installation
+   * ==================================================================== */
+  async function detectLoggedInUsername() {
+    const resp = await fetch("/cgi-bin/koha/mainpage.pl", { credentials: "same-origin" });
+    const html = await resp.text();
+    if (!resp.ok) {
+      throw new Error("Impossible de vérifier la session (HTTP " + resp.status + ")");
+    }
+    if (looksLikeLoginPage(html)) {
+      throw new Error("Session Koha absente — connectez-vous sur l'intranet.");
+    }
+    const doc = new DOMParser().parseFromString(html, "text/html");
+    const withData = doc.querySelector("[data-loggedinusername]");
+    if (withData && withData.getAttribute("data-loggedinusername")) {
+      return withData.getAttribute("data-loggedinusername").trim();
+    }
+    const spans = Array.from(doc.querySelectorAll(".loggedinusername"));
+    for (const span of spans) {
+      const name = (span.textContent || "").trim();
+      if (name) return name;
+    }
+    throw new Error("Impossible de lire l'utilisateur connecté dans la page Koha.");
+  }
+
+  async function enforceAccess() {
+    const statusEl = document.getElementById("uds-auth-status");
+    const appEl = document.getElementById("uds-app");
+    const deniedEl = document.getElementById("uds-denied");
+    try {
+      const username = await detectLoggedInUsername();
+      const allowed = CONFIG.allowedUsernames.map((u) => u.toLowerCase());
+      if (allowed.length && !allowed.includes(username.toLowerCase())) {
+        statusEl.textContent = "Connecté en tant que « " + username + " » — accès refusé.";
+        deniedEl.hidden = false;
+        appEl.hidden = true;
+        return false;
+      }
+      statusEl.textContent = "Connecté en tant que « " + username + " » — accès autorisé.";
+      deniedEl.hidden = true;
+      appEl.hidden = false;
+      return true;
+    } catch (e) {
+      statusEl.textContent = "Contrôle d'accès : " + e.message;
+      deniedEl.hidden = false;
+      appEl.hidden = true;
+      return false;
+    }
+  }
+
+  function formatStatut(value) {
+    const v = String(value ?? "").trim();
+    if (!v || v === "0") return "—";
+    return v;
+  }
+
+  function addRow(barcode, data) {
+    if (rows.has(barcode)) {
+      rows.get(barcode).el.remove();
+      rows.delete(barcode);
+    }
+    const tbody = document.getElementById("uds-table-body");
+    const tr = document.createElement("tr");
+    tr.dataset.barcode = barcode;
+
+    const conflictNote = data.conflict
+      ? '<div class="uds-conflict">⚠ ce code-barres existe déjà sur un exemplaire actif : il sera suffixé "_1" à la restauration.</div>'
+      : "";
+
+    tr.innerHTML = `
+      <td><input type="checkbox" checked /></td>
+      <td><strong>${esc(barcode)}</strong>${conflictNote}</td>
+      <td>${esc(data.title)}<br/><em>${esc(data.author)}</em></td>
+      <td>${esc(data.isbn)}${data.issn ? " / " + esc(data.issn) : ""}</td>
+      <td>N° ${esc(data.biblionumber)}</td>
+      <td>${esc(data.timestamp)}</td>
+      <td>${esc(formatStatut(data.statut))}</td>
+      <td>${esc(formatStatut(data.statut_perdu))}</td>
+      <td><span class="uds-status uds-status--wait">En attente</span></td>
+      <td>
+        <div class="uds-actions">
+          <button class="uds-btn uds-btn--restore" data-action="restore">Restaurer</button>
+          <button class="uds-btn uds-btn--issue" data-action="issue" disabled>Prêter</button>
+          <button class="uds-btn uds-btn--return" data-action="return" disabled>Retourner</button>
+        </div>
+        <div class="uds-log"></div>
+      </td>
+    `;
+
+    const restoreButton = tr.querySelector('[data-action="restore"]');
+    const restoreGate = restoreCapabilityStatus();
+    restoreButton.disabled = !restoreGate.ok;
+    if (!restoreGate.ok) restoreButton.title = "Restauration indisponible : " + prerequisiteReason(restoreGate, "vérifiez la version de Koha et UndeleteRecords.");
+    restoreButton.addEventListener("click", () => doRestore(barcode));
+    const issueButton = tr.querySelector('[data-action="issue"]');
+    const returnButton = tr.querySelector('[data-action="return"]');
+    const circulationAllowed = canCirculate();
+    issueButton.hidden = !circulationAllowed;
+    returnButton.hidden = !circulationAllowed;
+    if (!circulationAllowed) {
+      issueButton.title = "Droit de circulation requis.";
+      returnButton.title = "Droit de circulation requis.";
+    }
+    issueButton.addEventListener("click", () => doIssue(barcode));
+    returnButton.addEventListener("click", () => doReturn(barcode));
+
+    tbody.appendChild(tr);
+    rows.set(barcode, { data, el: tr });
+  }
+
+  async function doRestore(barcode) {
+    const row = rows.get(barcode);
+    if (!row) return;
+    setStatus(barcode, "Restauration…", "busy");
+    log(barcode, "→ Restauration de l'exemplaire " + row.data.itemnumber);
+    try {
+      const confirmations = await restoreItemnumbers([row.data.itemnumber]);
+      setStatus(barcode, "Restauré", "ok");
+      confirmations.forEach((c) => log(barcode, "✔ " + c));
+      row.el.querySelector('[data-action="restore"]').disabled = true;
+      if (canCirculate()) row.el.querySelector('[data-action="issue"]').disabled = false;
+    } catch (e) {
+      setStatus(barcode, "Erreur restauration", "error");
+      log(barcode, "✖ " + e.message);
+      throw e;
+    }
+  }
+
+  async function doIssue(barcode) {
+    if (!canCirculate()) throw new Error("Prêt indisponible : votre compte Koha n’a pas le droit de circulation.");
+    const row = rows.get(barcode);
+    if (!row) return;
+    setStatus(barcode, "Prêt en cours…", "busy");
+    log(barcode, "→ Prêt API REST — carte " + CONFIG.patronCardnumber);
+    try {
+      const result = await issueItem(row.data.itemnumber, barcode);
+      setStatus(barcode, "Prêté", "ok");
+      const confirmNote = (result.confirms && result.confirms.length)
+        ? " [confirmé : " + result.confirms.join(", ") + "]"
+        : "";
+      log(barcode, "✔ Prêté via API REST (patron_id " + result.patron_id + ")" + confirmNote);
+      row.el.querySelector('[data-action="issue"]').disabled = true;
+      if (canCirculate()) row.el.querySelector('[data-action="return"]').disabled = false;
+    } catch (e) {
+      setStatus(barcode, "Erreur prêt", "error");
+      log(barcode, "✖ " + e.message);
+      throw e;
+    }
+  }
+
+  async function doReturn(barcode) {
+    if (!canCirculate()) throw new Error("Retour indisponible : votre compte Koha n’a pas le droit de circulation.");
+    const row = rows.get(barcode);
+    if (!row) return;
+    setStatus(barcode, "Retour en cours…", "busy");
+    log(barcode, "→ Retour API REST");
+    try {
+      await returnItem(row.data.itemnumber, barcode);
+      setStatus(barcode, "Retourné", "ok");
+      log(barcode, "✔ Retourné via API REST");
+      row.el.querySelector('[data-action="return"]').disabled = true;
+    } catch (e) {
+      setStatus(barcode, "Erreur retour", "error");
+      log(barcode, "✖ " + e.message);
+      throw e;
+    }
+  }
+
+  async function doFullPipeline(barcode) {
+    if (!canCirculate()) throw new Error("Prêt/retour indisponible : votre compte Koha n’a pas le droit de circulation.");
+    const gate = pipelineCapabilityStatus();
+    if (!gate.ok) throw new Error("Pipeline indisponible : " + prerequisiteReason(gate, "prérequis de prêt/retour ou restauration manquant."));
+    await doRestore(barcode);
+    await doIssue(barcode);
+    await doReturn(barcode);
+  }
+
+  function getSelectedBarcodes() {
+    const boxes = document.querySelectorAll("#uds-table-body input[type=checkbox]:checked");
+    return Array.from(boxes).map((b) => b.closest("tr").dataset.barcode);
+  }
+
+  async function runOnSelection(fn) {
+    const barcodes = getSelectedBarcodes();
+    if (barcodes.length === 0) {
+      showMessage("Aucun exemplaire coché.", "error");
+      return;
+    }
+    showMessage("Traitement de " + barcodes.length + " exemplaire(s)…", "info");
+    for (const barcode of barcodes) {
+      try { await fn(barcode); } catch (e) { /* déjà loggé */ }
+    }
+    showMessage("Traitement terminé.", "info");
+  }
+
+  document.getElementById("uds-search").addEventListener("click", handleSearch);
+  document.getElementById("uds-search-dates").addEventListener("click", handleDateSearch);
+
+  document.getElementById("uds-barcode-input").addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
+      e.preventDefault();
+      handleSearch();
+    }
+  });
+
+  document.querySelectorAll('input[name="uds-search-mode"]').forEach((input) => {
+    input.addEventListener("change", updateModeUI);
+  });
+
+  document.getElementById("uds-select-all").addEventListener("click", () => {
+    const boxes = document.querySelectorAll("#uds-table-body input[type=checkbox]");
+    const allChecked = Array.from(boxes).every((b) => b.checked);
+    boxes.forEach((b) => (b.checked = !allChecked));
+  });
+
+  document.getElementById("uds-batch-restore").addEventListener("click", () => {
+    runOnSelection((barcode) => doRestore(barcode));
+  });
+
+  document.getElementById("uds-batch-pipeline").addEventListener("click", () => {
+    runOnSelection((barcode) => doFullPipeline(barcode));
+  });
+
+  const restoreBatchGate = restoreCapabilityStatus();
+  const restoreBatchButton = document.getElementById("uds-batch-restore");
+  if (restoreBatchButton) { restoreBatchButton.disabled = !restoreBatchGate.ok; if (!restoreBatchGate.ok) restoreBatchButton.title = "Restauration indisponible : " + prerequisiteReason(restoreBatchGate, "vérifiez la version de Koha et UndeleteRecords."); }
+  const pipelineGate = pipelineCapabilityStatus();
+  const pipelineButton = document.getElementById("uds-batch-pipeline");
+  if (pipelineButton) {
+    const circulationAllowed = canCirculate();
+    pipelineButton.hidden = !circulationAllowed;
+    pipelineButton.disabled = !circulationAllowed || !pipelineGate.ok;
+    if (!circulationAllowed) pipelineButton.title = "Droit de circulation requis.";
+    else if (!pipelineGate.ok) pipelineButton.title = "Traitement indisponible : " + prerequisiteReason(pipelineGate, "prérequis de prêt/retour ou restauration manquant.");
+  }
+
+  document.getElementById("uds-from-date").value = daysAgoISO(CONFIG.defaultLookbackDays);
+  document.getElementById("uds-to-date").value = todayISO();
+  updateModeUI();
+
+  enforceAccess().then((ok) => {
+    if (ok) document.getElementById("uds-barcode-input").focus();
+  });
+})();
+</script>

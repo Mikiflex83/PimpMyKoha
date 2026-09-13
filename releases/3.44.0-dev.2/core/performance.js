@@ -1,0 +1,13 @@
+(function(global){"use strict";
+const KT=global.KohaTools;if(!KT)return;
+let defaults=null;
+function cfg(){return defaults?.performance||KT.Config?.effective?.performance||{}}
+function msBetween(a,b){const A=Date.parse(a||""),B=Date.parse(b||"");return Number.isFinite(A)&&Number.isFinite(B)?Math.max(0,B-A):null}
+function row(id){const t=KT.getHealthTelemetry?.(id)||{};const load=msBetween(t.loadStartedAt,t.loadFinishedAt);const init=Number.isFinite(Number(t.lastInitDurationMs))?Number(t.lastInitDurationMs):null;const effective=Math.max(load||0,init||0);const warn=Number(cfg().moduleWarnMs||250),critical=Number(cfg().moduleCriticalMs||1000);const level=effective>=critical?"danger":effective>=warn?"warn":"ok";return {canonicalId:id,loadMs:load,initMs:init,initCalls:Number(t.initCalls||0),initErrors:Number(t.initErrors||0),mutations:Number(t.mutationCount||0),runtimeRegistered:t.runtimeRegistered===true,loadOk:t.loadOk!==false,level,effectiveMs:effective};}
+function ids(){return Object.keys(KT.Config?.effective?.canonicalModules||{})}
+function resources(){try{const root=String(global.KohaToolsBootstrap?.assetRoot||"");const xs=performance.getEntriesByType("resource").filter(x=>!root||String(x.name).startsWith(root));return {count:xs.length,transferBytes:xs.reduce((n,x)=>n+Number(x.transferSize||0),0),decodedBytes:xs.reduce((n,x)=>n+Number(x.decodedBodySize||0),0)}}catch(_){return {count:0,transferBytes:0,decodedBytes:0}}}
+function firebaseToday(){try{const all=KT.getService("firebase-budget")?.status?.()||{},day=new Date().toISOString().slice(0,10);let reads=0,writes=0,deletes=0,queries=0,listeners=0;for(const p of Object.values(all.projects||{})){const d=p.days?.[day]||{};reads+=Number(d.reads||0);writes+=Number(d.writes||0);deletes+=Number(d.deletes||0);queries+=Number(d.queries||0);listeners+=Number(p.listeners?.active||0)}return {reads,writes,deletes,queries,activeListeners:listeners}}catch(_){return {reads:0,writes:0,deletes:0,queries:0,activeListeners:0}}}
+function summary(){const rows=ids().map(row).filter(x=>x.loadMs!=null||x.initMs!=null||x.initCalls||x.initErrors);const res=resources(),boot=global.__KohaToolsBootTelemetry||{};return {boot,resources:res,kohaApi:KT.getService("koha-adapter")?.status?.()||{},observers:KT.getService("observe")?.status?.()||{},firebase:firebaseToday(),rows,slow:rows.filter(x=>x.level!=="ok").sort((a,b)=>b.effectiveMs-a.effectiveMs),limits:{moduleWarnMs:Number(cfg().moduleWarnMs||250),moduleCriticalMs:Number(cfg().moduleCriticalMs||1000)}}}
+function init(d){defaults=d||null}
+KT.registerService("performance",{init,summary,row,resources});
+})(window);

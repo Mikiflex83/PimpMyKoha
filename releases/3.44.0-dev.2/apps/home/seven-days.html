@@ -1,0 +1,698 @@
+<div class="newsbody"><style>
+    :root {
+        --sub-report-primary: #2c3e50;
+        --sub-report-secondary: #3498db;
+        --sub-report-bg: #f8f9fa;
+        --sub-report-border: #dee2e6;
+        --sub-report-text-dark: #2c3e50;
+        --sub-report-text-light: #ffffff;
+    }
+
+    .sub-report-container {
+        max-width: 420px !important;
+        margin: 0 auto;
+        background: white;
+        border-radius: 4px;
+        box-shadow: 0 2px 3px rgba(0, 0, 0, 0.05);
+        overflow: hidden;
+    }
+
+    .sub-report-header {
+        padding: 0.8rem;
+        margin: 0;
+        background: var(--sub-report-primary);
+        color: var(--sub-report-text-light);
+        font-size: 1.1rem;
+        text-align: center;
+    }
+
+    .sub-report-accordion {
+        border-bottom: 1px solid var(--sub-report-border);
+    }
+
+    .sub-report-accordion summary {
+        padding: 0.6rem;
+        background: var(--sub-report-bg);
+        font-weight: 600;
+        list-style: none;
+        cursor: pointer;
+    }
+
+    .sub-report-accordion summary::-webkit-details-marker {
+        display: none;
+    }
+
+    .sub-report-filters {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        padding: 0.8rem;
+        background: #f4f6f8;
+    }
+
+    .sub-report-filter-group {
+        width: 100%;
+    }
+
+    .sub-report-filter-group label {
+        display: block;
+        margin-bottom: 0.3rem;
+        color: var(--sub-report-text-dark);
+        font-size: 0.8rem;
+    }
+
+    .sub-report-select {
+        width: 100%;
+        padding: 0.4rem;
+        border: 1px solid var(--sub-report-border);
+        border-radius: 4px;
+        font-size: 0.75rem;
+    }
+
+    .sub-report-reset {
+        padding: 0.4rem 0.8rem;
+        background: var(--sub-report-secondary);
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 0.75rem;
+    }
+
+    .sub-report-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.7rem;
+    }
+
+    .sub-report-table th,
+    .sub-report-table td {
+        padding: 0.4rem;
+        text-align: left;
+        border-bottom: 1px solid var(--sub-report-border);
+        white-space: nowrap;
+    }
+
+    .sub-report-table th {
+        background: var(--sub-report-primary);
+        color: var(--sub-report-text-light);
+        cursor: pointer;
+    }
+
+    .sub-report-chart-container {
+        padding: 0.8rem;
+    }
+
+    .sub-report-chart {
+        width: 100%;
+        height: 600px;
+    }
+
+    .sub-report-loading {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255, 255, 255, 0.9);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.9rem;
+        z-index: 1000;
+    }
+</style>
+<!-- Rapport de Circulation -->
+<div class="sub-report-container" id="circulationReport">
+<h1 class="sub-report-header">📊 Circulation</h1>
+<details class="sub-report-accordion">
+<summary>Filtres</summary>
+<div class="sub-report-filters">
+<div class="sub-report-filter-group"><label for="filterSite">Site</label><select id="filterSite" class="sub-report-select" multiple="multiple"><option value="tous">Tous</option></select></div>
+<div class="sub-report-filter-group"><label for="filterDate">Date</label><select id="filterDate" class="sub-report-select"><option value="tous" selected>Tous</option></select></div>
+<div class="sub-report-filter-group"><label for="filterType">Type</label><select id="filterType" class="sub-report-select">
+<option value="tous" selected="selected">Tous</option>
+<option value="Issues">Prêts</option>
+<option value="Renews">Renouvellements</option>
+<option value="Returns">Retours</option>
+</select></div>
+<button id="resetFiltersCirculation" class="sub-report-reset" onclick="resetFiltersCirculation()">Réinitialiser</button></div>
+</details><details class="sub-report-accordion">
+<summary>Données brutes</summary>
+<table id="dataTableCirculation" class="sub-report-table">
+<thead>
+<tr>
+<th data-key="site">Site</th>
+<th data-key="date">Date</th>
+<th data-key="Issues">Prêts</th>
+<th data-key="Renews">Renouv.</th>
+<th data-key="Returns">Retours</th>
+</tr>
+</thead>
+<tbody></tbody>
+</table>
+</details>
+<div class="sub-report-chart-container" id="chartContainerCirculation"><canvas id="lineChartCirculation" class="chart" style="display: block; box-sizing: border-box; height: 197.5px; width: 395px;" width="395" height="197"></canvas></div>
+<div class="sub-report-loading" id="loadingSpinnerCirculation" style="display: none;">Chargement...</div>
+</div>
+<!-- Rapport d'Abonnements -->
+<div class="sub-report-container" id="subscriptionReport">
+<h1 class="sub-report-header">📚 Abonnements</h1>
+<details class="sub-report-accordion">
+<summary>Filtres</summary>
+<div class="sub-report-filters">
+<div class="sub-report-filter-group"><label for="filterSiteSubscription">Site</label><select id="filterSiteSubscription" class="sub-report-select" multiple="multiple"><option value="tous">Tous</option></select></div>
+<div class="sub-report-filter-group"><label for="filterDateSubscription">Date</label><select id="filterDateSubscription" class="sub-report-select"><option value="tous" selected>Tous</option></select></div>
+<div class="sub-report-filter-group"><label for="filterTypeSubscription">Type</label><select id="filterTypeSubscription" class="sub-report-select">
+<option value="tous" selected="selected">Tous</option>
+<option value="inscription">Nouveaux</option>
+<option value="renouvellement">Renouvellements</option>
+</select></div>
+<button id="resetFiltersSubscription" class="sub-report-reset" onclick="resetFiltersSubscription()">Réinitialiser</button></div>
+</details><details class="sub-report-accordion">
+<summary>Données brutes</summary>
+<table id="dataTableSubscription" class="sub-report-table">
+<thead>
+<tr>
+<th data-key="site">Site</th>
+<th data-key="date">Date</th>
+<th data-key="Nouveaux_abonnes">Nouveaux</th>
+<th data-key="Renouvellements">Renouv.</th>
+</tr>
+</thead>
+<tbody></tbody>
+</table>
+</details>
+<div class="sub-report-chart-container" id="chartContainerSubscription"><canvas id="lineChartSubscription" class="chart" style="display: block; box-sizing: border-box; height: 197.5px; width: 395px;" width="395" height="197"></canvas></div>
+<div class="sub-report-loading" id="loadingSpinnerSubscription" style="display: none;">Chargement...</div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+<script src="https://cdn.jsdelivr.net/npm/date-fns@2.29.3/locale/fr/index.min.js"></script>
+<script>
+    // Rapport de Circulation
+    const KT7=window.KohaTools?.Config?.getCanonical?.('home-seven-days')?.installation||{}; const CIRC_ID=Number(KT7.reports?.circulationId||0); const API_ENDPOINT_CIRCULATION=CIRC_ID?`/cgi-bin/koha/svc/report?id=${CIRC_ID}`:'';
+    let rawDataCirculation = [];
+    let sortConfigCirculation = { key: null, direction: 1 };
+
+    async function initializeCirculation() {
+        try {
+            showLoadingCirculation();
+            await loadDataCirculation();
+            populateFiltersCirculation();
+            addFilterListenersCirculation();
+            addSortListenersCirculation();
+            renderTableCirculation();
+        } catch (error) {
+            showErrorCirculation(error);
+        } finally {
+            hideLoadingCirculation();
+        }
+    }
+
+    async function loadDataCirculation() {
+        const response = await fetch(API_ENDPOINT_CIRCULATION, { headers: { Accept: 'application/json' } });
+        if (!response.ok) throw new Error(`Erreur HTTP ${response.status}`);
+        const jsonData = await response.json();
+        rawDataCirculation = jsonData.map(row => ({
+            site: row[0],
+            date: row[1],
+            Issues: parseInt(row[2], 10) || 0,
+            Renews: parseInt(row[3], 10) || 0,
+            Returns: parseInt(row[4], 10) || 0
+        }));
+    }
+
+    function populateFiltersCirculation() {
+        const userSite = document.querySelector('.logged-in-branch-code').textContent.trim();
+        const selectSite = document.getElementById('filterSite');
+        const uniqueSites = [...new Set(rawDataCirculation.map(item => item.site))].sort((a, b) => a.localeCompare(b));
+        let optionsHTML = `<option value="tous">Tous</option>`;
+        optionsHTML += uniqueSites.map(site => {
+            let selected = (site === userSite) ? ' selected' : '';
+            return `<option value="${site}"${selected}>${site}</option>`;
+        }).join('');
+        selectSite.innerHTML = optionsHTML;
+
+        const selectDate = document.getElementById('filterDate');
+        const uniqueDates = [...new Set(rawDataCirculation.map(item => item.date))].sort();
+        let dateOptions = `<option value="tous" selected>Tous</option>`;
+        dateOptions += uniqueDates.map(date => `<option value="${date}">${date}</option>`).join('');
+        selectDate.innerHTML = dateOptions;
+    }
+
+    function filterDataCirculation() {
+        const selectedSites = Array.from(document.getElementById('filterSite').selectedOptions)
+                                    .map(option => option.value);
+        const sitesFilter = selectedSites.includes('tous') ? [] : selectedSites;
+        const selectedDate = document.getElementById('filterDate').value;
+        const typeFilter = document.getElementById('filterType').value;
+
+        return rawDataCirculation.filter(item => {
+            if (sitesFilter.length && !sitesFilter.includes(item.site)) return false;
+            if (selectedDate !== 'tous' && item.date !== selectedDate) return false;
+            if (typeFilter !== 'tous') {
+                const value = parseInt(item[typeFilter], 10);
+                if (isNaN(value) || value <= 0) return false;
+            }
+            return true;
+        });
+    }
+
+    function renderTableCirculation() {
+        const tbody = document.querySelector('#dataTableCirculation tbody');
+        let filteredData = filterDataCirculation();
+
+        if (sortConfigCirculation.key) {
+            filteredData.sort((a, b) => {
+                let valA = a[sortConfigCirculation.key];
+                let valB = b[sortConfigCirculation.key];
+                const numA = parseFloat(valA);
+                const numB = parseFloat(valB);
+                if (!isNaN(numA) && !isNaN(numB)) {
+                    return (numA - numB) * sortConfigCirculation.direction;
+                }
+                return valA.toString().localeCompare(valB.toString()) * sortConfigCirculation.direction;
+            });
+        }
+
+        tbody.innerHTML = filteredData.map(item => {
+    return `<tr>
+        <td>${item.site}</td>
+        <td>${item.date}</td>
+        <td>${item.Issues}</td>
+        <td>${item.Renews}</td>
+        <td>${item.Returns}</td>
+    </tr>`;
+}).join('');
+
+        renderLineChartCirculation();
+    }
+
+    function renderLineChartCirculation() {
+        const filteredData = filterDataCirculation();
+        const allDatesSet = new Set(filteredData.map(item => item.date));
+        const allDates = Array.from(allDatesSet).sort();
+
+        const dataBySite = {};
+        filteredData.forEach(item => {
+            if (!dataBySite[item.site]) dataBySite[item.site] = {};
+            if (!dataBySite[item.site][item.date]) {
+                dataBySite[item.site][item.date] = { Issues: 0, Renews: 0, Returns: 0 };
+            }
+            dataBySite[item.site][item.date].Issues += item.Issues;
+            dataBySite[item.site][item.date].Renews += item.Renews;
+            dataBySite[item.site][item.date].Returns += item.Returns;
+        });
+
+        const typeFilter = document.getElementById('filterType').value;
+        const colors = {
+            Issues: '#4BC0C0',
+            Renews: '#FF9F40',
+            Returns: '#9966FF'
+        };
+
+        const datasets = [];
+        Object.keys(dataBySite).forEach(site => {
+            ['Issues', 'Renews', 'Returns'].forEach(type => {
+                if (typeFilter === 'tous' || typeFilter === type) {
+                    const typeData = allDates.map(date =>
+                        dataBySite[site][date] ? dataBySite[site][date][type] : 0
+                    );
+                    const frenchLabels = {
+    Issues: 'Prêts',
+    Renews: 'Renouvellements',
+    Returns: 'Retours'
+};
+
+datasets.push({
+    label: `${frenchLabels[type]} - ${site}`,
+                        data: typeData,
+                        borderColor: colors[type],
+                        backgroundColor: `${colors[type]}33`,
+                        fill: false,
+                        tension: 0.1
+                    });
+                }
+            });
+        });
+
+        const chartContainer = document.getElementById('chartContainerCirculation');
+        chartContainer.innerHTML = '';
+        const canvas = document.createElement('canvas');
+        canvas.id = 'lineChartCirculation';
+        canvas.className = 'chart';
+        chartContainer.appendChild(canvas);
+
+        const ctx = canvas.getContext('2d');
+    new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: allDates,
+        datasets: datasets
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: {display: false },
+maintainAspectRatio: false,
+            title: { display: true, text: 'Activité de circulation par site' },
+            tooltip: {
+                callbacks: {
+                    title: function(context) {
+                        return new Date(context[0].parsed.x).toLocaleDateString('fr-FR', {
+                            weekday: 'long',
+                            day: 'numeric',
+                            month: 'long',
+                            year: 'numeric'
+                        });
+                    }
+                }
+            }
+        },
+        scales: {
+            x: { 
+                type: 'time',
+                time: { 
+                    parser: 'yyyy-MM-dd', 
+                    unit: 'day', 
+                    displayFormats: { 
+                        day: 'dd/MM'
+                    },
+                    tooltipFormat: 'eeee d MMMM yyyy',
+                    locale: 'fr'
+                },
+                title: { display: true, text: 'Date' }
+            },
+            y: { 
+                title: { display: true, text: 'Nombre de mouvements' } 
+            }
+        }
+    }
+});
+}
+    function addFilterListenersCirculation() {
+        document.getElementById('filterSite').addEventListener('change', renderTableCirculation);
+        document.getElementById('filterDate').addEventListener('change', renderTableCirculation);
+        document.getElementById('filterType').addEventListener('change', renderTableCirculation);
+    }
+
+    function addSortListenersCirculation() {
+        const headers = document.querySelectorAll('#dataTableCirculation th');
+        headers.forEach(header => {
+            header.addEventListener('click', () => {
+                const key = header.getAttribute('data-key');
+                if (sortConfigCirculation.key === key) {
+                    sortConfigCirculation.direction *= -1;
+                } else {
+                    sortConfigCirculation.key = key;
+                    sortConfigCirculation.direction = 1;
+                }
+                renderTableCirculation();
+            });
+        });
+    }
+
+    function showLoadingCirculation() {
+        document.getElementById('loadingSpinnerCirculation').style.display = 'flex';
+    }
+
+    function hideLoadingCirculation() {
+        document.getElementById('loadingSpinnerCirculation').style.display = 'none';
+    }
+
+    function showErrorCirculation(error) {
+        alert(`Erreur: ${error.message}`);
+    }
+
+    function resetFiltersCirculation() {
+        document.getElementById('filterSite').selectedIndex = 0;
+        document.getElementById('filterDate').selectedIndex = 0;
+        document.getElementById('filterType').selectedIndex = 0;
+        renderTableCirculation();
+    }
+
+    initializeCirculation();
+
+    // Rapport d'Abonnements
+    const SUB_ID=Number(KT7.reports?.subscriptionsId||0); const API_ENDPOINT_SUBSCRIPTION=SUB_ID?`/cgi-bin/koha/svc/report?id=${SUB_ID}`:'';
+    let rawDataSubscription = [];
+    let sortConfigSubscription = { key: null, direction: 1 };
+
+    async function initializeSubscription() {
+        try {
+            showLoadingSubscription();
+            await loadDataSubscription();
+            populateFiltersSubscription();
+            addFilterListenersSubscription();
+            addSortListenersSubscription();
+            renderTableSubscription();
+        } catch (error) {
+            showErrorSubscription(error);
+        } finally {
+            hideLoadingSubscription();
+        }
+    }
+
+    async function loadDataSubscription() {
+        const response = await fetch(API_ENDPOINT_SUBSCRIPTION, { headers: { Accept: 'application/json' } });
+        if (!response.ok) throw new Error(`Erreur HTTP ${response.status}`);
+        const jsonData = await response.json();
+        rawDataSubscription = jsonData.map(row => ({
+            site: row[0],
+            date: row[1],
+            Nouveaux_abonnes: row[2],
+            Renouvellements: row[3]
+        }));
+    }
+
+    function populateFiltersSubscription() {
+        const userSite = document.querySelector('.logged-in-branch-code').textContent.trim();
+        const selectSite = document.getElementById('filterSiteSubscription');
+        const uniqueSites = [...new Set(rawDataSubscription.map(item => item.site))].sort((a, b) => a.localeCompare(b));
+        let optionsHTML = `<option value="tous">Tous</option>`;
+        optionsHTML += uniqueSites.map(site => {
+            let selected = (site === userSite) ? ' selected' : '';
+            return `<option value="${site}"${selected}>${site}</option>`;
+        }).join('');
+        selectSite.innerHTML = optionsHTML;
+
+        const selectDate = document.getElementById('filterDateSubscription');
+        const uniqueDates = [...new Set(rawDataSubscription.map(item => item.date))].sort();
+        let dateOptions = `<option value="tous" selected>Tous</option>`;
+        dateOptions += uniqueDates.map(date => `<option value="${date}">${date}</option>`).join('');
+        selectDate.innerHTML = dateOptions;
+    }
+
+    function filterDataSubscription() {
+        const selectedSites = Array.from(document.getElementById('filterSiteSubscription').selectedOptions)
+                                    .map(option => option.value);
+        const sitesFilter = selectedSites.includes('tous') ? [] : selectedSites;
+        const selectedDate = document.getElementById('filterDateSubscription').value;
+        const typeFilter = document.getElementById('filterTypeSubscription').value;
+
+        return rawDataSubscription.filter(item => {
+            if (sitesFilter.length && !sitesFilter.includes(item.site)) return false;
+            if (selectedDate !== 'tous' && item.date !== selectedDate) return false;
+            if (typeFilter !== 'tous') {
+                if (typeFilter === 'inscription' && parseInt(item.Nouveaux_abonnes, 10) <= 0) {
+                    return false;
+                }
+                if (typeFilter === 'renouvellement' && parseInt(item.Renouvellements, 10) <= 0) {
+                    return false;
+                }
+            }
+            return true;
+        });
+    }
+
+    function renderTableSubscription() {
+        const tbody = document.querySelector('#dataTableSubscription tbody');
+        let filteredData = filterDataSubscription();
+
+        if (sortConfigSubscription.key) {
+            filteredData.sort((a, b) => {
+                let valA = a[sortConfigSubscription.key];
+                let valB = b[sortConfigSubscription.key];
+                const numA = parseFloat(valA);
+                const numB = parseFloat(valB);
+                if (!isNaN(numA) && !isNaN(numB)) {
+                    return (numA - numB) * sortConfigSubscription.direction;
+                }
+                return valA.toString().localeCompare(valB.toString()) * sortConfigSubscription.direction;
+            });
+        }
+
+        tbody.innerHTML = filteredData.map(item => {
+            return `<tr>
+                <td>${item.site}</td>
+                <td>${item.date}</td>
+                <td>${item.Nouveaux_abonnes}</td>
+                <td>${item.Renouvellements}</td>
+            </tr>`;
+        }).join('');
+
+        renderLineChartSubscription();
+    }
+
+    function renderLineChartSubscription() {
+        const filteredData = filterDataSubscription();
+        const allDatesSet = new Set(filteredData.map(item => item.date));
+        const allDates = Array.from(allDatesSet).sort();
+
+        const dataBySite = {};
+        filteredData.forEach(item => {
+            if (!dataBySite[item.site]) {
+                dataBySite[item.site] = {};
+            }
+            if (!dataBySite[item.site][item.date]) {
+                dataBySite[item.site][item.date] = { Nouveaux_abonnes: 0, Renouvellements: 0 };
+            }
+            dataBySite[item.site][item.date].Nouveaux_abonnes += parseInt(item.Nouveaux_abonnes, 10);
+            dataBySite[item.site][item.date].Renouvellements += parseInt(item.Renouvellements, 10);
+        });
+
+        const typeFilter = document.getElementById('filterTypeSubscription').value;
+        const datasets = [];
+        const colors = {
+            inscription: '#36A2EB',
+            renouvellement: '#FF6384'
+        };
+
+        Object.keys(dataBySite).forEach(site => {
+            if (typeFilter === 'tous' || typeFilter === 'inscription') {
+                const nouveauxData = allDates.map(date =>
+                    dataBySite[site][date] ? dataBySite[site][date].Nouveaux_abonnes : 0
+                );
+                datasets.push({
+                    label: `Nouveaux abonnés - ${site}`,
+                    data: nouveauxData,
+                    borderColor: colors.inscription,
+                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                    fill: false,
+                    tension: 0.1
+                });
+            }
+            if (typeFilter === 'tous' || typeFilter === 'renouvellement') {
+                const renouvellementsData = allDates.map(date =>
+                    dataBySite[site][date] ? dataBySite[site][date].Renouvellements : 0
+                );
+                datasets.push({
+                    label: `Renouvellements - ${site}`,
+                    data: renouvellementsData,
+                    borderColor: colors.renouvellement,
+                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                    fill: false,
+                    tension: 0.1
+                });
+            }
+        });
+
+        const chartContainer = document.getElementById('chartContainerSubscription');
+        chartContainer.innerHTML = '';
+        const canvas = document.createElement('canvas');
+        canvas.id = 'lineChartSubscription';
+        canvas.className = 'chart';
+        chartContainer.appendChild(canvas);
+
+        const ctx = canvas.getContext('2d');
+new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: allDates,
+        datasets: datasets
+    },
+    options: {
+       responsive: true,
+
+        plugins: {
+            legend: { display: false },
+ maintainAspectRatio: false,
+            title: { 
+                display: true, 
+                text: 'Évolution des abonnements par site' 
+            },
+            tooltip: {
+                callbacks: {
+                    title: function(context) {
+                        return new Date(context[0].parsed.x).toLocaleDateString('fr-FR', {
+                            weekday: 'long',
+                            day: 'numeric',
+                            month: 'long',
+                            year: 'numeric'
+                        });
+                    }
+                }
+            }
+        },
+        scales: {
+            x: { 
+                type: 'time',
+                time: { 
+                    parser: 'yyyy-MM-dd',
+                    unit: 'day',
+                    displayFormats: { 
+                        day: 'dd/MM' // Format court "lun. 01/01"
+                    },
+                    tooltipFormat: 'eeee d MMMM yyyy', // Format long "lundi 1 janvier 2024"
+                    locale: 'fr'
+                },
+                title: { 
+                    display: true, 
+                    text: 'Date' 
+                }
+            },
+            y: { 
+                title: { 
+                    display: true, 
+                    text: 'Nombre d\'abonnements' // Modification spécifique aux abonnements
+                } 
+            }
+        }
+    }
+});
+    }
+
+    function addFilterListenersSubscription() {
+        document.getElementById('filterSiteSubscription').addEventListener('change', renderTableSubscription);
+        document.getElementById('filterDateSubscription').addEventListener('change', renderTableSubscription);
+        document.getElementById('filterTypeSubscription').addEventListener('change', renderTableSubscription);
+    }
+
+    function addSortListenersSubscription() {
+        const headers = document.querySelectorAll('#dataTableSubscription th');
+        headers.forEach(header => {
+            header.addEventListener('click', () => {
+                const key = header.getAttribute('data-key');
+                if (sortConfigSubscription.key === key) {
+                    sortConfigSubscription.direction *= -1;
+                } else {
+                    sortConfigSubscription.key = key;
+                    sortConfigSubscription.direction = 1;
+                }
+                renderTableSubscription();
+            });
+        });
+    }
+
+    function showLoadingSubscription() {
+        document.getElementById('loadingSpinnerSubscription').style.display = 'flex';
+    }
+
+    function hideLoadingSubscription() {
+        document.getElementById('loadingSpinnerSubscription').style.display = 'none';
+    }
+
+    function showErrorSubscription(error) {
+        alert(`Erreur : ${error.message}`);
+    }
+
+    function resetFiltersSubscription() {
+        document.getElementById('filterSiteSubscription').selectedIndex = 0;
+        document.getElementById('filterDateSubscription').selectedIndex = 0;
+        document.getElementById('filterTypeSubscription').selectedIndex = 0;
+        renderTableSubscription();
+    }
+
+    initializeSubscription();
+</script></div>
