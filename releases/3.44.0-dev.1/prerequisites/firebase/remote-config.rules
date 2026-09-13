@@ -1,0 +1,17 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function isAdmin() { return signedIn() && request.auth.token.kohatools_admin == true; }
+    match /kohaTools_installations/{installationId} {
+      allow read: if signedIn();
+      allow write: if false;
+      match /config_modules/{moduleId} { allow read: if signedIn(); allow write: if isAdmin(); }
+      match /runtime/{docId} { allow read: if signedIn(); allow write: if isAdmin(); }
+      match /meta/{docId} { allow read: if signedIn(); allow write: if isAdmin(); }
+      match /testing_modules/{docId} { allow read: if signedIn(); allow write: if isAdmin(); }
+      match /testing_runs/{docId} { allow read: if signedIn(); allow write: if isAdmin(); }
+    }
+    match /{document=**} { allow read, write: if false; }
+  }
+}
