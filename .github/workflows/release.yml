@@ -47,10 +47,16 @@ jobs:
         run: node scripts/test-channel-loader.mjs
       - name: Test access control
         run: node scripts/test-access-control.mjs
-      - name: Test navigation and prerequisites
-        run: node scripts/test-navigation.mjs
-      - name: Test fresh-install candidate sandbox
-        run: node scripts/test-fresh-install-canary.mjs
+      - name: Test prerequisite scopes and version gates
+        run: node scripts/test-prerequisite-gates.mjs
+      - name: Test fresh-install certification contract
+        run: node scripts/test-fresh-install-certification.mjs
+      - name: Test safe configuration promotion
+        run: node scripts/test-certifier-promotion.mjs
+      - name: Test user workflows and access model
+        run: node scripts/test-user-workflows.mjs
+      - name: Test fresh-install native gates
+        run: node scripts/test-fresh-install-native-gates.mjs
       - name: Build release archive
         id: build
         shell: bash

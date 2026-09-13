@@ -1,4 +1,4 @@
-# Pimp My Koha / KohaTools — V3.43.2
+# Pimp My Koha / KohaTools — V3.44.0-dev.1
 
 Distribution pré-plugin multi-installations.
 
@@ -9,12 +9,12 @@ Distribution pré-plugin multi-installations.
 - `prerequisites/` : SQL, règles Firebase, index et instructions copiables.
 - `admin/panel.js` : unique interface d'administration, intégrée dans Koha.
 - `docs/INSTALLATION.md` : installation neuve.
-- `docs/MIGRATION-DRACENIE.md` : migration de l'installation historique.
+- L’espace **Migration des anciens modules** de l’administration : reprise contrôlée d’une installation historique.
 
 Le mode `fresh-install` ne charge jamais silencieusement un module legacy. Un prérequis obligatoire manquant bloque uniquement le module concerné.
 
 ## Distribution, accès et mises à jour
 
-V3.43.2 ajoute la distribution GitHub **Stable / Canary / Dev** et une couche d’accès Pimp My Koha. Le rôle `developer` doit toujours être explicitement associé à un username Koha ; les outils DEV ne sont chargés que sur le canal Dev. Le Canary module local est également réservé au développeur et stocké par compte Koha.
+V3.44.0-dev.1 consolide le parcours de mise en production : modules normaux séparés de la migration, configuration simplifiée, droits alignés sur Koha, tests et validation communs à tous les types de modules, prérequis isolés par fonction et première installation guidée. Le rôle `developer` reste explicitement associé à un compte Koha et les essais locaux restent limités au navigateur du mainteneur.
 
 Une release n’est jamais installée silencieusement : la production GitHub Pages reste épinglée à une version et l’auto-hébergement conserve la maîtrise de ses fichiers. Voir `docs/UPDATE.md`, `docs/ACCESS-CONTROL.md` et `docs/CHANNELS.md`.

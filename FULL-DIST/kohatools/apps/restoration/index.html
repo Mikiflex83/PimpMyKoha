@@ -48,7 +48,7 @@
   #uds-auth-status { font-size:.85em; color:#666; margin-bottom:1em; }
 </style>
 <h1>Restauration d'exemplaires par scan</h1>
-<p class="uds-sub">Recherche par <strong>code-barres</strong> ou par <strong>plage de dates</strong> &mdash; restauration via <strong>UndeleteRecords</strong> &mdash; pr&ecirc;t / retour via le compte technique configur&eacute; pour cette installation.</p>
+<p class="uds-sub">Recherche par <strong>code-barres</strong> ou par <strong>plage de dates</strong> &mdash; restauration via <strong>API Koha native (26.05+)</strong> ou <strong>UndeleteRecords</strong> sur les versions ant&eacute;rieures &mdash; pr&ecirc;t / retour via le compte technique configur&eacute; pour cette installation.</p>
 <div id="uds-auth-status">V&eacute;rification de la session Koha&hellip;</div>
 <div id="uds-denied" hidden=""><strong>Acc&egrave;s refus&eacute;.</strong> Votre compte Koha n&rsquo;est pas autoris&eacute; &agrave; utiliser cet outil sur cette installation.</div>
 <div id="uds-app" hidden="">
@@ -414,9 +414,94 @@
   }
 
   /* ======================================================================
-   * 2) RESTAURATION — UndeleteRecords merge
+   * 2) RESTAURATION — moteur automatique
+   *    Koha 26.05+ : API REST native
+   *    Koha < 26.05 : plugin UndeleteRecords si confirmé
    * ==================================================================== */
-  async function restoreItemnumbers(itemnumbers) {
+  function restorationCfg() {
+    return window.KohaTools?.Config?.getCanonical?.("restoration") || {};
+  }
+
+  function kohaVersionCompare(a, b) {
+    const parse = (v) => {
+      const m = String(v || "").match(/(\d{2})\.(\d{2})(?:\.(\d{1,2}))?/);
+      return m ? [Number(m[1]), Number(m[2]), Number(m[3] || 0)] : null;
+    };
+    const x = parse(a), y = parse(b);
+    if (!x || !y) return null;
+    for (let i = 0; i < 3; i++) {
+      if (x[i] !== y[i]) return x[i] < y[i] ? -1 : 1;
+    }
+    return 0;
+  }
+
+  function detectedKohaVersion() {
+    return window.KohaTools?.getService?.("health")?.kohaVersion?.()
+      || window.KohaTools?.getService?.("recipe")?.currentKohaVersion?.()
+      || null;
+  }
+
+  function restoreEngine() {
+    const c = restorationCfg();
+    const requested = String(c.installation?.restoreEngine || "auto").toLowerCase();
+    const minimum = String(c.installation?.nativeRestoreMinKohaVersion || "26.05");
+    const version = detectedKohaVersion();
+    const cmp = kohaVersionCompare(version, minimum);
+    const nativeAvailable = cmp !== null && cmp >= 0;
+    if (requested === "native") return { engine: nativeAvailable ? "native" : "unavailable", version, minimum };
+    if (requested === "plugin") return { engine: "plugin", version, minimum };
+    if (nativeAvailable) return { engine: "native", version, minimum };
+    return { engine: "plugin", version, minimum };
+  }
+
+  function restoreCapabilityStatus() {
+    return window.KohaTools?.getService?.("prerequisites")?.statusFor?.("restoration", "restore")
+      || { ok: true, blocking: [] };
+  }
+
+  function pipelineCapabilityStatus() {
+    return window.KohaTools?.getService?.("prerequisites")?.statusFor?.("restoration", "pipeline")
+      || { ok: true, blocking: [] };
+  }
+
+  function canCirculate() {
+    const access = window.KohaTools?.getService?.("access-control");
+    return access?.hasKohaCapability?.("circulate") === true || access?.isSuperlibrarian?.() === true;
+  }
+
+  function prerequisiteReason(status, fallback) {
+    const labels = (status?.blocking || []).map((x) => x.label || x.id).filter(Boolean);
+    return labels.length ? labels.join(", ") : fallback;
+  }
+
+  async function restoreViaNative(itemnumbers) {
+    const headers = await restHeaders();
+    const confirmations = [];
+    for (const itemnumber of itemnumbers) {
+      const url = new URL(
+        CONFIG.restBase + "/deleteditems/" + encodeURIComponent(String(itemnumber)) + "/restore",
+        window.location.origin
+      );
+      const resp = await fetch(url.toString(), {
+        method: "POST",
+        credentials: "same-origin",
+        headers,
+      });
+      const raw = await resp.text();
+      if (!resp.ok) {
+        const err = new Error(
+          "Restauration native Koha refusée : HTTP " + resp.status +
+          (raw ? " — " + raw.slice(0, 350) : "")
+        );
+        err.status = resp.status;
+        throw err;
+      }
+      confirmations.push("Exemplaire " + itemnumber + " restauré via l’API native Koha.");
+    }
+    return confirmations;
+  }
+
+  async function restoreViaPlugin(itemnumbers) {
     const csrf_token = await fetchFreshCsrfToken();
 
     const body = new URLSearchParams();
@@ -432,22 +517,58 @@
     const resp = await fetch(runUrl({}), {
       method: "POST",
       credentials: "same-origin",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        Accept: "text/html,application/xhtml+xml",
+      },
       body: body.toString(),
     });
+
     const html = await resp.text();
     if (!resp.ok) {
+      throw new Error("Plugin UndeleteRecords : HTTP " + resp.status + " — " + extractErrorSnippet(html));
+    }
+    if (looksLikeLoginPage(html)) {
+      throw new Error("Session Koha absente — reconnectez-vous sur l'intranet.");
+    }
+    const text = new DOMParser().parseFromString(html, "text/html").body?.textContent || html;
+    if (/error|failed|impossible|cannot restore|not restored/i.test(text) &&
+        !/success|restored|merged|réussi|restaur/i.test(text)) {
+      throw new Error("UndeleteRecords n’a pas confirmé la restauration — " + extractErrorSnippet(html));
+    }
+    const confirmations = itemnumbers.map((n) => "Exemplaire " + n + " restauré via UndeleteRecords.");
+    return confirmations;
+  }
+
+  async function restoreItemnumbers(itemnumbers) {
+    const gate = restoreCapabilityStatus();
+    if (!gate.ok) {
+      const labels = (gate.blocking || []).map((x) => x.label || x.id).join(", ");
       throw new Error(
-        "Erreur HTTP " + resp.status + " lors de la restauration — " + extractErrorSnippet(html)
+        "La restauration n’est pas disponible sur cette version/configuration de Koha" +
+        (labels ? " : " + labels : ".")
       );
     }
 
-    const doc = new DOMParser().parseFromString(html, "text/html");
-    const confirmations = Array.from(doc.querySelectorAll("#undeleted p")).map((p) => txt(p));
-    if (confirmations.length === 0) {
-      throw new Error("Aucune confirmation de restauration reçue — vérifiez manuellement dans Koha.");
+    const selected = restoreEngine();
+    if (selected.engine === "unavailable") {
+      throw new Error(
+        "Le moteur natif de restauration nécessite Koha " + selected.minimum +
+        " ou supérieur."
+      );
     }
-    return confirmations;
+    if (selected.engine === "native") {
+      try {
+        return await restoreViaNative(itemnumbers);
+      } catch (e) {
+        const cfg = restorationCfg();
+        const canFallback = cfg.installation?.undeletePluginConfirmed === true
+          && [404, 405, 501].includes(Number(e?.status));
+        if (!canFallback) throw e;
+        return restoreViaPlugin(itemnumbers);
+      }
+    }
+    return restoreViaPlugin(itemnumbers);
   }
 
   /* ======================================================================
@@ -905,9 +1026,22 @@
       </td>
     `;
 
-    tr.querySelector('[data-action="restore"]').addEventListener("click", () => doRestore(barcode));
-    tr.querySelector('[data-action="issue"]').addEventListener("click", () => doIssue(barcode));
-    tr.querySelector('[data-action="return"]').addEventListener("click", () => doReturn(barcode));
+    const restoreButton = tr.querySelector('[data-action="restore"]');
+    const restoreGate = restoreCapabilityStatus();
+    restoreButton.disabled = !restoreGate.ok;
+    if (!restoreGate.ok) restoreButton.title = "Restauration indisponible : " + prerequisiteReason(restoreGate, "vérifiez la version de Koha et UndeleteRecords.");
+    restoreButton.addEventListener("click", () => doRestore(barcode));
+    const issueButton = tr.querySelector('[data-action="issue"]');
+    const returnButton = tr.querySelector('[data-action="return"]');
+    const circulationAllowed = canCirculate();
+    issueButton.hidden = !circulationAllowed;
+    returnButton.hidden = !circulationAllowed;
+    if (!circulationAllowed) {
+      issueButton.title = "Droit de circulation requis.";
+      returnButton.title = "Droit de circulation requis.";
+    }
+    issueButton.addEventListener("click", () => doIssue(barcode));
+    returnButton.addEventListener("click", () => doReturn(barcode));
 
     tbody.appendChild(tr);
     rows.set(barcode, { data, el: tr });
@@ -923,7 +1057,7 @@
       setStatus(barcode, "Restauré", "ok");
       confirmations.forEach((c) => log(barcode, "✔ " + c));
       row.el.querySelector('[data-action="restore"]').disabled = true;
-      row.el.querySelector('[data-action="issue"]').disabled = false;
+      if (canCirculate()) row.el.querySelector('[data-action="issue"]').disabled = false;
     } catch (e) {
       setStatus(barcode, "Erreur restauration", "error");
       log(barcode, "✖ " + e.message);
@@ -932,6 +1066,7 @@
   }
 
   async function doIssue(barcode) {
+    if (!canCirculate()) throw new Error("Prêt indisponible : votre compte Koha n’a pas le droit de circulation.");
     const row = rows.get(barcode);
     if (!row) return;
     setStatus(barcode, "Prêt en cours…", "busy");
@@ -944,7 +1079,7 @@
         : "";
       log(barcode, "✔ Prêté via API REST (patron_id " + result.patron_id + ")" + confirmNote);
       row.el.querySelector('[data-action="issue"]').disabled = true;
-      row.el.querySelector('[data-action="return"]').disabled = false;
+      if (canCirculate()) row.el.querySelector('[data-action="return"]').disabled = false;
     } catch (e) {
       setStatus(barcode, "Erreur prêt", "error");
       log(barcode, "✖ " + e.message);
@@ -953,6 +1088,7 @@
   }
 
   async function doReturn(barcode) {
+    if (!canCirculate()) throw new Error("Retour indisponible : votre compte Koha n’a pas le droit de circulation.");
     const row = rows.get(barcode);
     if (!row) return;
     setStatus(barcode, "Retour en cours…", "busy");
@@ -970,6 +1106,9 @@
   }
 
   async function doFullPipeline(barcode) {
+    if (!canCirculate()) throw new Error("Prêt/retour indisponible : votre compte Koha n’a pas le droit de circulation.");
+    const gate = pipelineCapabilityStatus();
+    if (!gate.ok) throw new Error("Pipeline indisponible : " + prerequisiteReason(gate, "prérequis de prêt/retour ou restauration manquant."));
     await doRestore(barcode);
     await doIssue(barcode);
     await doReturn(barcode);
@@ -1020,6 +1159,19 @@
   document.getElementById("uds-batch-pipeline").addEventListener("click", () => {
     runOnSelection((barcode) => doFullPipeline(barcode));
   });
+
+  const restoreBatchGate = restoreCapabilityStatus();
+  const restoreBatchButton = document.getElementById("uds-batch-restore");
+  if (restoreBatchButton) { restoreBatchButton.disabled = !restoreBatchGate.ok; if (!restoreBatchGate.ok) restoreBatchButton.title = "Restauration indisponible : " + prerequisiteReason(restoreBatchGate, "vérifiez la version de Koha et UndeleteRecords."); }
+  const pipelineGate = pipelineCapabilityStatus();
+  const pipelineButton = document.getElementById("uds-batch-pipeline");
+  if (pipelineButton) {
+    const circulationAllowed = canCirculate();
+    pipelineButton.hidden = !circulationAllowed;
+    pipelineButton.disabled = !circulationAllowed || !pipelineGate.ok;
+    if (!circulationAllowed) pipelineButton.title = "Droit de circulation requis.";
+    else if (!pipelineGate.ok) pipelineButton.title = "Traitement indisponible : " + prerequisiteReason(pipelineGate, "prérequis de prêt/retour ou restauration manquant.");
+  }
 
   document.getElementById("uds-from-date").value = daysAgoISO(CONFIG.defaultLookbackDays);
   document.getElementById("uds-to-date").value = todayISO();

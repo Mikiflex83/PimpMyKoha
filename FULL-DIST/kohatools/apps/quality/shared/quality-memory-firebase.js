@@ -176,6 +176,6 @@ async function saveRule(rule){requireAdmin();const m=state.modules.firestore,mod
 async function aggregateFeedback(module){requireApproved();const m=state.modules.firestore,mod=cleanId(module,'unknown'),q=m.query(m.collection(state.db,'quality_feedback'),m.where('module','==',mod),m.limit(1000)),snap=await m.getDocs(q),rows=[];budget('reads',snap.size);snap.forEach(d=>{const x={id:d.id,...d.data()};x.day_count=Object.keys(x.day_tokens||{}).length;delete x.day_tokens;rows.push(x)});return rows}
 
 window.KohaQualityMemory={VERSION,SDK_VERSION,getStatus,onStatus,saveConfig,loadConfig,clearConfig,connect,getRules,getSettings,saveSettings,submitFeedback,flushFeedbackQueue,observePattern,proposeRule,getCandidates,saveRule,aggregateFeedback,cachedRules,cachedSettings,patternKey,sanitizeContext,privacyCheck,isInvariantRule,SAFE_CONTEXT_KEYS:[...SAFE_CONTEXT_KEYS]};
-// Alias temporaire pour les anciennes intégrations ; aucun module V3.43.2 ne l’utilise.
+// Alias temporaire pour les anciennes intégrations ; aucun module V3.44.0 ne l’utilise.
 window.DracQualityMemory=window.KohaQualityMemory;
 })();

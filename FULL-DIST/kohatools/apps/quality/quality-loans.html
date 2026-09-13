@@ -7,7 +7,7 @@
 (function(){
 'use strict';
 if(window.__dracQualityLoansV1)return;window.__dracQualityLoansV1=true;
-const CFG={MODULE:'loans',VERSION:'1.5.0',API:'/api/v1',ROWS:50,API_PAGE:100,MIN_GAP:250,DEEP_LIMIT:300,SETTINGS_KEY:'drac_quality_loans_settings_v1',MEMORY_SCRIPT:'__KOHATOOLS_ASSET_ROOT__apps/quality/shared/quality-memory-firebase.js?ktv=3.43.2',DEFAULTS:{oldDays:365,veryOldDays:730,overdueDays:180,criticalOverdueDays:730,idleDays:365,claimDays:90,claimCriticalDays:365,unseenRenewals:3}};
+const CFG={MODULE:'loans',VERSION:'1.5.0',API:'/api/v1',ROWS:50,API_PAGE:100,MIN_GAP:250,DEEP_LIMIT:300,SETTINGS_KEY:'drac_quality_loans_settings_v1',MEMORY_SCRIPT:'__KOHATOOLS_ASSET_ROOT__apps/quality/shared/quality-memory-firebase.js?ktv=3.44.0',DEFAULTS:{oldDays:365,veryOldDays:730,overdueDays:180,criticalOverdueDays:730,idleDays:365,claimDays:90,claimCriticalDays:365,unseenRenewals:3}};
 const root=document.getElementById('dql-app');if(!root)return;const SEV={ok:0,atypical:1,review:2,critical:3};
 function loadSettings(){try{return {...CFG.DEFAULTS,...JSON.parse(localStorage.getItem(CFG.SETTINGS_KEY)||'{}')}}catch(_){return {...CFG.DEFAULTS}}}
 const state={tab:'overview',rows:[],loading:false,stop:false,settings:loadSettings(),search:'',severity:'',library:'',minAge:0,page:1,selected:new Set(),deep:new Map(),deepRunning:false,deepDone:0,writeUnlocked:false,simulation:null,resolutions:[],memoryStatus:null,remoteFeedback:[]};

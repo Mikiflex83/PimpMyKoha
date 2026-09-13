@@ -1,33 +1,48 @@
 {
   "schema": "pimp-my-koha.release-metadata.v1",
-  "version": "3.43.2",
-  "channel": "stable",
+  "version": "3.44.0-dev.1",
+  "channel": "dev",
   "releasedAt": "2026-09-13",
-  "summary": "Navigation fiable : menus idempotents, socle chargé dans le bon ordre et aucun lien d’application proposé tant que ses prérequis obligatoires ne sont pas satisfaits.",
+  "summary": "Préproduction sandbox de Pimp My Koha 3.44.0 : version DEV réservée aux comptes développeur pour recette réelle avant Stable.",
   "highlights": [
-    "Le chargeur initialise le contrôle d’accès avant de filtrer les modules canoniques.",
-    "Le menu Mes outils reste unique après les rafraîchissements et rechargements Koha.",
-    "Les modules désactivés, interdits ou bloqués par un prérequis obligatoire ne sont plus affichés dans les menus.",
-    "Les sous-menus devenus vides ne sont plus rendus.",
-    "Le raccourci Tableau de bord est masqué tant que son loader d’installation n’est pas configuré.",
-    "Le Centre qualité remplace les ouvertures sans effet par un état À configurer explicite.",
-    "La console sépare les modules disponibles des 105 groupes historiques de migration et affiche des compteurs cohérents.",
-    "Les 98 groupes historiques disposant d’une candidate complète peuvent être testés individuellement sur le navigateur du développeur en installation neuve, sans affecter les autres postes.",
-    "Un test CI couvre la disponibilité des modules, les prérequis, les droits, le tableau de bord et l’anti-duplication."
+    "Séparation nette entre les modules disponibles et la migration des anciens scripts.",
+    "Configuration d’un module simplifiée autour de quatre étapes : Activer, Préparer, Régler, Enregistrer.",
+    "Les applications natives passent désormais par la même validation métier avant diffusion sur une nouvelle installation.",
+    "Le point d’entrée Pimp My Koha est protégé contre une désactivation accidentelle.",
+    "Les applications sensibles réutilisent les droits Koha existants et les menus masquent les outils non autorisés ou indisponibles.",
+    "L’assistant de première installation utilise un parcours compréhensible sans URL ou nom de paramètre technique.",
+    "Les anciens scripts sans remplaçant reçoivent une décision explicite : reprendre, remplacer ou retirer volontairement.",
+    "La restauration choisit automatiquement le mécanisme natif à partir de Koha 26.05 et limite le plugin historique aux versions antérieures.",
+    "Le fichier de validation embarque la configuration réellement testée et distingue les réglages produit des valeurs propres à l’installation.",
+    "Les prérequis peuvent bloquer une fonction précise sans rendre tout le module inutilisable."
   ],
   "changedModules": [
-    "core/navigation",
+    "core/config",
+    "core/prerequisites",
     "core/canary",
+    "core/production",
+    "core/recipe",
+    "core/navigation",
+    "core/access-control",
+    "core/lifecycle",
     "loader",
     "admin/panel",
-    "apps/quality/quality-center",
-    "ci/navigation-test",
-    "ci/fresh-install-canary-test"
+    "admin/preflight",
+    "admin/launcher",
+    "apps/restoration",
+    "apps/quality",
+    "distribution/certification"
   ],
   "breaking": false,
   "kohaCompatibility": {
-    "branches": ["25.11", "26.06"],
-    "tested": ["26.06.00"],
-    "targeted": ["25.11.04", "26.06"]
+    "branches": [
+      "25.11",
+      "26.05+"
+    ],
+    "tested": [],
+    "targeted": [
+      "25.11.04",
+      "26.05+"
+    ]
   }
 }

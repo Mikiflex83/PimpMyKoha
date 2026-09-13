@@ -734,7 +734,7 @@
             let access=await getDoc(accessRef);
             budgetRead(access.exists()?1:0);
             if(!access.exists()){
-                await setDoc(accessRef,{approved:false,role:'pending',createdAt:serverTimestamp(),clientVersion:'3.43.2'});
+                await setDoc(accessRef,{approved:false,role:'pending',createdAt:serverTimestamp(),clientVersion:'3.44.0'});
                 budgetWrite(1);
                 access=await getDoc(accessRef); budgetRead(1);
             }

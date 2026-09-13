@@ -5,7 +5,7 @@
 3. Extraire `kohatools/` sur un hébergement HTTPS accessible depuis l'intranet Koha.
 4. Ajouter dans `IntranetUserJS` le bootstrap local indiqué dans le README.
 5. Ajouter `updateManifestUrl` pointant vers le `latest.json` GitHub Pages du projet pour recevoir les notifications de nouvelles releases.
-6. Recharger Koha puis effectuer la recette.
+6. Recharger Koha puis effectuer les tests et la validation.
 
 ## Mise à jour
 

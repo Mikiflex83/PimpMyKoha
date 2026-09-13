@@ -39,6 +39,8 @@ function canPromote(cid){
   if(isLive(cid))return {ok:false,reason:"already-production"};
   const life=KT.getService("lifecycle")?.status?.(cid);
   if(life&&(life.disabled||life.archived))return {ok:false,reason:"module-inactive",lifecycle:life};
+  const gate=KT.getService("prerequisites")?.status?.(cid);
+  if(gate&&!gate.ok)return {ok:false,reason:"prerequisites-blocking",prerequisites:gate};
   const v=validationState(cid);
   if(defaults?.productionRollout?.requireValidatedLocalStateForPromotion!==false&&v.state!=="validated")return {ok:false,reason:"not-validated",validation:v};
   const maps=currentMappings(cid);if(!maps.length)return {ok:false,reason:"manifest-mapping-missing"};

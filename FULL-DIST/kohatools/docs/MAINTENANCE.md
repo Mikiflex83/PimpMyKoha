@@ -1,4 +1,4 @@
-# Maintenance — Pimp My Koha 3.43.2
+# Maintenance — Pimp My Koha 3.44.0-dev.1
 
 La V3.42 introduit un état de référence avant mise à jour, une comparaison après mise à jour, des diagnostics par module et une instrumentation légère des performances.
 

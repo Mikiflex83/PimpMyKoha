@@ -1,10 +1,10 @@
 (function(global){
 "use strict";
-if(global.__KohaToolsV3432Loaded)return;
-global.__KohaToolsV3432Loaded=true;
+if(global.__KohaToolsV3430Loaded)return;
+global.__KohaToolsV3430Loaded=true;
 global.__KohaToolsBootStarted=performance.now();
 
-const VERSION="3.43.2";
+const VERSION="3.44.0-dev.1";
 const BOOT=(global.KohaToolsBootstrap&&typeof global.KohaToolsBootstrap==="object")?global.KohaToolsBootstrap:{};
 const ROOT=String(BOOT.assetRoot||new URL("./",document.currentScript?.src||location.href).href).replace(/\/?$/,"/");
 const MANIFEST_URL=BOOT.manifestUrl||null,DEFAULTS_URL=BOOT.defaultsUrl||null;
@@ -94,7 +94,7 @@ function finishCandidateTelemetry(ctx,ok,error){
 async function boot(){
  loadCss(ROOT+"ui/koha-tools.css");loadCss(ROOT+"admin/panel.css");
  for(const f of [
-   "core/core.js","core/access-control.js","core/update-service.js","core/config-origin.js","core/maintenance.js","core/performance.js","core/discovery.js","core/installation-profile.js","core/compatibility.js","core/late-ready-compat.js","core/platform.js","core/storage.js","core/gateway.js","core/architecture-audit.js","core/config.js","core/prerequisites.js","core/koha-adapter.js","core/config-migrations.js","core/firebase-module.js","core/firestore.js","core/firestore-auth.js","core/firebase-budget.js","core/taxonomy.js","core/remote-config.js","core/production.js","core/lifecycle.js","core/canary.js","core/validation.js","core/testing-workspace.js","core/retirement-report.js","core/validation-dashboard.js","core/recipe.js","core/health.js",
+   "core/core.js","core/update-service.js","core/config-origin.js","core/maintenance.js","core/performance.js","core/discovery.js","core/installation-profile.js","core/compatibility.js","core/late-ready-compat.js","core/platform.js","core/storage.js","core/gateway.js","core/architecture-audit.js","core/config.js","core/prerequisites.js","core/koha-adapter.js","core/config-migrations.js","core/firebase-module.js","core/firestore.js","core/firestore-auth.js","core/firebase-budget.js","core/taxonomy.js","core/remote-config.js","core/production.js","core/lifecycle.js","core/canary.js","core/validation.js","core/testing-workspace.js","core/retirement-report.js","core/validation-dashboard.js","core/recipe.js","core/health.js",
    "core/dom.js","core/date.js","core/table.js","core/serials.js","core/cataloging-assistant.js","core/scope.js","core/targets.js","core/clipboard.js","core/actions.js","core/ui.js","core/assets.js","core/capabilities.js","core/observe.js","core/sidebar.js","core/home-layout.js","core/module-host.js","core/navigation.js",
    "admin/panel.js"
  ])await loadScript(ROOT+f);
@@ -102,7 +102,7 @@ async function boot(){
  const[manifest,productDefaults]=await Promise.all([getJson(MANIFEST_URL||"config/manifest.json"),getJson(DEFAULTS_URL||"config/product-defaults.json")]);
  const merge=(a,b)=>{if(Array.isArray(b))return b.slice();if(b&&typeof b==="object"){const o=(a&&typeof a==="object"&&!Array.isArray(a))?{...a}:{};for(const[k,v]of Object.entries(b))o[k]=merge(o[k],v);return o}return b===undefined?a:b};
  let profile={};const profileUrl=BOOT.profileUrl||((BOOT.installationId&&BOOT.autoLoadProfile!==false)?`profiles/${encodeURIComponent(BOOT.installationId)}.json`:"");if(profileUrl){try{profile=await getJson(profileUrl)}catch(e){KohaTools.record?.({module:"loader",level:"warn",kind:"profile-not-loaded",message:String(e?.message||e)})}}
- KohaTools.productDefaults=productDefaults;KohaTools.profile=profile||{};const defaults=merge(productDefaults,profile||{});defaults.installationId=BOOT.installationId||defaults.installationId||defaults.installation?.id||"";defaults.deployment=merge(defaults.deployment||{},{mode:BOOT.deploymentMode||defaults.deployment?.mode||"fresh-install"});KohaTools.deploymentMode=defaults.deployment.mode;KohaTools.profile=profile;KohaTools.Config.setDefaults(defaults);global.__KohaToolsManifest=manifest;global.__KohaToolsProductDefaults=productDefaults;
+ KohaTools.productDefaults=productDefaults;KohaTools.profile=profile||{};const defaults=merge(productDefaults,profile||{});defaults.installationId=BOOT.installationId||defaults.installationId||defaults.installation?.id||"";defaults.deployment=merge(defaults.deployment||{},{mode:BOOT.deploymentMode||defaults.deployment?.mode||"fresh-install"});KohaTools.deploymentMode=defaults.deployment.mode;KohaTools.profile=profile;global.__KohaToolsFreshInstallCertified={};if(KohaTools.deploymentMode==="fresh-install"){for(const m of (manifest.modules||[])){if(m?.freshInstall?.supported===true&&m?.freshInstall?.certified===true){const cid=defaults?.modules?.[m.id]?.config?.canonicalModule||m.canonicalModule;if(cid)global.__KohaToolsFreshInstallCertified[cid]=true}}}KohaTools.Config.setDefaults(defaults);global.__KohaToolsManifest=manifest;global.__KohaToolsProductDefaults=productDefaults;
  const access=KohaTools.getService("access-control");access?.init?.(defaults);
  if(access?.can?.("developer")&&access?.channel?.()==="dev"){try{await loadScript(ROOT+"dev/developer-tools.js")}catch(e){KohaTools.record?.({module:"loader",level:"warn",kind:"developer-tools-not-loaded",message:String(e?.message||e)})}}
  if(KohaTools.deploymentMode==="migration"){
@@ -129,9 +129,8 @@ async function boot(){
  const loaded=new Set();
  for(const mod of manifest.modules){
    const mode=KohaTools.Config.modeForManifestModule?KohaTools.Config.modeForManifestModule(mod.id):KohaTools.Config.mode(mod.id);
+   if(KohaTools.deploymentMode==="fresh-install"&&mod.freshInstall?.supported!==true)continue; if(!mod.nextModule||!["shadow","live"].includes(mode))continue;
    const moduleCfg=KohaTools.Config.getModule(mod.id)?.config||{},canonicalId=moduleCfg.canonicalModule,canonicalCfg=canonicalId?KohaTools.Config.getCanonical(canonicalId):null;
-   const freshCanary=KohaTools.deploymentMode==="fresh-install"&&canonicalId&&KohaTools.getService("canary")?.shouldRunLive?.(canonicalId)===true;
-   if(KohaTools.deploymentMode==="fresh-install"&&mod.freshInstall?.supported!==true&&!freshCanary)continue; if(!mod.nextModule||!["shadow","live"].includes(mode))continue;
    if(canonicalId&&!KohaTools.getService("access-control")?.moduleAllowed?.(canonicalId)){KohaTools.record?.({module:mod.id,level:"info",kind:"module-blocked-access",canonicalId});continue;}
    const effectiveScope=canonicalCfg?.general?.scope||moduleCfg.scope||mod.scope||{include:["*"]}; if(KohaTools.deploymentMode==="fresh-install"&&canonicalId){const gate=KohaTools.getService("prerequisites")?.status?.(canonicalId);if(gate&&!gate.ok){KohaTools.record?.({module:mod.id,level:"info",kind:"module-blocked-prerequisites",blocking:gate.blocking.map(x=>x.id)});continue;}}
    if(!scopeAllows(effectiveScope))continue;
@@ -172,5 +171,5 @@ async function boot(){
  global.__KohaToolsBootTelemetry={startedAtMs:global.__KohaToolsBootStarted,finishedAtMs:performance.now(),durationMs:Math.round((performance.now()-global.__KohaToolsBootStarted)*10)/10,at:new Date().toISOString()};KohaTools.emit("koha-tools:ready",{version:KohaTools.version});
  setTimeout(()=>KohaTools.getService("health")?.scanCurrentPage?.({passive:true}),1200);
 }
-boot().catch(e=>{document.documentElement.dataset.kohaToolsV3432BootError="1";console.error("KohaTools boot",e)});
+boot().catch(e=>{document.documentElement.dataset.kohaToolsV3430BootError="1";console.error("KohaTools boot",e)});
 })(window);

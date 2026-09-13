@@ -9,7 +9,7 @@ La distribution fournit notamment :
 - des applications métier intégrées à l'interface Koha ;
 - une configuration par defaults produit + profil d'installation + réglages administrateur ;
 - des prérequis guidés (SQL, Firebase, plugin, paramètres locaux) ;
-- une recette et un diagnostic après mise à jour de Koha ;
+- des tests et un diagnostic après mise à jour de Koha ;
 - un état de référence avant mise à jour et une comparaison ciblée après bascule ;
 - une santé et des prérequis visibles module par module ;
 - la provenance des réglages (produit / profil / installation / navigateur) ;
@@ -18,8 +18,8 @@ La distribution fournit notamment :
 - des rôles Pimp My Koha (`staff`, `manager`, `admin`, `developer`) sans création de droits serveur ;
 - trois canaux de distribution GitHub : **Stable / Canary / Dev** ;
 - un mode DEV explicitement réservé aux usernames Koha autorisés.
-- un assistant de première installation en 6 étapes ;
-- une recette ciblée après mise à jour et des budgets de performance non invasifs.
+- un assistant guidé de première installation ;
+- des tests ciblés après mise à jour et des budgets de performance non invasifs.
 
 > Pimp My Koha n'effectue aucune mise à jour silencieuse. L'établissement choisit explicitement la version utilisée.
 
@@ -30,7 +30,7 @@ La distribution fournit notamment :
 Cette méthode évite d'héberger soi-même les fichiers Pimp My Koha. Chaque release stable reste disponible sous une URL versionnée :
 
 ```text
-https://VOTRE-COMPTE.github.io/VOTRE-DEPOT/releases/3.43.2/
+https://VOTRE-COMPTE.github.io/VOTRE-DEPOT/releases/3.44.0/
 ```
 
 Dans `IntranetUserJS`, ajouter un bootstrap minimal :
@@ -43,7 +43,7 @@ window.KohaToolsBootstrap = {
 
 (function () {
   var s = document.createElement("script");
-  s.src = "https://VOTRE-COMPTE.github.io/VOTRE-DEPOT/releases/3.43.2/bootstrap.js";
+  s.src = "https://VOTRE-COMPTE.github.io/VOTRE-DEPOT/releases/3.44.0/bootstrap.js";
   s.async = false;
   document.head.appendChild(s);
 })();
@@ -51,7 +51,7 @@ window.KohaToolsBootstrap = {
 
 Le runtime détecte automatiquement le `latest.json` publié à la racine GitHub Pages et peut signaler qu'une nouvelle release est disponible.
 
-**Pour mettre à jour tous les postes**, remplacer uniquement le numéro de version dans l'URL de `IntranetUserJS`, par exemple `3.43.2` → `3.44.0`, après avoir lu la release et effectué la recette souhaitée.
+**Pour mettre à jour tous les postes**, remplacer uniquement le numéro de version dans l'URL de `IntranetUserJS`, vers la version validée, après avoir lu les changements et effectué les tests souhaités.
 
 Avantages :
 
@@ -125,10 +125,10 @@ Avant une release, modifier `release/release.json`. Une release `stable` utilise
 ## Stable / Canary / Dev
 
 - **Stable** : production, version explicitement épinglée recommandée ;
-- **Canary** : prérelease de recette ;
+- **Canary** : prérelease de validation ;
 - **Dev** : développement actif, accessible uniquement aux usernames déclarés développeurs.
 
-Le `channel-loader.js` est destiné surtout aux sandbox : si le compte connecté n'est pas autorisé pour le canal demandé, il retombe automatiquement sur Stable. Le Canary module local historique reste distinct du canal GitHub Canary.
+Le `channel-loader.js` est destiné surtout aux sandbox : si le compte connecté n'est pas autorisé pour le canal demandé, il retombe automatiquement sur Stable. Le test local d’un module reste distinct du canal GitHub Canary.
 
 Voir `FULL-DIST/kohatools/docs/ACCESS-CONTROL.md` et `FULL-DIST/kohatools/docs/CHANNELS.md`.
 
@@ -140,6 +140,6 @@ Le dépôt public ne doit contenir **aucun profil d'établissement réel**. Seul
 
 Voir [`LICENSE`](LICENSE).
 
-## Licence publique
+## Avant la première publication publique
 
-Pimp My Koha est distribué sous licence **MIT**. Voir [`LICENSE`](LICENSE) et la note [`docs/LICENCE-AVANT-PUBLICATION.md`](docs/LICENCE-AVANT-PUBLICATION.md). Les dépendances et services externes restent soumis à leurs propres licences et conditions.
+Le choix de licence du projet doit être validé par le propriétaire du dépôt. Voir [`docs/LICENCE-AVANT-PUBLICATION.md`](docs/LICENCE-AVANT-PUBLICATION.md). Le projet fournit un modèle MIT à titre de proposition, mais il n’est pas activé automatiquement.

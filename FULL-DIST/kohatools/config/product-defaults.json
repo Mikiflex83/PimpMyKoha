@@ -341,7 +341,7 @@
             "selectors": [
               "#holdings_table"
             ],
-            "minimumConfidence": 1.0
+            "minimumConfidence": 1
           },
           "headerLabelPreference": [
             "data-colname",
@@ -6529,7 +6529,7 @@
       "appearance": {}
     }
   },
-  "suiteVersion": "3.43.2",
+  "suiteVersion": "3.44.0-dev.1",
   "diagnostics": {
     "enabled": false,
     "showPanel": false,
@@ -6539,7 +6539,6 @@
     "allowLocalOverrides": true,
     "browserCanary": {
       "enabled": true,
-      "allowFreshInstallDeveloperTest": true,
       "storageKey": "KohaTools.browserCanary.v1",
       "requireReload": true,
       "safety": {
@@ -6597,7 +6596,7 @@
           "selectors": [
             "#holdings_table"
           ],
-          "minimumConfidence": 1.0
+          "minimumConfidence": 1
         },
         "columns": {
           "dateaccessioned": {
@@ -10418,7 +10417,7 @@
           "requireSelectors": []
         }
       },
-      "label": "KohaTools",
+      "label": "Pimp My Koha",
       "targets": {
         "userMenu": [
           "#michael-tools-menu .dropdown-menu",
@@ -13510,10 +13509,10 @@
       },
       "metrics": {
         "normalizePerItem": true,
-        "loanWeight": 1.0,
+        "loanWeight": 1,
         "renewalWeight": 0.35,
         "holdWeight": 0.5,
-        "agePenaltyPerYear": 0.0,
+        "agePenaltyPerYear": 0,
         "zeroLoanScore": 0
       },
       "domains": [
@@ -20342,23 +20341,23 @@
       },
       "calculation": {
         "frequencyDays": {
-          "6": 21,
-          "11": 365,
-          "18": 7,
-          "17": 15,
-          "8": 60,
           "1": 0.5,
-          "12": 730,
-          "4": 7,
-          "13": 365,
-          "7": 30,
-          "19": 120,
-          "5": 15,
           "2": 1,
-          "10": 180,
-          "16": 1095,
           "3": 21,
+          "4": 7,
+          "5": 15,
+          "6": 21,
+          "7": 30,
+          "8": 60,
           "9": 90,
+          "10": 180,
+          "11": 365,
+          "12": 730,
+          "13": 365,
+          "16": 1095,
+          "17": 15,
+          "18": 7,
+          "19": 120,
           "23": 7,
           "25": 121
         },
@@ -25208,7 +25207,16 @@
         "status": "active"
       },
       "configSchemaVersion": 1,
-      "prerequisites": []
+      "prerequisites": [],
+      "access": {
+        "audience": "staff",
+        "allowedUsernames": [],
+        "deniedUsernames": [],
+        "kohaAny": [
+          "tools",
+          "editcatalogue"
+        ]
+      }
     },
     "weeding": {
       "enabled": true,
@@ -25270,7 +25278,16 @@
           "configPath": "firebase.anonymousAuth",
           "statusProbe": "configured-value"
         }
-      ]
+      ],
+      "access": {
+        "audience": "staff",
+        "allowedUsernames": [],
+        "deniedUsernames": [],
+        "kohaAny": [
+          "tools",
+          "editcatalogue"
+        ]
+      }
     },
     "restoration": {
       "enabled": true,
@@ -25301,9 +25318,12 @@
           "datesId": 0
         },
         "patronCardnumber": "",
-        "undeletePluginRequired": true,
+        "undeletePluginRequired": false,
         "undeletePluginConfirmed": false,
-        "allowedUsernames": []
+        "allowedUsernames": [],
+        "restoreEngine": "auto",
+        "nativeRestoreMinKohaVersion": "26.05",
+        "undeletePluginCompatibilityFallback": true
       },
       "configSchemaVersion": 1,
       "prerequisites": [
@@ -25334,18 +25354,39 @@
           "label": "Carte lecteur technique",
           "instructions": "Renseigner la carte du compte technique utilisé par le workflow de restauration.",
           "configPath": "installation.patronCardnumber",
-          "statusProbe": "configured-value"
+          "statusProbe": "configured-value",
+          "blockingScope": "capability",
+          "capabilities": [
+            "issue",
+            "return",
+            "pipeline"
+          ]
         },
         {
           "id": "undelete-plugin",
           "type": "koha-plugin",
           "required": true,
           "label": "Plugin UndeleteRecords",
-          "instructions": "Installer et tester le plugin Koha UndeleteRecords avant activation.",
+          "instructions": "Koha < 26.05 uniquement : installer et tester le plugin Koha UndeleteRecords pour autoriser l’action Restaurer. Koha 26.05+ utilise l’API REST native.",
           "configPath": "installation.undeletePluginConfirmed",
-          "statusProbe": "configured-value"
+          "statusProbe": "configured-value",
+          "blockingScope": "capability",
+          "capabilities": [
+            "restore",
+            "pipeline"
+          ],
+          "maxKohaVersionExclusive": "26.05",
+          "versionUnknownPolicy": "apply"
         }
-      ]
+      ],
+      "access": {
+        "audience": "staff",
+        "allowedUsernames": [],
+        "deniedUsernames": [],
+        "kohaAll": [
+          "editcatalogue"
+        ]
+      }
     },
     "patron-map": {
       "enabled": false,
@@ -25410,7 +25451,16 @@
           "configPath": "installation.privacy.approved",
           "statusProbe": "configured-value"
         }
-      ]
+      ],
+      "access": {
+        "audience": "staff",
+        "allowedUsernames": [],
+        "deniedUsernames": [],
+        "kohaAll": [
+          "borrowers",
+          "reports"
+        ]
+      }
     },
     "rdv-sondages": {
       "enabled": true,
@@ -25515,7 +25565,12 @@
         "status": "active"
       },
       "configSchemaVersion": 1,
-      "prerequisites": []
+      "prerequisites": [],
+      "access": {
+        "audience": "staff",
+        "allowedUsernames": [],
+        "deniedUsernames": []
+      }
     },
     "quality-authorities": {
       "enabled": true,
@@ -25596,7 +25651,15 @@
           "statusProbe": "firebase-config",
           "rulesSource": "prerequisites/firebase/quality-firestore.rules"
         }
-      ]
+      ],
+      "access": {
+        "audience": "staff",
+        "allowedUsernames": [],
+        "deniedUsernames": [],
+        "kohaAll": [
+          "editcatalogue"
+        ]
+      }
     },
     "quality-reservations": {
       "enabled": true,
@@ -25649,7 +25712,15 @@
           "statusProbe": "firebase-config",
           "rulesSource": "prerequisites/firebase/quality-firestore.rules"
         }
-      ]
+      ],
+      "access": {
+        "audience": "staff",
+        "allowedUsernames": [],
+        "deniedUsernames": [],
+        "kohaAll": [
+          "circulate"
+        ]
+      }
     },
     "quality-loans": {
       "enabled": true,
@@ -25702,7 +25773,15 @@
           "statusProbe": "firebase-config",
           "rulesSource": "prerequisites/firebase/quality-firestore.rules"
         }
-      ]
+      ],
+      "access": {
+        "audience": "staff",
+        "allowedUsernames": [],
+        "deniedUsernames": [],
+        "kohaAll": [
+          "circulate"
+        ]
+      }
     },
     "quality-transfers": {
       "enabled": true,
@@ -25771,7 +25850,15 @@
           "statusProbe": "firebase-config",
           "rulesSource": "prerequisites/firebase/quality-firestore.rules"
         }
-      ]
+      ],
+      "access": {
+        "audience": "staff",
+        "allowedUsernames": [],
+        "deniedUsernames": [],
+        "kohaAll": [
+          "circulate"
+        ]
+      }
     },
     "quality-items": {
       "enabled": true,
@@ -25824,7 +25911,15 @@
           "statusProbe": "firebase-config",
           "rulesSource": "prerequisites/firebase/quality-firestore.rules"
         }
-      ]
+      ],
+      "access": {
+        "audience": "staff",
+        "allowedUsernames": [],
+        "deniedUsernames": [],
+        "kohaAll": [
+          "editcatalogue"
+        ]
+      }
     },
     "quality-biblios": {
       "enabled": true,
@@ -25893,7 +25988,15 @@
           "statusProbe": "firebase-config",
           "rulesSource": "prerequisites/firebase/quality-firestore.rules"
         }
-      ]
+      ],
+      "access": {
+        "audience": "staff",
+        "allowedUsernames": [],
+        "deniedUsernames": [],
+        "kohaAll": [
+          "editcatalogue"
+        ]
+      }
     },
     "quality-serials": {
       "enabled": true,
@@ -25962,7 +26065,15 @@
           "statusProbe": "firebase-config",
           "rulesSource": "prerequisites/firebase/quality-firestore.rules"
         }
-      ]
+      ],
+      "access": {
+        "audience": "staff",
+        "allowedUsernames": [],
+        "deniedUsernames": [],
+        "kohaAll": [
+          "serials"
+        ]
+      }
     },
     "quality-patrons": {
       "enabled": true,
@@ -26015,7 +26126,15 @@
           "statusProbe": "firebase-config",
           "rulesSource": "prerequisites/firebase/quality-firestore.rules"
         }
-      ]
+      ],
+      "access": {
+        "audience": "staff",
+        "allowedUsernames": [],
+        "deniedUsernames": [],
+        "kohaAll": [
+          "borrowers"
+        ]
+      }
     },
     "quality-rule-lab": {
       "enabled": true,
@@ -26052,7 +26171,12 @@
           "statusProbe": "firebase-config",
           "rulesSource": "prerequisites/firebase/quality-firestore.rules"
         }
-      ]
+      ],
+      "access": {
+        "audience": "admin",
+        "allowedUsernames": [],
+        "deniedUsernames": []
+      }
     },
     "planning-navette-mediabus": {
       "enabled": true,
@@ -26434,7 +26558,15 @@
           "configPath": "installation.loaderUrl",
           "statusProbe": "configured-value"
         }
-      ]
+      ],
+      "access": {
+        "audience": "staff",
+        "allowedUsernames": [],
+        "deniedUsernames": [],
+        "kohaAll": [
+          "reports"
+        ]
+      }
     },
     "user-menu-manager": {
       "enabled": true,
@@ -26529,7 +26661,12 @@
         ]
       },
       "configSchemaVersion": 1,
-      "prerequisites": []
+      "prerequisites": [],
+      "access": {
+        "audience": "admin",
+        "allowedUsernames": [],
+        "deniedUsernames": []
+      }
     },
     "intranet-nav-manager": {
       "enabled": true,
@@ -26572,7 +26709,12 @@
         ]
       },
       "configSchemaVersion": 1,
-      "prerequisites": []
+      "prerequisites": [],
+      "access": {
+        "audience": "admin",
+        "allowedUsernames": [],
+        "deniedUsernames": []
+      }
     },
     "home-layout-manager": {
       "enabled": true,
@@ -26609,7 +26751,12 @@
         "adoptLegacy": true
       },
       "configSchemaVersion": 1,
-      "prerequisites": []
+      "prerequisites": [],
+      "access": {
+        "audience": "admin",
+        "allowedUsernames": [],
+        "deniedUsernames": []
+      }
     },
     "tracking-journal": {
       "enabled": true,
@@ -26740,7 +26887,8 @@
         "audience": "admin",
         "allowedUsernames": [],
         "deniedUsernames": []
-      }
+      },
+      "freshInstallCore": true
     }
   },
   "remoteConfig": {
@@ -26871,7 +27019,8 @@
       "archived"
     ],
     "protectedCanonicalIds": [
-      "core-date-compat"
+      "core-date-compat",
+      "admin-console-launcher"
     ],
     "note": "Désactivation et archivage globaux, réversibles. Les modules en production doivent être rollbackés avant."
   },
@@ -26902,6 +27051,25 @@
       "recipe"
     ],
     "globalFieldLabels": {
+      "1": "1",
+      "2": "2",
+      "3": "3",
+      "4": "4",
+      "5": "5",
+      "6": "6",
+      "7": "7",
+      "8": "8",
+      "9": "9",
+      "10": "10",
+      "11": "11",
+      "12": "12",
+      "13": "13",
+      "16": "16",
+      "17": "17",
+      "18": "18",
+      "19": "19",
+      "23": "23",
+      "25": "25",
       "enabled": "Activé",
       "mode": "Mode d’exécution",
       "scope": "Pages d’application",
@@ -27083,31 +27251,12 @@
       "090_positionnement_couvertures_js": "Script 090 — positionnement des couvertures",
       "096_result_and_detail_image_placement_js": "Script 096 — placement des images dans les résultats et la notice",
       "097_extract_tree_content_page_114_js": "Script 097 — extraire le contenu de l’arborescence de la page 114",
-      "1": "1",
-      "10": "10",
       "106_scroll_buttons_js": "Script 106 — boutons haut/bas de page",
-      "11": "11",
       "111_internal_share_js": "Script 111 — partage interne",
       "112_responsive_js": "Script 112 — adaptation responsive",
       "116_chrono_messages_js": "Script 116 — chronologie des messages lecteur",
-      "12": "12",
       "121_placement_couv_js": "Script 121 — placement des couvertures",
       "126_masquer_btn_suggestion_js": "Script 126 — masquer le bouton de suggestion",
-      "13": "13",
-      "16": "16",
-      "17": "17",
-      "18": "18",
-      "19": "19",
-      "2": "2",
-      "23": "23",
-      "25": "25",
-      "3": "3",
-      "4": "4",
-      "5": "5",
-      "6": "6",
-      "7": "7",
-      "8": "8",
-      "9": "9",
       "AS": "AS",
       "Accueil Outils": "Accueil Outils",
       "Accès aux fichiers": "Accès aux fichiers",
@@ -28581,8 +28730,8 @@
         "fieldHelp": {}
       },
       "admin-console-launcher": {
-        "title": "Accès à la console KohaTools",
-        "userDescription": "Ajoute l'accès à la console de configuration KohaTools dans le menu utilisateur.",
+        "title": "Accès à Pimp My Koha",
+        "userDescription": "Ajoute l’accès à l’administration de Pimp My Koha pour les comptes autorisés.",
         "reviewStatus": "pending-user",
         "reviewBadge": "MÉTIER · À VÉRIFIER",
         "reviewVersion": "3.33.0",
@@ -30492,163 +30641,163 @@
         "title": "Arborescence des collections",
         "userDescription": "Accessible directement depuis KohaTools ; aucune page ou annonce Koha à créer manuellement.",
         "reviewStatus": "pending-user",
-        "reviewBadge": "MODULE NATIF · À RECETTER"
+        "reviewBadge": "À TESTER AVANT DIFFUSION"
       },
       "inventory": {
         "title": "Inventaire autonome",
         "userDescription": "Accessible directement depuis KohaTools ; aucune page ou annonce Koha à créer manuellement.",
         "reviewStatus": "pending-user",
-        "reviewBadge": "MODULE NATIF · À RECETTER"
+        "reviewBadge": "À TESTER AVANT DIFFUSION"
       },
       "weeding": {
         "title": "Désherbage",
         "userDescription": "Accessible directement depuis KohaTools ; aucune page ou annonce Koha à créer manuellement.",
         "reviewStatus": "pending-user",
-        "reviewBadge": "MODULE NATIF · À RECETTER"
+        "reviewBadge": "À TESTER AVANT DIFFUSION"
       },
       "restoration": {
         "title": "Restauration de documents",
         "userDescription": "Accessible directement depuis KohaTools ; aucune page ou annonce Koha à créer manuellement.",
         "reviewStatus": "pending-user",
-        "reviewBadge": "MODULE NATIF · À RECETTER"
+        "reviewBadge": "À TESTER AVANT DIFFUSION"
       },
       "patron-map": {
         "title": "Cartographie des adhérents",
         "userDescription": "Accessible directement depuis KohaTools ; aucune page ou annonce Koha à créer manuellement.",
         "reviewStatus": "pending-user",
-        "reviewBadge": "MODULE NATIF · À RECETTER"
+        "reviewBadge": "À TESTER AVANT DIFFUSION"
       },
       "rdv-sondages": {
         "title": "RDV & sondages",
         "userDescription": "Application RDV & sondages avec sa page et son widget d’accueil, sans page Koha à créer.",
         "reviewStatus": "pending-user",
-        "reviewBadge": "MODULE NATIF · À RECETTER"
+        "reviewBadge": "À TESTER AVANT DIFFUSION"
       },
       "quality-center": {
         "title": "Centre qualité Koha",
         "userDescription": "Centre qualité et ses sous-modules accessibles comme de vraies pages KohaTools.",
         "reviewStatus": "pending-user",
-        "reviewBadge": "MODULE NATIF · À RECETTER"
+        "reviewBadge": "À TESTER AVANT DIFFUSION"
       },
       "quality-authorities": {
         "title": "Qualité · Autorités",
         "userDescription": "Accessible directement depuis KohaTools ; aucune page ou annonce Koha à créer manuellement.",
         "reviewStatus": "pending-user",
-        "reviewBadge": "MODULE NATIF · À RECETTER"
+        "reviewBadge": "À TESTER AVANT DIFFUSION"
       },
       "quality-reservations": {
         "title": "Qualité · Réservations",
         "userDescription": "Accessible directement depuis KohaTools ; aucune page ou annonce Koha à créer manuellement.",
         "reviewStatus": "pending-user",
-        "reviewBadge": "MODULE NATIF · À RECETTER"
+        "reviewBadge": "À TESTER AVANT DIFFUSION"
       },
       "quality-loans": {
         "title": "Qualité · Prêts & litiges",
         "userDescription": "Accessible directement depuis KohaTools ; aucune page ou annonce Koha à créer manuellement.",
         "reviewStatus": "pending-user",
-        "reviewBadge": "MODULE NATIF · À RECETTER"
+        "reviewBadge": "À TESTER AVANT DIFFUSION"
       },
       "quality-transfers": {
         "title": "Qualité · Transferts / navette",
         "userDescription": "Accessible directement depuis KohaTools ; aucune page ou annonce Koha à créer manuellement.",
         "reviewStatus": "pending-user",
-        "reviewBadge": "MODULE NATIF · À RECETTER"
+        "reviewBadge": "À TESTER AVANT DIFFUSION"
       },
       "quality-items": {
         "title": "Qualité · Exemplaires",
         "userDescription": "Accessible directement depuis KohaTools ; aucune page ou annonce Koha à créer manuellement.",
         "reviewStatus": "pending-user",
-        "reviewBadge": "MODULE NATIF · À RECETTER"
+        "reviewBadge": "À TESTER AVANT DIFFUSION"
       },
       "quality-biblios": {
         "title": "Qualité · Notices",
         "userDescription": "Accessible directement depuis KohaTools ; aucune page ou annonce Koha à créer manuellement.",
         "reviewStatus": "pending-user",
-        "reviewBadge": "MODULE NATIF · À RECETTER"
+        "reviewBadge": "À TESTER AVANT DIFFUSION"
       },
       "quality-serials": {
         "title": "Qualité · Périodiques",
         "userDescription": "Accessible directement depuis KohaTools ; aucune page ou annonce Koha à créer manuellement.",
         "reviewStatus": "pending-user",
-        "reviewBadge": "MODULE NATIF · À RECETTER"
+        "reviewBadge": "À TESTER AVANT DIFFUSION"
       },
       "quality-patrons": {
         "title": "Qualité · Lecteurs",
         "userDescription": "Accessible directement depuis KohaTools ; aucune page ou annonce Koha à créer manuellement.",
         "reviewStatus": "pending-user",
-        "reviewBadge": "MODULE NATIF · À RECETTER"
+        "reviewBadge": "À TESTER AVANT DIFFUSION"
       },
       "quality-rule-lab": {
         "title": "Qualité · Laboratoire des règles",
         "userDescription": "Accessible directement depuis KohaTools ; aucune page ou annonce Koha à créer manuellement.",
         "reviewStatus": "pending-user",
-        "reviewBadge": "MODULE NATIF · À RECETTER"
+        "reviewBadge": "À TESTER AVANT DIFFUSION"
       },
       "planning-navette-mediabus": {
         "title": "Planning Navette + Médiabus",
         "userDescription": "Accessible directement depuis KohaTools ; aucune page ou annonce Koha à créer manuellement.",
         "reviewStatus": "pending-user",
-        "reviewBadge": "MODULE NATIF · À RECETTER"
+        "reviewBadge": "À TESTER AVANT DIFFUSION"
       },
       "attendance-frequency": {
         "title": "Compteur de fréquentation",
         "userDescription": "Accessible directement depuis KohaTools ; aucune page ou annonce Koha à créer manuellement.",
         "reviewStatus": "pending-user",
-        "reviewBadge": "MODULE NATIF · À RECETTER"
+        "reviewBadge": "À TESTER AVANT DIFFUSION"
       },
       "emergency-assistance": {
         "title": "Alerte d’urgence / assistance",
         "userDescription": "Accessible directement depuis KohaTools ; aucune page ou annonce Koha à créer manuellement.",
         "reviewStatus": "pending-user",
-        "reviewBadge": "MODULE NATIF · À RECETTER"
+        "reviewBadge": "À TESTER AVANT DIFFUSION"
       },
       "home-seven-days": {
         "title": "Ces 7 derniers jours",
         "userDescription": "Bloc « Ces 7 derniers jours » provenant d’une annonce Koha, désormais géré comme module.",
         "reviewStatus": "pending-user",
-        "reviewBadge": "MODULE NATIF · À RECETTER"
+        "reviewBadge": "À TESTER AVANT DIFFUSION"
       },
       "home-comptage": {
         "title": "Comptage accueil",
         "userDescription": "Bloc Comptage provenant d’une annonce Koha, désormais géré comme module.",
         "reviewStatus": "pending-user",
-        "reviewBadge": "MODULE NATIF · À RECETTER"
+        "reviewBadge": "À TESTER AVANT DIFFUSION"
       },
       "home-shortcuts-menu": {
         "title": "Menu de raccourcis accueil",
         "userDescription": "Ancien menu placé dans une annonce Koha, désormais encapsulé comme module d’accueil.",
         "reviewStatus": "pending-user",
-        "reviewBadge": "MODULE NATIF · À RECETTER"
+        "reviewBadge": "À TESTER AVANT DIFFUSION"
       },
       "dashboard-analytics": {
         "title": "Tableau de bord analytique",
         "userDescription": "Accessible directement depuis KohaTools ; aucune page ou annonce Koha à créer manuellement.",
         "reviewStatus": "pending-user",
-        "reviewBadge": "MODULE NATIF · À RECETTER"
+        "reviewBadge": "À TESTER AVANT DIFFUSION"
       },
       "user-menu-manager": {
         "title": "Menu utilisateur Koha",
         "userDescription": "Crée simplement « Mes outils » et ses sous-menus directement dans le menu utilisateur natif de Koha.",
         "reviewStatus": "pending-user",
-        "reviewBadge": "MODULE NATIF · À RECETTER"
+        "reviewBadge": "À TESTER AVANT DIFFUSION"
       },
       "intranet-nav-manager": {
-        "title": "Menu IntranetNav",
-        "userDescription": "Crée les entrées, menus et sous-menus d’IntranetNav sans écrire de HTML ou JavaScript.",
+        "title": "Menu principal Koha",
+        "userDescription": "Crée les entrées, menus et sous-menus du menu principal de Koha sans écrire de HTML ou JavaScript.",
         "reviewStatus": "pending-user",
-        "reviewBadge": "MODULE NATIF · À RECETTER"
+        "reviewBadge": "À TESTER AVANT DIFFUSION"
       },
       "home-layout-manager": {
         "title": "Accueil & annonces",
         "userDescription": "Réorganise par glisser-déposer les widgets et anciennes annonces de l’accueil Koha, avec visibilité indépendante de l’activation du module.",
         "reviewStatus": "pending-user",
-        "reviewBadge": "MODULE NATIF · À RECETTER"
+        "reviewBadge": "À TESTER AVANT DIFFUSION"
       },
       "tracking-journal": {
         "title": "Journal de suivi",
         "userDescription": "Journal partagé du journal de suivi intégré directement à KohaTools ; l’ancienne page 119 n’est plus requise.",
         "reviewStatus": "pending-user",
-        "reviewBadge": "MODULE NATIF · À RECETTER"
+        "reviewBadge": "À TESTER AVANT DIFFUSION"
       }
     },
     "uxPrinciples": {

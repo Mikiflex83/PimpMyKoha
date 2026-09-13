@@ -22,4 +22,4 @@ Le FULL-DIST ne contient pas de dossier `vendor` : les dépendances ci-dessous s
 - Pour une diffusion institutionnelle avec CSP stricte, autoriser uniquement les origines réellement utilisées ou auto-héberger la bibliothèque concernée.
 - Les versions explicitement épinglées dans le code doivent le rester lors d'une mise à jour. Les rares URL non épinglées (notamment Chart.js / adaptateur) sont à figer lors d'un futur chantier de supply-chain, sans modifier le fonctionnement métier.
 - Les clés Firebase Web ne sont pas des secrets d'administration. La sécurité repose sur Firebase Authentication et les Security Rules fournies dans `prerequisites/firebase/`.
-- Le code propre à Pimp My Koha est distribué sous licence MIT. Cette licence ne remplace ni les licences ni les conditions d’utilisation des dépendances et services externes listés ci-dessus.
+- La redistribution publique de KohaTools reste soumise à la validation de la licence du projet et des licences de ces dépendances.

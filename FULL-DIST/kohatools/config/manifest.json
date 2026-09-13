@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "suiteVersion": "3.43.2",
+  "suiteVersion": "3.44.0-dev.1",
   "baseUrl": "",
   "policy": {
     "defaultEnabled": true,
@@ -8585,7 +8585,7 @@
       "optionalDependencies": [
         "navigation"
       ],
-      "migrationStatus": "native-application-v3.43.2",
+      "migrationStatus": "native-application-v3.43.0",
       "notes": "Ancienne page 119 intégrée et généricisée : plusieurs journaux, backend Firestore configurable par installation, avec conservation du fonds patrimonial configuré.",
       "mode": "live",
       "shadowCapable": false,

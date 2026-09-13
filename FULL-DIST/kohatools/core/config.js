@@ -56,7 +56,17 @@
       let result = this.getCanonicalPersistent(moduleId, true);
       const life=String(result?.lifecycle?.status||"active").toLowerCase();
       if(result?.enabled===false||["disabled","retired","archived"].includes(life))return deepMerge(result,{enabled:false,mode:"off"});
-      if (result?.nativeApplication === true) { const gate=KT.getService("prerequisites")?.status?.(moduleId); if(global.KohaTools?.deploymentMode==="fresh-install"&&gate&&!gate.ok)return deepMerge(result,{enabled:true,mode:"blocked",blockedByPrerequisites:gate.blocking}); return deepMerge(result,{enabled:true,mode:"live"}); }
+      if (result?.nativeApplication === true) {
+        const gate=KT.getService("prerequisites")?.status?.(moduleId);
+        if(global.KohaTools?.deploymentMode==="fresh-install"){
+          if(gate&&!gate.ok)return deepMerge(result,{enabled:true,mode:"blocked",blockedByPrerequisites:gate.blocking});
+          if(result?.freshInstallCore===true)return deepMerge(result,{enabled:true,mode:"live",freshInstallCore:true});
+          if(global.__KohaToolsFreshInstallCertified?.[moduleId]===true)return deepMerge(result,{enabled:true,mode:"live",freshInstallCertified:true});
+          return deepMerge(result,{enabled:true,mode:"blocked",blockedByCertification:true});
+        }
+        return deepMerge(result,{enabled:true,mode:"live"});
+      }
+      if(global.KohaTools?.deploymentMode==="fresh-install"&&global.__KohaToolsFreshInstallCertified?.[moduleId]===true){const gate=KT.getService("prerequisites")?.status?.(moduleId);if(gate&&!gate.ok)return deepMerge(result,{enabled:true,mode:"blocked",blockedByPrerequisites:gate.blocking});return deepMerge(result,{enabled:true,mode:"live",freshInstallCertified:true});}
       const production = KT.getService?.("production");
       if (production?.isSuppressed?.(moduleId)) return deepMerge(result,{enabled:false,mode:"off"});
       if (production?.isLive(moduleId)) return deepMerge(result,{enabled:true,mode:"live"});

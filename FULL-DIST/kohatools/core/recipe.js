@@ -37,7 +37,8 @@ function scopeKind(scope){
 function canonicalOf(m){return defaults?.modules?.[m.id]?.config?.canonicalModule||null}
 function canonicalCfg(cid){return KT.Config?.getCanonical?.(cid)||defaults?.canonicalModules?.[cid]||{}}
 function allMappings(cid){return (manifest?.modules||[]).filter(m=>canonicalOf(m)===cid)}
-function isRecipeModule(cid){return defaults?.moduleUi?.modules?.[cid]?.reviewStatus==="pending-user"&&!!defaults?.canonicalModules?.[cid]?.recipe}
+function isNativeApplication(cid){return defaults?.canonicalModules?.[cid]?.nativeApplication===true||allMappings(cid).some(m=>m.applicationModule===true)}
+function isRecipeModule(cid){return defaults?.moduleUi?.modules?.[cid]?.reviewStatus==="pending-user"&&(!!defaults?.canonicalModules?.[cid]?.recipe||isNativeApplication(cid))}
 function mappings(cid){return allMappings(cid).filter(m=>!!m.nextModule||!!m.legacyFile)}
 function productionMappings(cid){return allMappings(cid).filter(m=>m.production20260911==="active"||m.production20260911==="production-addition")}
 function uniqueCanonical(){
@@ -112,7 +113,12 @@ const TARGET_ROUTES={
  "page.pl":{direct:"/cgi-bin/koha/tools/page.pl"}
 };
 function basenameFromUrl(url){try{return new URL(url,location.href).pathname.split("/").filter(Boolean).pop()||""}catch(_){return ""}}
-function configuredRecipe(cid){return defaults?.canonicalModules?.[cid]?.recipe||canonicalCfg(cid)?.recipe||null}
+function configuredRecipe(cid){
+ const explicit=defaults?.canonicalModules?.[cid]?.recipe||canonicalCfg(cid)?.recipe||null;if(explicit)return explicit;
+ if(!isNativeApplication(cid))return null;
+ const title=defaults?.moduleUi?.modules?.[cid]?.title||allMappings(cid)[0]?.title||cid,host=KT.getService("module-host");
+ return {revision:"native-application-v1",configContractVerifiedAtBuild:true,manualValidationRequired:true,targets:[{page:"__pimp_my_koha_app__",preferredUrl:host?.url?.(cid)||null,label:`Ouvrir ${title}`}],exerciseSteps:[{label:"Ouvrir l’outil et exercer sa fonction principale sur un cas réel."}],qualityChecks:[{label:"Vérifier que les libellés et actions sont compréhensibles pour l’utilisateur concerné."}]};
+}
 function realLinkForPage(page,query){
  const cur=pageName();if(page==="*"||page===cur){
    if(!query||Object.entries(query).every(([k,v])=>{const a=new URLSearchParams(location.search).get(k);return Array.isArray(v)?v.map(String).includes(String(a)):v===null?new URLSearchParams(location.search).has(k):String(a)===String(v)}))return location.href;
@@ -152,6 +158,10 @@ function fingerprint(cid){
  return tinyHash(stableStringify({recipeRevision:rec.revision||null,mappingHash:boot?.mappingHash||null,maps,config:clean}));
 }
 function testability(cid){
+ const gate=KT.getService("prerequisites")?.status?.(cid);
+ if(gate&&!gate.ok)return {ok:false,mode:"unavailable",reason:"prerequisites-blocking",blocking:gate.blocking};
+ if(KT.getService("access-control")?.moduleAllowed?.(cid)===false)return {ok:false,mode:"unavailable",reason:"access-denied"};
+ if(isNativeApplication(cid))return {ok:true,mode:"direct",reason:"native-application-direct-test"};
  if(KT.getService("production")?.isLive?.(cid))return {ok:true,mode:"production",reason:"already-production"};
  const e=KT.getService("canary")?.eligible(cid)||{ok:false,reason:"canary-service-missing"};
  return {...e,mode:e.ok?"canary":"unavailable"};
@@ -375,8 +385,8 @@ function commonChecks(cid){
  const scope=cfg?.general?.scope||{};
  checks.push(mkCheck("page-scope",scopeAllows(scope)?"pass":"fail",scopeAllows(scope)?"Page conforme au périmètre":"Page hors périmètre",pageName(),true));
  const rt=KT.modules?.get?.(cid),tele=telemetry(cid),candidateOk=!!rt||tele.loadOk===true;
- checks.push(mkCheck("candidate-loaded",candidateOk?"pass":"fail",candidateOk?"Candidate KohaTools chargée":"Candidate KohaTools absente",rt?`${cid} · runtime canonique enregistré`:(tele.loadOk?`${cid} · script candidat chargé (module direct)`:"La candidate n’est pas chargée."),true));
- checks.push(mkCheck("configuration-loaded",cfg&&typeof cfg==="object"?"pass":"fail",cfg&&typeof cfg==="object"?"Configuration chargée":"Configuration indisponible",rec.configContractVerifiedAtBuild===true?"La candidate lit la configuration canonique KohaTools.":"Contrat de configuration à vérifier.",true));
+ checks.push(mkCheck("candidate-loaded",candidateOk?"pass":"fail",candidateOk?"Module Pimp My Koha chargé":"Module Pimp My Koha absent",rt?`${cid} · module enregistré`:(tele.loadOk?`${cid} · nouvelle version chargée`:"Le module n’est pas chargé."),true));
+ checks.push(mkCheck("configuration-loaded",cfg&&typeof cfg==="object"?"pass":"fail",cfg&&typeof cfg==="object"?"Configuration chargée":"Configuration indisponible",rec.configContractVerifiedAtBuild===true?"Le module utilise la configuration prévue par Pimp My Koha.":"Configuration à vérifier.",true));
  const req=scope.requireSelectors||[],missing=[];for(const sel of req){try{if(!document.querySelector(sel))missing.push(sel)}catch(_){missing.push(sel)}}
  checks.push(mkCheck("required-selectors",missing.length?"fail":"pass",missing.length?"Éléments Koha requis absents":"Éléments Koha requis présents",missing.join(", ")||`${req.length} sélecteur(s) obligatoire(s)`,true));
  const errs=errDiagnostics(cid);checks.push(mkCheck("diagnostics",errs.length?"fail":"pass",errs.length?"Erreur JavaScript détectée":"Aucune erreur JavaScript détectée",errs.slice(-3).map(x=>x.kind||x.message||"error").join(", "),true));
@@ -404,9 +414,9 @@ function testSpecific(cid){
  const exerciseSteps=(rec.exerciseSteps||rec.manualChecks||[]).map(x=>typeof x==="string"?{label:x}:({...x}));
  const qualityChecks=(rec.qualityChecks||[]).map(x=>typeof x==="string"?{label:x}:({...x}));
  const proofLevel=b.proofLevel||"none",evidenceState=b.evidenceState||(b.status==="pass"?"proven":"case-not-exercised");
- const status=blockingFail?"fail":b.status==="pass"?"pass":"warn";
- const detail=blockingFail?"Une preuve automatique a échoué.":status==="pass"?`Preuve ${proofLevel==="strong"?"forte":"technique"} obtenue automatiquement.`:evidenceState==="action-needed"?"Une action métier est nécessaire pour exercer le comportement ; aucun contrôle visuel générique n’est demandé.":"Le cas nécessaire à la preuve n’est pas présent sur cette page.";
- return {canonicalId:cid,status,label:blockingFail?"Contrôle automatique en échec":`${passCount}/${autoCount} contrôles automatiques réussis`,detail,manual:false,humanRequired:false,at:new Date().toISOString(),checks,exerciseSteps,qualityChecks,manualChecks:[],targets:targetLinks(cid),recipeRevision:rec.revision||null,fingerprint:fingerprint(cid),kohaVersion:currentKohaVersion(),suiteVersion:KT.version,proofLevel,evidenceState,proofType:b.proofType||null};
+ const status=blockingFail?"fail":b.status==="pass"?"pass":"warn",humanRequired=rec.manualValidationRequired===true;
+ const detail=blockingFail?"Une preuve automatique a échoué.":humanRequired?"Une vérification métier est demandée avant validation.":status==="pass"?`Preuve ${proofLevel==="strong"?"forte":"technique"} obtenue automatiquement.`:evidenceState==="action-needed"?"Une action métier est nécessaire pour exercer le comportement ; aucun contrôle visuel générique n’est demandé.":"Le cas nécessaire à la preuve n’est pas présent sur cette page.";
+ return {canonicalId:cid,status,label:blockingFail?"Contrôle automatique en échec":humanRequired?"Vérification métier requise":`${passCount}/${autoCount} contrôles automatiques réussis`,detail,manual:false,humanRequired,at:new Date().toISOString(),checks,exerciseSteps,qualityChecks,manualChecks:[],targets:targetLinks(cid),recipeRevision:rec.revision||null,fingerprint:fingerprint(cid),kohaVersion:currentKohaVersion(),suiteVersion:KT.version,proofLevel,evidenceState,proofType:b.proofType||null};
 }
 function testOne(cid){return testSpecific(cid)}
 
@@ -465,13 +475,15 @@ function validatePassed(){
   return {ok:true,count};
 }
 function activateMany(ids){
-  const C=KT.getService("canary"),activated=[],ready=[],production=[],errors=[];
+  const C=KT.getService("canary"),activated=[],ready=[],production=[],direct=[],errors=[];
   for(const id of ids){
-    if(KT.getService("production")?.isLive?.(id)){ready.push(id);production.push(id);continue}
+    const tb=testability(id);
+    if(tb.ok&&tb.mode==="direct"){ready.push(id);direct.push(id);continue}
+    if(tb.ok&&tb.mode==="production"){ready.push(id);production.push(id);continue}
     const r=C?.activate(id);
-    if(r?.ok){activated.push(id);ready.push(id)} else errors.push({id,reason:r?.reason||"error"});
+    if(r?.ok){activated.push(id);ready.push(id)} else errors.push({id,reason:r?.reason||tb.reason||"error"});
   }
-  return {activated,ready,production,errors};
+  return {activated,ready,production,direct,errors};
 }
 function deactivateMany(ids){
   const C=KT.getService("canary");for(const id of ids||[])C?.deactivate(id);return true;
@@ -484,15 +496,27 @@ async function startQuick(ids){
   if(!a.activated.length){const rr=run(a.ready);runState.phase="tested";runState.results=rr.results;runState.testedAt=new Date().toISOString();write(RUN_KEY,runState);await KT.getService("testing-workspace")?.saveRun?.(runState);return {ok:true,reloadRequired:false,results:rr.results,state:runState}}
   return {ok:true,reloadRequired:true,...runState};
 }
+async function persistSequentialResult(state,r){
+ state.results.push(r);await KT.getService("testing-workspace")?.saveResult?.(r,{pageKey:KT.getService("testing-workspace")?.pageKey?.()||location.pathname,url:location.href,page:pageName()});
+}
+async function prepareSequentialStep(state){
+ const C=KT.getService("canary");
+ while(state.index<state.ids.length){
+   const id=state.ids[state.index],tb=testability(id);
+   if(!tb.ok){await persistSequentialResult(state,testResult(id,"fail","Test impossible",tb.reason||"indisponible"));state.index++;continue}
+   if(tb.mode==="direct"||tb.mode==="production"){const r=testSpecific(id);await persistSequentialResult(state,r);state.index++;continue}
+   const ar=C?.activate(id);
+   if(!ar?.ok){await persistSequentialResult(state,testResult(id,"fail","Test local impossible",ar?.reason||"error"));state.index++;continue}
+   state.phase="testing";write(RUN_KEY,state);await KT.getService("testing-workspace")?.saveRun?.(state);return {ok:true,reloadRequired:true,state};
+ }
+ const payload={version:2,url:location.href,page:pageName(),pageKey:KT.getService("testing-workspace")?.pageKey?.()||location.pathname,at:new Date().toISOString(),results:state.results};
+ write(RESULT_KEY,payload);await KT.getService("testing-workspace")?.saveResults?.(payload);state.phase="done";state.doneAt=new Date().toISOString();write(RUN_KEY,state);await KT.getService("testing-workspace")?.saveRun?.(state);return {ok:true,reloadRequired:false,done:true,state,results:state.results};
+}
 async function startSequential(ids){
-  ids=(ids&&ids.length?ids:relevant({onlyEligible:true}).map(x=>x.canonicalId));
-  if(!ids.length)return {ok:false,reason:"no-eligible-module"};
-  const state={version:1,mode:"sequential",url:location.href,ids,index:0,results:[],phase:"activate",startedAt:new Date().toISOString()};
-  const C=KT.getService("canary"),r=C?.activate(ids[0]);
-  if(!r?.ok)return {ok:false,reason:r?.reason||"activate-failed"};
-  state.phase="testing";state.pageKey=KT.getService("testing-workspace")?.pageKey?.()||location.pathname;
-  write(RUN_KEY,state);await KT.getService("testing-workspace")?.saveRun?.(state);
-  return {ok:true,reloadRequired:true,state};
+ ids=(ids&&ids.length?ids:relevant({onlyEligible:true}).map(x=>x.canonicalId));
+ if(!ids.length)return {ok:false,reason:"no-eligible-module"};
+ const state={version:2,mode:"sequential",url:location.href,ids,index:0,results:[],phase:"prepare",startedAt:new Date().toISOString(),pageKey:KT.getService("testing-workspace")?.pageKey?.()||location.pathname};
+ write(RUN_KEY,state);await KT.getService("testing-workspace")?.saveRun?.(state);return prepareSequentialStep(state);
 }
 function currentRun(){return read(RUN_KEY,null)}
 async function clearRun(){try{localStorage.removeItem(RUN_KEY);await KT.getService("testing-workspace")?.finishRun?.({phase:"cleared"});return true}catch(_){return false}}
@@ -530,23 +554,8 @@ async function resume(){
     return {done:true,mode:"quick",results:rr.results};
   }
   if(st.mode==="sequential"&&st.phase==="testing"){
-    const id=st.ids[st.index],r=testSpecific(id);st.results.push(r);
-    await KT.getService("testing-workspace")?.saveResult?.(r,{pageKey:KT.getService("testing-workspace")?.pageKey?.()||location.pathname,url:location.href,page:pageName()});
-    KT.getService("canary")?.deactivate(id);
-    st.index++;
-    if(st.index>=st.ids.length){
-      const payload={version:1,url:location.href,page:pageName(),pageKey:KT.getService("testing-workspace")?.pageKey?.()||location.pathname,at:new Date().toISOString(),results:st.results};
-      write(RESULT_KEY,payload);await KT.getService("testing-workspace")?.saveResults?.(payload);
-      st.phase="done";st.doneAt=new Date().toISOString();write(RUN_KEY,st);await KT.getService("testing-workspace")?.saveRun?.(st);
-      setTimeout(()=>location.reload(),250);
-      return {done:true,finalReload:true};
-    }
-    const next=st.ids[st.index],ar=KT.getService("canary")?.activate(next);
-    if(!ar?.ok){
-      st.results.push(testResult(next,"fail","Activation canary impossible",ar?.reason||"error"));
-      st.index++;
-    }
-    write(RUN_KEY,st);await KT.getService("testing-workspace")?.saveRun?.(st);setTimeout(()=>location.reload(),250);return {done:false,next};
+    const id=st.ids[st.index],r=testSpecific(id);await persistSequentialResult(st,r);KT.getService("canary")?.deactivate(id);st.index++;
+    const next=await prepareSequentialStep(st);if(next.reloadRequired)setTimeout(()=>location.reload(),250);return next.done?{done:true,finalReload:false,results:st.results}:{done:false,next:st.ids[st.index]};
   }
   if(st.mode==="sequential"&&st.phase==="done"){
     await clearRun();return {done:true,mode:"sequential",results:results().results||[]};

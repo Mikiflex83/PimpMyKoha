@@ -1,0 +1,17 @@
+Pimp My Koha 3.44.0 — tests locaux — 2026-09-13T21:27:48Z
+
+PASS Pimp My Koha 3.44.0
+- AVERTISSEMENT: licence publique encore à valider (voir docs/LICENCE-AVANT-PUBLICATION.md)
+- 188 JS contrôlés
+- 27 scripts HTML contrôlés
+- 165 entrées manifeste
+- 160 configurations canoniques
+- canal release stable
+- contrôle accès/DEV public fail-closed
+PASS channel-loader: dev autorisé, fallback non autorisé, canary admin, fallback canal non publié
+PASS access-control: DEV explicite, fallback legacy borné, capacités Koha optionnelles, superlibrarian
+PASS prerequisite scopes/version gates
+PASS fresh-install certification contract
+PASS certifier safe config promotion: history-table-headers
+PASS user workflows: agent/admin/developer, migration separation, access, onboarding and wording
+PASS fresh-install native gates: core setup, certification and prerequisites

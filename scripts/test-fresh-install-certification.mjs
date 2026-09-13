@@ -1,0 +1,16 @@
+import assert from "node:assert/strict";
+import fs from "node:fs";
+const config=fs.readFileSync("FULL-DIST/kohatools/core/config.js","utf8");
+const loader=fs.readFileSync("FULL-DIST/kohatools/loader.js","utf8");
+const validate=fs.readFileSync("scripts/validate-dist.mjs","utf8");
+assert.match(config,/__KohaToolsFreshInstallCertified/);
+assert.match(config,/freshInstallCertified:true/);
+assert.match(loader,/freshInstall\?\.certified===true/);
+assert.match(validate,/Certification fresh-install partielle interdite/);
+const panel=fs.readFileSync("FULL-DIST/kohatools/admin/panel.js","utf8");
+const certifier=fs.readFileSync("scripts/certify-fresh-install.mjs","utf8");
+assert.match(panel,/KohaTools.certification-config.v1/);
+assert.match(panel,/productDefaultCandidate/);
+assert.match(certifier,/productDefaultCandidate/);
+assert.match(certifier,/installationSpecific/);
+console.log("PASS fresh-install certification contract");

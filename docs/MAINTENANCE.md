@@ -1,4 +1,4 @@
-# Maintenance — Pimp My Koha 3.43.2
+# Maintenance — Pimp My Koha 3.44.0
 
 La V3.42 a introduit un état de référence avant mise à jour, une comparaison après mise à jour, des diagnostics par module et une instrumentation légère des performances.
 
@@ -13,7 +13,7 @@ La V3.42 a introduit un état de référence avant mise à jour, une comparaison
 
 Ouvrir **Maintenance**. Pimp My Koha compare la version Koha, la configuration, les prérequis, les états de santé et les erreurs d’initialisation. Seuls les modules dont l’état a réellement changé sont mis en avant.
 
-L’absence de changement détectable n’est pas une preuve métier : les modules nécessitant une action réelle conservent le statut **Action à exercer** jusqu’à passage sur leur page de recette.
+L’absence de changement détectable n’est pas une preuve métier : les modules nécessitant une action réelle conservent le statut **Action à exercer** jusqu’à passage sur leur page de test.
 
 ## Confidentialité du diagnostic
 
