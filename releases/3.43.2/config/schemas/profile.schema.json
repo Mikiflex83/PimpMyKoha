@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "KohaTools installation profile",
+  "type": "object",
+  "required": [
+    "profileSchemaVersion",
+    "installationId"
+  ],
+  "properties": {
+    "profileSchemaVersion": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "installationId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "installation": {
+      "type": "object"
+    },
+    "canonicalModules": {
+      "type": "object"
+    },
+    "remoteConfig": {
+      "type": "object"
+    },
+    "accessControl": {
+      "type": "object"
+    }
+  }
+}

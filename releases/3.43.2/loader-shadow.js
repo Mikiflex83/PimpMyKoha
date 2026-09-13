@@ -1,0 +1,1 @@
+(function(){if(window.__KohaToolsV341CompatLoader)return;window.__KohaToolsV341CompatLoader=true;var s=document.createElement("script");s.src=new URL("loader.js",document.currentScript.src).href;s.dataset.ktCompat="loader-shadow";document.head.appendChild(s)})();

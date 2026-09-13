@@ -1,0 +1,1566 @@
+<style>
+    #freqAppMini {
+        --freq-bg: #0f1720;
+        --freq-card: #0b1220;
+        --freq-accent: #10b981;
+        --freq-muted: #9aa4b2;
+        --freq-radius: 12px;
+        --freq-pad: 12px;
+        font-family: Inter, system-ui, Segoe UI, Roboto, "Helvetica Neue", Arial;
+        color: #e6eef6;
+        background: var(--freq-bg);
+        border-radius: var(--freq-radius);
+        padding: var(--freq-pad);
+        width: 340px;
+        position: fixed;
+        z-index: 10000;
+        top: 20px;
+        right: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+        cursor: move;
+        user-select: none;
+        resize: both;
+        overflow: hidden;
+        min-width: 300px;
+        max-width: 520px;
+        min-height: 250px;
+        transition: all 0.3s ease;
+        display: none;
+    }
+    
+    #freqAppMini.visible {
+        display: block;
+    }
+    
+    #freqAppMini:hover {
+        border-color: rgba(255, 255, 255, 0.25);
+        box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
+    }
+    
+    #freqAppMini.compact {
+        width: 200px !important;
+        min-width: 200px;
+        height: 50px !important;
+        min-height: 50px;
+        max-height: 50px;
+        padding: 8px 12px;
+    }
+    
+    #freqAppMini.compact .freq-content {
+        display: none !important;
+    }
+    
+    #freqAppMini.compact .freq-title {
+        font-size: 11px;
+    }
+    
+    #freqAppMini .freq-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+    }
+    
+    #freqAppMini.compact .freq-header {
+        margin-bottom: 0;
+        padding-bottom: 0;
+        border-bottom: none;
+    }
+    
+    #freqAppMini .freq-title {
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--freq-accent);
+        letter-spacing: 0.5px;
+    }
+    
+    #freqAppMini .freq-controls-btn {
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 6px;
+        padding: 4px 8px;
+        font-size: 11px;
+        font-weight: bold;
+        color: var(--freq-muted);
+        cursor: pointer;
+        transition: all 0.2s ease;
+        min-width: 24px;
+        text-align: center;
+    }
+    
+    #freqAppMini .freq-controls-btn:hover {
+        background: rgba(255, 255, 255, 0.15);
+        border-color: rgba(255, 255, 255, 0.3);
+        color: white;
+    }
+    
+    #freqAppMini .freq-content {
+        transition: all 0.3s ease;
+    }
+    
+    #freqAppMini .freq-compact-row {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        margin-bottom: 8px;
+        font-size: 11px;
+    }
+    
+    #freqAppMini select, #freqAppMini input[type=date] {
+        padding: 6px 8px;
+        border-radius: 6px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(0, 0, 0, 0.4);
+        color: white;
+        font-size: 11px;
+        width: 100%;
+        transition: all 0.2s ease;
+    }
+    
+    #freqAppMini select:focus, #freqAppMini input[type=date]:focus {
+        border-color: var(--freq-accent);
+        outline: none;
+    }
+    
+    #freqAppMini select {
+        flex: 2;
+    }
+    
+    #freqAppMini input[type=date] {
+        flex: 1;
+    }
+    
+    #freqAppMini.compact .freq-date-input {
+        display: none;
+    }
+    
+    #freqAppMini .freq-counters {
+        display: flex;
+        gap: 12px;
+        margin: 12px 0;
+    }
+    
+    #freqAppMini .freq-counter-compact {
+        flex: 1;
+        text-align: center;
+    }
+    
+    #freqAppMini .freq-counter-label {
+        font-size: 10px;
+        color: var(--freq-muted);
+        margin-bottom: 6px;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+    }
+    
+    #freqAppMini .freq-counter-buttons {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        justify-content: center;
+    }
+    
+    #freqAppMini .freq-counter-btn {
+        width: 32px;
+        height: 32px;
+        font-size: 16px;
+        font-weight: bold;
+        background: linear-gradient(180deg, #10b981, #059669);
+        border: 1px solid #047857;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s ease;
+        color: white;
+        cursor: pointer;
+    }
+    
+    #freqAppMini .freq-counter-btn:hover {
+        background: linear-gradient(180deg, #34d399, #10b981);
+        transform: translateY(-1px);
+    }
+    
+    #freqAppMini .freq-counter-btn:active {
+        transform: translateY(0px);
+    }
+    
+    #freqAppMini .freq-counter-btn:disabled {
+        background: linear-gradient(180deg, #6b7280, #4b5563);
+        border-color: #374151;
+        cursor: not-allowed;
+        transform: none;
+        opacity: 0.6;
+    }
+    
+    #freqAppMini .freq-count-display {
+        min-width: 40px;
+        height: 32px;
+        text-align: center;
+        font-weight: 800;
+        font-size: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.25);
+        color: #10b981;
+    }
+    
+    #freqAppMini .freq-footer {
+        display: flex;
+        justify-content: flex-start;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 8px;
+        padding-top: 8px;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    #freqAppMini .freq-status {
+        font-size: 10px;
+        color: var(--freq-muted);
+        flex: 1 1 100%;
+        font-weight: 500;
+    }
+    
+    #freqAppMini .freq-action-btn {
+        background: linear-gradient(180deg, #3b82f6, #1d4ed8);
+        border: 1px solid #1e40af;
+        border-radius: 6px;
+        padding: 5px 10px;
+        font-size: 10px;
+        font-weight: 600;
+        color: white;
+        cursor: pointer;
+        margin-left: 0;
+        transition: all 0.2s ease;
+        white-space: nowrap;
+    }
+    
+    #freqAppMini .freq-action-btn:hover {
+        background: linear-gradient(180deg, #60a5fa, #3b82f6);
+        transform: translateY(-1px);
+    }
+    
+    #freqAppMini .freq-action-btn:disabled {
+        background: linear-gradient(180deg, #6b7280, #4b5563);
+        border-color: #374151;
+        cursor: not-allowed;
+        transform: none;
+        opacity: 0.6;
+    }
+    
+    #freqAppMini .freq-reset-btn {
+        background: linear-gradient(180deg, #6b7280, #4b5563);
+        border: 1px solid #374151;
+    }
+    
+    #freqAppMini .freq-reset-btn:hover {
+        background: linear-gradient(180deg, #9ca3af, #6b7280);
+    }
+    
+    #freqAppMini .freq-report-btn {
+        background: linear-gradient(180deg, #8b5cf6, #7c3aed);
+        border: 1px solid #6d28d9;
+        border-radius: 6px;
+        padding: 5px 10px;
+        font-size: 10px;
+        font-weight: 600;
+        color: white;
+        cursor: pointer;
+        margin-left: 6px;
+        transition: all 0.2s ease;
+        text-decoration: none;
+        display: inline-block;
+        line-height: 1.2;
+    }
+    
+    #freqAppMini .freq-report-btn:hover {
+        background: linear-gradient(180deg, #a78bfa, #8b5cf6);
+        transform: translateY(-1px);
+        text-decoration: none;
+        color: white;
+    }
+
+    #freqAppMini .freq-correction-btn {
+        background: linear-gradient(180deg, #f59e0b, #d97706);
+        border: 1px solid #b45309;
+        border-radius: 6px;
+        padding: 5px 10px;
+        font-size: 10px;
+        font-weight: 600;
+        color: white;
+        cursor: pointer;
+        margin-left: 6px;
+        transition: all 0.2s ease;
+    }
+    
+    #freqAppMini .freq-correction-btn:hover {
+        background: linear-gradient(180deg, #fbbf24, #f59e0b);
+        transform: translateY(-1px);
+    }
+
+    /* Overlay et modal de correction */
+    #freq-correction-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.7);
+        z-index: 10001;
+        display: none;
+    }
+
+    #freq-correction-modal {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: var(--freq-card);
+        border-radius: var(--freq-radius);
+        padding: 20px;
+        z-index: 10002;
+        width: 280px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        display: none;
+    }
+
+    #freq-correction-modal.visible {
+        display: block;
+    }
+
+    #freq-correction-overlay.visible {
+        display: block;
+    }
+
+    .freq-correction-title {
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--freq-accent);
+        margin-bottom: 15px;
+        text-align: center;
+    }
+
+    .freq-time-inputs {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 15px;
+    }
+
+    .freq-time-inputs input {
+        width: 50px;
+        padding: 8px;
+        text-align: center;
+        background: rgba(0, 0, 0, 0.4);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 6px;
+        color: white;
+        font-size: 14px;
+    }
+
+    .freq-time-inputs span {
+        color: var(--freq-muted);
+        font-weight: bold;
+    }
+
+    .freq-correction-buttons {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 15px;
+        justify-content: center;
+    }
+
+    .freq-correction-counter-btn {
+        background: linear-gradient(180deg, #10b981, #059669);
+        border: 1px solid #047857;
+        border-radius: 8px;
+        padding: 10px 15px;
+        font-size: 12px;
+        font-weight: 600;
+        color: white;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        flex: 1;
+    }
+
+    .freq-correction-counter-btn:hover {
+        background: linear-gradient(180deg, #34d399, #10b981);
+        transform: translateY(-1px);
+    }
+
+    .freq-modal-actions {
+        display: flex;
+        gap: 8px;
+        justify-content: center;
+    }
+
+    .freq-modal-btn {
+        padding: 8px 16px;
+        border-radius: 6px;
+        font-size: 11px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        border: 1px solid;
+    }
+
+    .freq-modal-cancel {
+        background: rgba(255, 255, 255, 0.1);
+        border-color: rgba(255, 255, 255, 0.2);
+        color: var(--freq-muted);
+    }
+
+    .freq-modal-cancel:hover {
+        background: rgba(255, 255, 255, 0.15);
+        color: white;
+    }
+
+    .freq-modal-validate {
+        background: linear-gradient(180deg, #10b981, #059669);
+        border-color: #047857;
+        color: white;
+    }
+
+    .freq-modal-validate:hover {
+        background: linear-gradient(180deg, #34d399, #10b981);
+    }
+
+    .freq-modal-validate:disabled {
+        background: linear-gradient(180deg, #6b7280, #4b5563);
+        border-color: #374151;
+        cursor: not-allowed;
+        opacity: 0.6;
+    }
+
+    .freq-correction-preview {
+        font-size: 11px;
+        text-align: center;
+        color: var(--freq-muted);
+        margin-bottom: 10px;
+        min-height: 16px;
+    }
+
+    #freq-location-fix-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.7);
+        z-index: 10001;
+        display: none;
+    }
+
+    #freq-location-fix-modal {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: var(--freq-card);
+        border-radius: var(--freq-radius);
+        padding: 16px;
+        z-index: 10002;
+        width: 320px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        display: none;
+    }
+
+    #freq-location-fix-modal.visible,
+    #freq-location-fix-overlay.visible {
+        display: block;
+    }
+
+    .freq-fix-row {
+        margin-bottom: 10px;
+    }
+
+    .freq-fix-row label {
+        display: block;
+        font-size: 11px;
+        color: var(--freq-muted);
+        margin-bottom: 4px;
+    }
+
+    .freq-fix-row select,
+    .freq-fix-row input {
+        width: 100%;
+        padding: 7px;
+        border-radius: 6px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: rgba(0, 0, 0, 0.4);
+        color: white;
+        font-size: 12px;
+    }
+
+    .freq-fix-dates {
+        display: flex;
+        gap: 8px;
+    }
+
+    .freq-fix-dates > div {
+        flex: 1;
+    }
+
+    /* Style pour le drag */
+    #freqAppMini.dragging {
+        opacity: 0.9;
+        cursor: grabbing;
+        transform: scale(1.02);
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+    }
+    
+    /* Style pour le redimensionnement */
+    #freqAppMini::-webkit-resizer {
+        background: var(--freq-accent);
+        border-radius: 0 0 12px 0;
+    }
+    
+    #freqAppMini::-webkit-resizer:hover {
+        background: #34d399;
+    }
+    
+    /* Cacher le resizer en mode compact */
+    #freqAppMini.compact {
+        resize: none;
+    }
+</style>
+
+<!-- Module compteur flottant - Caché par défaut -->
+<div id="freqAppMini">
+    <div class="freq-header">
+        <div class="freq-title">COMPTEUR FRÉQUENTATION</div>
+        <button class="freq-controls-btn" id="freq-toggleCompact" title="Réduire/Agrandir">−</button>
+    </div>
+    
+    <div class="freq-content">
+        <div class="freq-compact-row">
+            <select id="freq-selectLocationMini">
+                <option value="">-- Sélectionnez une commune --</option>
+            </select>
+            <input type="date" id="freq-inputDateMini" class="freq-date-input" />
+        </div>
+        
+        <div class="freq-counters">
+            <div class="freq-counter-compact">
+                <div class="freq-counter-label">ADULTES</div>
+                <div class="freq-counter-buttons">
+                    <button class="freq-counter-btn" id="freq-decAdultsMini" title="Décrémenter" disabled>−</button>
+                    <div class="freq-count-display" id="freq-countAdultsMini">0</div>
+                    <button class="freq-counter-btn" id="freq-incAdultsMini" title="Incrémenter" disabled>+</button>
+                </div>
+            </div>
+            <div class="freq-counter-compact">
+                <div class="freq-counter-label">ENFANTS</div>
+                <div class="freq-counter-buttons">
+                    <button class="freq-counter-btn" id="freq-decKidsMini" title="Décrémenter" disabled>−</button>
+                    <div class="freq-count-display" id="freq-countKidsMini">0</div>
+                    <button class="freq-counter-btn" id="freq-incKidsMini" title="Incrémenter" disabled>+</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="freq-footer">
+    <div class="freq-status" id="freq-statusMini">Sélectionnez une commune</div>
+
+    <button class="freq-action-btn freq-correction-btn"
+            id="freq-btnCorrectionMini"
+            title="Ajouter une correction horaire"
+            disabled>
+        Correction horaire
+    </button>
+
+    <button class="freq-action-btn freq-reset-btn"
+            id="freq-btnResetMini"
+            title="Remettre à zéro"
+            disabled>
+        Reset
+    </button>
+
+    <a href="#" id="freq-report-link-mini"
+       target="_blank"
+       class="freq-action-btn freq-report-btn"
+       title="Voir le rapport de réservations">
+        Rapport
+    </a>
+
+    <a href="#" id="freq-stat-link-mini"
+       target="_blank"
+       class="freq-action-btn freq-stat-btn"
+       title="Voir les statistiques">
+        Stat
+    </a>
+
+    <button class="freq-action-btn"
+            id="freq-btnUpdateMini"
+            title="Synchroniser avec le serveur"
+            disabled>
+        MAJ
+    </button>
+
+    <button class="freq-action-btn freq-correction-btn"
+            id="freq-btnFixLocationMini"
+            title="Corriger un lieu sur l'historique">
+        Correction lieu
+    </button>
+</div>
+
+    </div>
+</div>
+
+<!-- Modal de correction -->
+<div id="freq-correction-overlay"></div>
+<div id="freq-correction-modal">
+    <div class="freq-correction-title">CORRECTION HORAIRE</div>
+    
+    <div class="freq-time-inputs">
+        <input type="number" id="freq-correction-hours" min="0" max="23" value="12" placeholder="HH">
+        <span>h</span>
+        <input type="number" id="freq-correction-minutes" min="0" max="59" value="0" placeholder="MM">
+    </div>
+    
+    <div class="freq-correction-preview" id="freq-correction-preview">
+        Heure sélectionnée : 12h00
+    </div>
+    
+    <div class="freq-correction-buttons">
+        <button class="freq-correction-counter-btn" id="freq-correction-adult">+1 Adulte</button>
+        <button class="freq-correction-counter-btn" id="freq-correction-kid">+1 Enfant</button>
+    </div>
+    
+    <div class="freq-modal-actions">
+        <button class="freq-modal-btn freq-modal-cancel" id="freq-correction-cancel">Annuler</button>
+        <button class="freq-modal-btn freq-modal-validate" id="freq-correction-validate" disabled>Valider (0)</button>
+    </div>
+</div>
+
+<!-- Modal correction de lieu -->
+<div id="freq-location-fix-overlay"></div>
+<div id="freq-location-fix-modal">
+    <div class="freq-correction-title">CORRECTION DE LIEU</div>
+
+    <div class="freq-fix-row">
+        <label for="freq-fix-old-location-mini">Lieu source</label>
+        <select id="freq-fix-old-location-mini">
+            <option value="">Lieu à corriger</option>
+        </select>
+    </div>
+
+    <div class="freq-fix-row">
+        <label for="freq-fix-new-location-mini">Nouveau lieu</label>
+        <select id="freq-fix-new-location-mini">
+            <option value="">Lieu de destination</option>
+        </select>
+    </div>
+
+    <div class="freq-fix-row freq-fix-dates">
+        <div>
+            <label for="freq-fix-from-mini">Du</label>
+            <input type="date" id="freq-fix-from-mini" />
+        </div>
+        <div>
+            <label for="freq-fix-to-mini">Au</label>
+            <input type="date" id="freq-fix-to-mini" />
+        </div>
+    </div>
+
+    <div class="freq-modal-actions">
+        <button class="freq-modal-btn freq-modal-cancel" id="freq-fix-cancel-mini">Annuler</button>
+        <button class="freq-modal-btn freq-modal-validate" id="freq-fix-validate-mini">Corriger</button>
+    </div>
+</div>
+
+<script type="module">
+    // Configuration Firebase
+    import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-app.js";
+    import { 
+        getAuth, 
+        signInAnonymously 
+    } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
+    import { 
+        getFirestore, 
+        collection, 
+        addDoc, 
+        getDocs, 
+        getDoc,
+        setDoc,
+        updateDoc,
+        doc,
+        serverTimestamp,
+        query,
+        where
+    } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore.js";
+    
+    const MODULE_ID = 'attendance-frequency';
+    const moduleConfig = window.KohaTools?.Config?.getCanonical?.(MODULE_ID) || {};
+    const installationConfig = moduleConfig.installation || {};
+    const activationBranchNames = (Array.isArray(installationConfig.activationBranchNames) ? installationConfig.activationBranchNames : []).map(v => String(v || '').trim().toLocaleUpperCase('fr'));
+    const reportId = Number(installationConfig.reservationsReportId || 0);
+    const statisticsPageId = Number(installationConfig.statisticsPageId || 0);
+    const reportLink = document.getElementById('freq-report-link-mini');
+    const statsLink = document.getElementById('freq-stat-link-mini');
+    if (reportLink) { if (reportId > 0) reportLink.href = `/cgi-bin/koha/reports/guided_reports.pl?id=${encodeURIComponent(reportId)}&op=run`; else reportLink.hidden = true; }
+    if (statsLink) { if (statisticsPageId > 0) statsLink.href = window.KohaTools?.getService?.('module-host')?.pageUrl?.(statisticsPageId) || `/cgi-bin/koha/tools/page.pl?page_id=${encodeURIComponent(statisticsPageId)}`; else statsLink.hidden = true; }
+    const firebaseMeta = window.KohaTools?.getService?.('firebase-module')?.require?.(MODULE_ID, moduleConfig.firebase);
+    const firebaseConfig = window.KohaTools?.getService?.('firebase-module')?.publicConfig?.(MODULE_ID, firebaseMeta, { throwOnError: true });
+    
+    let app = null;
+    let auth = null;
+    let db = null;
+    let firebaseStartPromise = null;
+    let firebaseLastError = null;
+    async function ensureFirebaseStarted(){
+        if(db && auth && state.user) return true;
+        if(firebaseStartPromise) return firebaseStartPromise;
+        firebaseStartPromise=(async()=>{try{
+            const appName=firebaseMeta?.appName||'KohaToolsAttendance';
+            app=getApps().find(a=>a.name===appName)||initializeApp(firebaseConfig,appName);
+            auth=getAuth(app);
+            db=firebaseMeta?.databaseId&&firebaseMeta.databaseId!=='(default)'?getFirestore(app,firebaseMeta.databaseId):getFirestore(app);
+            let user=auth.currentUser;
+            if(!user) user=(await signInAnonymously(auth)).user;
+            state.user=user;
+            const accessRef=doc(db,'attendance_access',user.uid);
+            let access=await getDoc(accessRef);
+            budgetRead(access.exists()?1:0);
+            if(!access.exists()){
+                await setDoc(accessRef,{approved:false,role:'pending',createdAt:serverTimestamp(),clientVersion:'3.43.2'});
+                budgetWrite(1);
+                access=await getDoc(accessRef); budgetRead(1);
+            }
+            if(access.data()?.approved!==true) throw new Error(`Accès Fréquentation en attente · UID ${user.uid}`);
+            firebaseLastError=null;
+            return true;
+        }catch(e){firebaseLastError=e;return false}finally{firebaseStartPromise=null}})();
+        return firebaseStartPromise;
+    }
+    const ktBudget = window.KohaTools?.getService?.('firebase-budget');
+    const budgetRead = n => { try { ktBudget?.record?.(firebaseMeta.projectId,'reads',Math.max(1,Number(n)||0),{kind:'firestore'}); } catch (_) {} };
+    const budgetWrite = n => { try { ktBudget?.record?.(firebaseMeta.projectId,'writes',Math.max(1,Number(n)||1),{kind:'firestore'}); } catch (_) {} };
+
+    function getLocalDateString(date = new Date()) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
+
+    function buildTimestampForLocalDateTime(dateString, hourMinute) {
+        const [year, month, day] = (dateString || '').split('-').map(Number);
+        const [hour, minute] = (hourMinute || '').split(':').map(Number);
+
+        if (!year || !month || !day || Number.isNaN(hour) || Number.isNaN(minute)) {
+            return new Date().toISOString();
+        }
+
+        const localDate = new Date(year, month - 1, day, hour, minute, 0, 0);
+        return localDate.toISOString();
+    }
+
+    function getDocTimestampMillis(docData) {
+        const updated = docData && docData.updatedAt && typeof docData.updatedAt.toMillis === 'function'
+            ? docData.updatedAt.toMillis()
+            : 0;
+        const created = docData && docData.createdAt && typeof docData.createdAt.toMillis === 'function'
+            ? docData.createdAt.toMillis()
+            : 0;
+        return Math.max(updated, created);
+    }
+    
+    let state = {
+        user: null,
+        locations: [],
+        current: {
+            adults: 0,
+            kids: 0,
+            date: getLocalDateString(),
+            locationId: null
+        },
+        timestamps: {
+            adults: [],
+            kids: []
+        },
+        currentDocId: null,
+        isCompact: false,
+        correction: {
+            adults: 0,
+            kids: 0,
+            hour: "12:00"
+        }
+    };
+    
+    const el = id => document.getElementById(id);
+    
+    function updateStatus(message) {
+        el('freq-statusMini').textContent = message;
+    }
+
+    function selectPrimaryCountDoc(docs) {
+        if (!docs || docs.length === 0) return null;
+        if (docs.length === 1) return docs[0];
+
+        let bestDoc = docs[0];
+        let bestScore = getDocTimestampMillis(bestDoc.data());
+
+        for (let i = 1; i < docs.length; i++) {
+            const score = getDocTimestampMillis(docs[i].data());
+            if (score > bestScore) {
+                bestDoc = docs[i];
+                bestScore = score;
+            }
+        }
+
+        return bestDoc;
+    }
+
+    function ensureMiniButtonsVisible() {
+        if (state.isCompact) return;
+        const appElement = el('freqAppMini');
+        const requiredHeight = Math.max(Math.ceil(appElement.scrollHeight), 250);
+        const currentHeight = Math.ceil(appElement.getBoundingClientRect().height);
+
+        if (currentHeight + 1 < requiredHeight) {
+            appElement.style.height = requiredHeight + 'px';
+        }
+    }
+    
+    // Activer/désactiver les boutons selon la sélection de commune
+    function updateButtonsState() {
+        const hasLocation = !!state.current.locationId;
+        
+        // Boutons de compteur
+        el('freq-incAdultsMini').disabled = !hasLocation;
+        el('freq-decAdultsMini').disabled = !hasLocation;
+        el('freq-incKidsMini').disabled = !hasLocation;
+        el('freq-decKidsMini').disabled = !hasLocation;
+        
+        // Boutons d'action
+        el('freq-btnResetMini').disabled = !hasLocation;
+        el('freq-btnUpdateMini').disabled = !hasLocation;
+        el('freq-btnCorrectionMini').disabled = !hasLocation;
+        el('freq-btnFixLocationMini').disabled = !hasLocation;
+        
+        if (!hasLocation) {
+            updateStatus('Sélectionnez une commune');
+        } else {
+            updateStatus('Prêt');
+        }
+    }
+    
+    // Gestion du drag & drop
+    function initDragAndDrop() {
+        const appElement = el('freqAppMini');
+        let isDragging = false;
+        let startX, startY, initialX, initialY;
+        
+        // Charger la position sauvegardée
+        const savedPosition = localStorage.getItem('freqAppPosition');
+        if (savedPosition) {
+            const { x, y } = JSON.parse(savedPosition);
+            appElement.style.left = x + 'px';
+            appElement.style.top = y + 'px';
+            appElement.style.right = 'auto';
+        }
+        
+        // Charger la taille sauvegardée
+        const savedSize = localStorage.getItem('freqAppSize');
+        if (savedSize && !state.isCompact) {
+            const { width, height } = JSON.parse(savedSize);
+            appElement.style.width = Math.max(width, 300) + 'px';
+            appElement.style.height = Math.max(height, 250) + 'px';
+        }
+        
+        appElement.addEventListener("mousedown", dragStart);
+        appElement.addEventListener("touchstart", dragStart);
+        
+        function dragStart(e) {
+            if (e.target.id === 'freq-toggleCompact') {
+                return;
+            }
+            
+            if (e.type === "touchstart") {
+                startX = e.touches[0].clientX;
+                startY = e.touches[0].clientY;
+            } else {
+                startX = e.clientX;
+                startY = e.clientY;
+            }
+            
+            const rect = appElement.getBoundingClientRect();
+            initialX = rect.left;
+            initialY = rect.top;
+            
+            isDragging = true;
+            appElement.classList.add('dragging');
+            
+            document.addEventListener("mousemove", drag);
+            document.addEventListener("touchmove", drag);
+            document.addEventListener("mouseup", dragEnd);
+            document.addEventListener("touchend", dragEnd);
+        }
+        
+        function drag(e) {
+            if (!isDragging) return;
+            
+            e.preventDefault();
+            
+            let currentX, currentY;
+            if (e.type === "touchmove") {
+                currentX = e.touches[0].clientX;
+                currentY = e.touches[0].clientY;
+            } else {
+                currentX = e.clientX;
+                currentY = e.clientY;
+            }
+            
+            const deltaX = currentX - startX;
+            const deltaY = currentY - startY;
+            
+            const newX = initialX + deltaX;
+            const newY = initialY + deltaY;
+            
+            const maxX = window.innerWidth - appElement.offsetWidth;
+            const maxY = window.innerHeight - appElement.offsetHeight;
+            
+            appElement.style.left = Math.max(0, Math.min(newX, maxX)) + 'px';
+            appElement.style.top = Math.max(0, Math.min(newY, maxY)) + 'px';
+            appElement.style.right = 'auto';
+        }
+        
+        function dragEnd() {
+            if (!isDragging) return;
+            
+            isDragging = false;
+            appElement.classList.remove('dragging');
+            
+            const rect = appElement.getBoundingClientRect();
+            localStorage.setItem('freqAppPosition', JSON.stringify({
+                x: rect.left,
+                y: rect.top
+            }));
+            
+            document.removeEventListener("mousemove", drag);
+            document.removeEventListener("touchmove", drag);
+            document.removeEventListener("mouseup", dragEnd);
+            document.removeEventListener("touchend", dragEnd);
+        }
+    }
+    
+    // Mode accordéon
+    function initCompactMode() {
+        const toggleBtn = el('freq-toggleCompact');
+        const appElement = el('freqAppMini');
+        
+        const savedCompact = localStorage.getItem('freqAppCompact');
+        if (savedCompact === 'true') {
+            state.isCompact = true;
+            appElement.classList.add('compact');
+            toggleBtn.textContent = '+';
+        }
+        
+        toggleBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            state.isCompact = !state.isCompact;
+            
+            if (state.isCompact) {
+                const rect = appElement.getBoundingClientRect();
+                localStorage.setItem('freqAppNormalSize', JSON.stringify({
+                    width: rect.width,
+                    height: rect.height
+                }));
+                appElement.classList.add('compact');
+                toggleBtn.textContent = '+';
+            } else {
+                appElement.classList.remove('compact');
+                toggleBtn.textContent = '−';
+                const savedSize = localStorage.getItem('freqAppNormalSize');
+                if (savedSize) {
+                    const { width, height } = JSON.parse(savedSize);
+                    appElement.style.width = Math.max(width, 300) + 'px';
+                    appElement.style.height = Math.max(height, 250) + 'px';
+                    setTimeout(ensureMiniButtonsVisible, 0);
+                }
+            }
+            
+            localStorage.setItem('freqAppCompact', state.isCompact.toString());
+        });
+        
+        let resizeTimeout;
+        appElement.addEventListener('mouseup', () => {
+            if (resizeTimeout) clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(() => {
+                if (!state.isCompact) {
+                    const rect = appElement.getBoundingClientRect();
+                    localStorage.setItem('freqAppSize', JSON.stringify({
+                        width: rect.width,
+                        height: Math.max(rect.height, 250)
+                    }));
+                }
+            }, 500);
+        });
+    }
+    
+    // Gestion de la correction horaire
+    function initCorrectionModal() {
+        const overlay = el('freq-correction-overlay');
+        const modal = el('freq-correction-modal');
+        const hoursInput = el('freq-correction-hours');
+        const minutesInput = el('freq-correction-minutes');
+        const preview = el('freq-correction-preview');
+        const cancelBtn = el('freq-correction-cancel');
+        const validateBtn = el('freq-correction-validate');
+        const adultBtn = el('freq-correction-adult');
+        const kidBtn = el('freq-correction-kid');
+        
+        // Ouvrir la modal
+        el('freq-btnCorrectionMini').addEventListener('click', () => {
+            // Réinitialiser la correction
+            state.correction.adults = 0;
+            state.correction.kids = 0;
+            state.correction.hour = "12:00";
+            
+            // Mettre l'heure actuelle par défaut
+            const now = new Date();
+            hoursInput.value = now.getHours().toString().padStart(2, '0');
+            minutesInput.value = now.getMinutes().toString().padStart(2, '0');
+            
+            updateCorrectionPreview();
+            updateCorrectionValidateButton();
+            
+            overlay.classList.add('visible');
+            modal.classList.add('visible');
+        });
+        
+        // Fermer la modal
+        function closeModal() {
+            overlay.classList.remove('visible');
+            modal.classList.remove('visible');
+        }
+        
+        overlay.addEventListener('click', closeModal);
+        cancelBtn.addEventListener('click', closeModal);
+        
+        // Mettre à jour l'aperçu quand l'heure change
+        function updateCorrectionPreview() {
+            const hours = hoursInput.value.padStart(2, '0');
+            const minutes = minutesInput.value.padStart(2, '0');
+            state.correction.hour = `${hours}:${minutes}`;
+            preview.textContent = `Heure sélectionnée : ${hours}h${minutes}`;
+        }
+        
+        function updateCorrectionValidateButton() {
+            const total = state.correction.adults + state.correction.kids;
+            validateBtn.disabled = total === 0;
+            validateBtn.textContent = `Valider (${total})`;
+        }
+        
+        hoursInput.addEventListener('input', updateCorrectionPreview);
+        minutesInput.addEventListener('input', updateCorrectionPreview);
+        
+        // Gestion des boutons de comptage
+        adultBtn.addEventListener('click', () => {
+            state.correction.adults++;
+            updateCorrectionValidateButton();
+        });
+        
+        kidBtn.addEventListener('click', () => {
+            state.correction.kids++;
+            updateCorrectionValidateButton();
+        });
+        
+        // Validation de la correction
+        validateBtn.addEventListener('click', async () => {
+            if (state.correction.adults + state.correction.kids === 0) return;
+            
+            try {
+                updateStatus('Correction...');
+                
+                // Charger les données actuelles
+                await loadCountsForSelectedDate();
+                
+                // Ajouter les timestamps avec l'heure personnalisée
+                const date = state.current.date;
+                const baseTimestamp = buildTimestampForLocalDateTime(date, state.correction.hour);
+                
+                for (let i = 0; i < state.correction.adults; i++) {
+                    state.timestamps.adults.push(baseTimestamp);
+                    state.current.adults++;
+                }
+                
+                for (let i = 0; i < state.correction.kids; i++) {
+                    state.timestamps.kids.push(baseTimestamp);
+                    state.current.kids++;
+                }
+                
+                // Sauvegarder
+                await saveCountWithTimestamps();
+                updateCountsUI();
+                
+                updateStatus(`Correction OK: ${state.correction.adults}A ${state.correction.kids}E`);
+                setTimeout(() => updateStatus('Prêt'), 2000);
+                
+                closeModal();
+                
+            } catch (error) {
+                updateStatus('Erreur correction');
+            }
+        });
+        
+        // Validation des inputs d'heure
+        hoursInput.addEventListener('blur', () => {
+            let value = parseInt(hoursInput.value) || 0;
+            if (value < 0) value = 0;
+            if (value > 23) value = 23;
+            hoursInput.value = value.toString().padStart(2, '0');
+            updateCorrectionPreview();
+        });
+        
+        minutesInput.addEventListener('blur', () => {
+            let value = parseInt(minutesInput.value) || 0;
+            if (value < 0) value = 0;
+            if (value > 59) value = 59;
+            minutesInput.value = value.toString().padStart(2, '0');
+            updateCorrectionPreview();
+        });
+    }
+    
+    function initMiniUI() {
+        el('freq-inputDateMini').value = state.current.date;
+        el('freq-fix-from-mini').value = state.current.date;
+        el('freq-fix-to-mini').value = state.current.date;
+        
+        if (state.current.date === getLocalDateString()) {
+            el('freq-inputDateMini').style.display = 'none';
+        }
+        
+        loadLocations();
+        initMiniEvents();
+        initDragAndDrop();
+        initCompactMode();
+        initCorrectionModal();
+        initLocationFixModal();
+        setTimeout(ensureMiniButtonsVisible, 0);
+        window.addEventListener('resize', ensureMiniButtonsVisible);
+        
+        updateButtonsState();
+        updateStatus('Initialisation...');
+    }
+    
+    function initMiniEvents() {
+        el('freq-incAdultsMini').addEventListener('click', async () => {
+            await handleIncrement('adults');
+        });
+        
+        el('freq-decAdultsMini').addEventListener('click', async () => {
+            await handleDecrement('adults');
+        });
+        
+        el('freq-incKidsMini').addEventListener('click', async () => {
+            await handleIncrement('kids');
+        });
+        
+        el('freq-decKidsMini').addEventListener('click', async () => {
+            await handleDecrement('kids');
+        });
+        
+        el('freq-btnUpdateMini').addEventListener('click', async () => {
+            updateStatus('MAJ...');
+            await loadCountsForSelectedDate();
+            updateStatus('MAJ OK');
+            setTimeout(() => updateStatus('Prêt'), 2000);
+        });
+        
+        el('freq-btnResetMini').addEventListener('click', () => {
+            state.current.adults = 0;
+            state.current.kids = 0;
+            state.timestamps.adults = [];
+            state.timestamps.kids = [];
+            updateCountsUI();
+            updateStatus('Reset OK');
+            setTimeout(() => updateStatus('Prêt'), 2000);
+        });
+        
+        el('freq-selectLocationMini').addEventListener('change', () => {
+            state.current.locationId = el('freq-selectLocationMini').value;
+            
+            if (state.current.locationId) {
+                localStorage.setItem('freqSelectedLocation', state.current.locationId);
+            } else {
+                localStorage.removeItem('freqSelectedLocation');
+            }
+            
+            updateButtonsState();
+            updateStatus('Chargement...');
+            loadCountsForSelectedDate();
+        });
+        
+        el('freq-inputDateMini').addEventListener('change', () => {
+            state.current.date = el('freq-inputDateMini').value;
+            updateStatus('Chargement...');
+            loadCountsForSelectedDate();
+        });
+    }
+
+    function initLocationFixModal() {
+        const overlay = el('freq-location-fix-overlay');
+        const modal = el('freq-location-fix-modal');
+
+        function openModal() {
+            el('freq-fix-from-mini').value = state.current.date || getLocalDateString();
+            el('freq-fix-to-mini').value = state.current.date || getLocalDateString();
+            overlay.classList.add('visible');
+            modal.classList.add('visible');
+        }
+
+        function closeModal() {
+            overlay.classList.remove('visible');
+            modal.classList.remove('visible');
+        }
+
+        el('freq-btnFixLocationMini').addEventListener('click', openModal);
+        el('freq-fix-cancel-mini').addEventListener('click', closeModal);
+        overlay.addEventListener('click', closeModal);
+
+        el('freq-fix-validate-mini').addEventListener('click', async () => {
+            await applyLocationCorrectionMini();
+            closeModal();
+        });
+    }
+    
+    
+    async function loadLocations() {
+        try {
+            updateStatus('Chargement lieux...');
+            state.locations = [];
+            const locationsSnapshot = await getDocs(collection(db, 'locations'));
+            budgetRead(locationsSnapshot.size);
+            
+            locationsSnapshot.forEach((docSnap) => {
+                const data = docSnap.data();
+                state.locations.push({
+                    id: docSnap.id,
+                    name: data.name
+                });
+            });
+            
+            state.locations.sort((a, b) => a.name.localeCompare(b.name));
+            renderLocations();
+            
+            if (state.locations.length > 0) {
+                await loadCountsForSelectedDate();
+            }
+            
+        } catch (error) {
+            updateStatus('Erreur lieux');
+        }
+    }
+    
+    function renderLocations() {
+        const selectLocation = el('freq-selectLocationMini');
+        const fixOldSelect = el('freq-fix-old-location-mini');
+        const fixNewSelect = el('freq-fix-new-location-mini');
+        selectLocation.innerHTML = '<option value="">-- Sélectionnez une commune --</option>';
+        fixOldSelect.innerHTML = '<option value="">Lieu à corriger</option>';
+        fixNewSelect.innerHTML = '<option value="">Lieu de destination</option>';
+        
+        state.locations.forEach(location => {
+            const option = document.createElement('option');
+            option.value = location.id;
+            option.textContent = location.name;
+            selectLocation.appendChild(option);
+
+            const oldOption = document.createElement('option');
+            oldOption.value = location.id;
+            oldOption.textContent = location.name;
+            fixOldSelect.appendChild(oldOption);
+
+            const newOption = document.createElement('option');
+            newOption.value = location.id;
+            newOption.textContent = location.name;
+            fixNewSelect.appendChild(newOption);
+        });
+        
+        const savedLocation = localStorage.getItem('freqSelectedLocation');
+        if (savedLocation && state.locations.some(loc => loc.id === savedLocation)) {
+            state.current.locationId = savedLocation;
+            selectLocation.value = savedLocation;
+            updateButtonsState();
+            updateStatus('Commune restaurée');
+        } else {
+            state.current.locationId = null;
+            selectLocation.value = '';
+            updateButtonsState();
+            updateStatus('Sélectionnez une commune');
+        }
+        
+        updateStatus(`${state.locations.length} lieux`);
+    }
+
+    async function applyLocationCorrectionMini() {
+        const oldLocationId = el('freq-fix-old-location-mini').value;
+        const newLocationId = el('freq-fix-new-location-mini').value;
+        const from = el('freq-fix-from-mini').value;
+        const to = el('freq-fix-to-mini').value;
+
+        if (!oldLocationId || !newLocationId) {
+            alert('Sélectionnez le lieu source et le nouveau lieu');
+            return;
+        }
+
+        if (oldLocationId === newLocationId) {
+            alert('Le lieu source et le nouveau lieu doivent être différents');
+            return;
+        }
+
+        if (!from || !to) {
+            alert('Sélectionnez une plage de dates');
+            return;
+        }
+
+        if (from > to) {
+            alert('La date de début doit être antérieure ou égale à la date de fin');
+            return;
+        }
+
+        const oldLocationName = state.locations.find(l => l.id === oldLocationId)?.name || oldLocationId;
+        const newLocationName = state.locations.find(l => l.id === newLocationId)?.name || newLocationId;
+
+        if (!confirm(`Corriger les passages de "${oldLocationName}" vers "${newLocationName}" du ${from} au ${to} ?`)) {
+            return;
+        }
+
+        try {
+            updateStatus('Recherche des corrections...');
+            const snapshot = await getDocs(query(collection(db, 'counts'), where('locationId', '==', oldLocationId)));
+            budgetRead(snapshot.size);
+            const docsToFix = [];
+
+            snapshot.forEach(docSnap => {
+                const data = docSnap.data();
+                if (data.locationId === oldLocationId && data.date >= from && data.date <= to) {
+                    docsToFix.push({ id: docSnap.id });
+                }
+            });
+
+            if (docsToFix.length === 0) {
+                updateStatus('Aucune entrée à corriger');
+                alert('Aucune entrée trouvée pour ces critères');
+                return;
+            }
+
+            updateStatus(`Correction de ${docsToFix.length} entrée(s)...`);
+
+            for (const entry of docsToFix) {
+                await updateDoc(doc(db, 'counts', entry.id), {
+                    locationId: newLocationId,
+                    correctedFromLocationId: oldLocationId,
+                    correctedAt: serverTimestamp(),
+                    correctedBy: state.user ? state.user.uid : 'unknown',
+                    updatedAt: serverTimestamp()
+                });
+            }
+
+            if (state.current.locationId === oldLocationId) {
+                state.current.locationId = newLocationId;
+                el('freq-selectLocationMini').value = newLocationId;
+                localStorage.setItem('freqSelectedLocation', newLocationId);
+            }
+
+            await loadCountsForSelectedDate();
+            updateStatus(`${docsToFix.length} entrée(s) corrigée(s)`);
+            alert(`${docsToFix.length} entrée(s) corrigée(s) avec succès`);
+            setTimeout(() => updateStatus('Prêt'), 2000);
+        } catch (error) {
+            updateStatus('Erreur correction lieux');
+            alert('Erreur lors de la correction des lieux: ' + error.message);
+        }
+    }
+    
+    function updateCountsUI() {
+        el('freq-countAdultsMini').textContent = state.current.adults;
+        el('freq-countKidsMini').textContent = state.current.kids;
+    }
+    
+    async function handleIncrement(type) {
+        if (!state.current.locationId) {
+            updateStatus('Sélectionnez une commune');
+            return;
+        }
+
+        try {
+            updateStatus('Sync...');
+            await loadCountsForSelectedDate();
+            
+            const timestamp = new Date().toISOString();
+            state.timestamps[type].push(timestamp);
+            state.current[type]++;
+            updateCountsUI();
+            
+            await saveCountWithTimestamps();
+            
+            updateStatus(`${type === 'adults' ? 'Adulte +1' : 'Enfant +1'}`);
+            setTimeout(() => updateStatus('Prêt'), 1500);
+            
+        } catch (error) {
+            updateStatus('Erreur');
+        }
+    }
+    
+    async function handleDecrement(type) {
+        if (!state.current.locationId) {
+            updateStatus('Sélectionnez une commune');
+            return;
+        }
+
+        if (state.current[type] <= 0) return;
+
+        try {
+            updateStatus('Sync...');
+            await loadCountsForSelectedDate();
+            
+            if (state.timestamps[type].length > 0) {
+                state.timestamps[type].pop();
+                state.current[type]--;
+                updateCountsUI();
+                await saveCountWithTimestamps();
+                updateStatus('Annulation OK');
+            } else {
+                state.current[type]--;
+                updateCountsUI();
+                await saveCountWithTimestamps();
+                updateStatus('Décrémenté');
+            }
+            
+            setTimeout(() => updateStatus('Prêt'), 1500);
+            
+        } catch (error) {
+            updateStatus('Erreur');
+        }
+    }
+    
+    async function getCurrentCountFromDB() {
+        if (!state.current.locationId || !state.current.date) return null;
+
+        try {
+            const countsQuery = query(
+                collection(db, 'counts'),
+                where('locationId', '==', state.current.locationId),
+                where('date', '==', state.current.date)
+            );
+            
+            const countsSnapshot = await getDocs(countsQuery);
+            budgetRead(countsSnapshot.size);
+            
+            if (!countsSnapshot.empty) {
+                const allDocs = countsSnapshot.docs;
+                const primaryDoc = selectPrimaryCountDoc(allDocs);
+                if (!primaryDoc) return null;
+                return {
+                    data: primaryDoc.data(),
+                    id: primaryDoc.id,
+                    duplicateCount: allDocs.length
+                };
+            }
+            
+            return null;
+        } catch (error) {
+            return null;
+        }
+    }
+    
+    async function loadCountsForSelectedDate() {
+        if (!state.current.locationId || !state.current.date) return;
+
+        try {
+            updateStatus('Chargement...');
+            const currentData = await getCurrentCountFromDB();
+
+            if (currentData) {
+                state.currentDocId = currentData.id;
+                state.current.adults = currentData.data.adults || 0;
+                state.current.kids = currentData.data.kids || 0;
+                state.timestamps.adults = currentData.data.adultTimestamps || [];
+                state.timestamps.kids = currentData.data.kidTimestamps || [];
+                updateCountsUI();
+                updateStatus('Données OK');
+            } else {
+                state.currentDocId = null;
+                state.current.adults = 0;
+                state.current.kids = 0;
+                state.timestamps.adults = [];
+                state.timestamps.kids = [];
+                updateCountsUI();
+                updateStatus('Nouveau');
+            }
+
+        } catch (error) {
+            updateStatus('Erreur chargement');
+        }
+    }
+    
+    async function saveCountWithTimestamps() {
+        if (!state.current.locationId) return;
+
+        const payload = {
+            locationId: state.current.locationId,
+            date: el('freq-inputDateMini').value || getLocalDateString(),
+            adults: state.current.adults,
+            kids: state.current.kids,
+            adultTimestamps: state.timestamps.adults,
+            kidTimestamps: state.timestamps.kids,
+            userId: state.user ? state.user.uid : 'anonymous',
+            updatedAt: serverTimestamp()
+        };
+
+        try {
+            updateStatus('Sauvegarde...');
+            if (state.currentDocId) {
+                await updateDoc(doc(db, 'counts', state.currentDocId), payload);
+                budgetWrite(1);
+                updateStatus('Sauvegardé');
+            } else {
+                const created = await addDoc(collection(db, 'counts'), {
+                    ...payload,
+                    createdAt: serverTimestamp()
+                });
+                state.currentDocId = created.id;
+                budgetWrite(1);
+                updateStatus('Créé');
+            }
+            
+        } catch (error) {
+            updateStatus('Erreur sauvegarde');
+        }
+    }
+    
+    // Initialisation conditionnelle
+    document.addEventListener('DOMContentLoaded', function() {
+        setTimeout(function() {
+            const branchNameElement = document.querySelector('.logged-in-branch-name');
+            
+            if (branchNameElement && activationBranchNames.includes(branchNameElement.textContent.trim().toLocaleUpperCase('fr'))) {
+                const module = document.getElementById('freqAppMini');
+                if (module) {
+                    ensureFirebaseStarted().then(ok => {
+                        if (!ok) { updateStatus(firebaseLastError?.message || 'Firebase indisponible'); return; }
+                        module.classList.add('visible');
+                        initMiniUI();
+                    });
+                }
+            } else {
+                if (branchNameElement) {
+                }
+            }
+        }, 1000);
+    });
+</script>

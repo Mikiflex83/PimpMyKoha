@@ -1,9 +1,9 @@
 {
   "schema": "pimp-my-koha.release-index.v1",
   "product": "pimp-my-koha",
-  "generatedAt": "2026-09-13T06:51:16.531Z",
+  "generatedAt": "2026-09-13T07:46:04.703Z",
   "channels": {
-    "stable": "3.43.1"
+    "stable": "3.43.2"
   },
   "releases": {
     "3.43.0": {
@@ -481,67 +481,171 @@
           "FULL-DIST/kohatools/profiles/example.json"
         ]
       }
+    },
+    "3.43.2": {
+      "schema": "pimp-my-koha.release-metadata.v1",
+      "version": "3.43.2",
+      "channel": "stable",
+      "releasedAt": "2026-09-13",
+      "summary": "Navigation fiable : menus idempotents, socle chargé dans le bon ordre et aucun lien d’application proposé tant que ses prérequis obligatoires ne sont pas satisfaits.",
+      "highlights": [
+        "Le chargeur initialise le contrôle d’accès avant de filtrer les modules canoniques.",
+        "Le menu Mes outils reste unique après les rafraîchissements et rechargements Koha.",
+        "Les modules désactivés, interdits ou bloqués par un prérequis obligatoire ne sont plus affichés dans les menus.",
+        "Les sous-menus devenus vides ne sont plus rendus.",
+        "Le raccourci Tableau de bord est masqué tant que son loader d’installation n’est pas configuré.",
+        "Le Centre qualité remplace les ouvertures sans effet par un état À configurer explicite.",
+        "La console sépare les modules disponibles des 105 groupes historiques de migration et affiche des compteurs cohérents.",
+        "Les 98 groupes historiques disposant d’une candidate complète peuvent être testés individuellement sur le navigateur du développeur en installation neuve, sans affecter les autres postes.",
+        "Un test CI couvre la disponibilité des modules, les prérequis, les droits, le tableau de bord et l’anti-duplication."
+      ],
+      "changedModules": [
+        "core/navigation",
+        "core/canary",
+        "loader",
+        "admin/panel",
+        "apps/quality/quality-center",
+        "ci/navigation-test",
+        "ci/fresh-install-canary-test"
+      ],
+      "breaking": false,
+      "kohaCompatibility": {
+        "branches": [
+          "25.11",
+          "26.06"
+        ],
+        "tested": [
+          "26.06.00"
+        ],
+        "targeted": [
+          "25.11.04",
+          "26.06"
+        ]
+      },
+      "runtimeRoot": "https://Mikiflex83.github.io/PimpMyKoha/releases/3.43.2/",
+      "releasePage": "https://github.com/Mikiflex83/PimpMyKoha/releases/tag/v3.43.2",
+      "downloadUrl": "https://github.com/Mikiflex83/PimpMyKoha/releases/download/v3.43.2/pimp-my-koha-3.43.2.zip",
+      "issuesUrl": "https://github.com/Mikiflex83/PimpMyKoha/issues/new",
+      "repository": {
+        "slug": "Mikiflex83/PimpMyKoha",
+        "issuesUrl": "https://github.com/Mikiflex83/PimpMyKoha/issues/new"
+      },
+      "sha256": "c50c9d84ba930c5e42f57f03d3570df364bc070274ec039d47beecb140f8abb7",
+      "impact": {
+        "schema": "pimp-my-koha.release-impact.v1",
+        "version": "3.43.2",
+        "previousVersion": "3.43.1",
+        "canonicalModules": [
+          "quality-center"
+        ],
+        "configChangedModules": [],
+        "sourceChangedModules": [
+          "quality-center"
+        ],
+        "coreFiles": [
+          "FULL-DIST/kohatools/admin/panel.js",
+          "FULL-DIST/kohatools/bootstrap.js",
+          "FULL-DIST/kohatools/core/canary.js",
+          "FULL-DIST/kohatools/core/core.js",
+          "FULL-DIST/kohatools/core/navigation.js",
+          "FULL-DIST/kohatools/loader.js"
+        ],
+        "prerequisites": [],
+        "configChanged": true,
+        "changedFiles": [
+          "FULL-DIST/kohatools/README.md",
+          "FULL-DIST/kohatools/admin/panel.js",
+          "FULL-DIST/kohatools/apps/collections-tree/index.html",
+          "FULL-DIST/kohatools/apps/global/attendance-frequency.html",
+          "FULL-DIST/kohatools/apps/quality/quality-authorities.html",
+          "FULL-DIST/kohatools/apps/quality/quality-biblios.html",
+          "FULL-DIST/kohatools/apps/quality/quality-center.html",
+          "FULL-DIST/kohatools/apps/quality/quality-items.html",
+          "FULL-DIST/kohatools/apps/quality/quality-loans.html",
+          "FULL-DIST/kohatools/apps/quality/quality-patrons.html",
+          "FULL-DIST/kohatools/apps/quality/quality-reservations.html",
+          "FULL-DIST/kohatools/apps/quality/quality-rule-lab.html",
+          "FULL-DIST/kohatools/apps/quality/quality-serials.html",
+          "FULL-DIST/kohatools/apps/quality/quality-transfers.html",
+          "FULL-DIST/kohatools/apps/quality/shared/quality-memory-firebase.js",
+          "FULL-DIST/kohatools/bootstrap.js",
+          "FULL-DIST/kohatools/config/host-contract.json",
+          "FULL-DIST/kohatools/config/manifest.json",
+          "FULL-DIST/kohatools/config/product-defaults.json",
+          "FULL-DIST/kohatools/core/canary.js",
+          "FULL-DIST/kohatools/core/core.js",
+          "FULL-DIST/kohatools/core/navigation.js",
+          "FULL-DIST/kohatools/docs/MAINTENANCE.md",
+          "FULL-DIST/kohatools/loader.js",
+          "FULL-DIST/kohatools/profiles/example.json"
+        ]
+      }
     }
   },
   "stable": {
     "schema": "pimp-my-koha.release-metadata.v1",
-    "version": "3.43.1",
+    "version": "3.43.2",
     "channel": "stable",
-    "releasedAt": "2026-09-12",
-    "summary": "Distribution GitHub multi-canaux et contrôle d’accès : Stable / Canary / Dev, outils DEV réservés explicitement, Canary module isolé par compte Koha et modules filtrés par audience.",
+    "releasedAt": "2026-09-13",
+    "summary": "Navigation fiable : menus idempotents, socle chargé dans le bon ordre et aucun lien d’application proposé tant que ses prérequis obligatoires ne sont pas satisfaits.",
     "highlights": [
-      "Ajout d’un contrôle d’accès Pimp My Koha avec rôles staff, manager, admin et developer.",
-      "Le rôle developer est fail-closed : sans username explicitement autorisé, personne n’accède au DEV.",
-      "Les modules peuvent déclarer une audience minimale et sont bloqués au chargement, au routeur et dans la navigation lorsqu’ils ne sont pas autorisés.",
-      "Les outils DEV ne sont chargés que sur le canal Dev et pour un compte développeur autorisé.",
-      "Le Canary module historique est réservé au développeur et son état est désormais isolé par compte Koha.",
-      "GitHub Pages publie trois canaux distincts : Stable, Canary et Dev, sans mise à jour silencieuse de la production épinglée.",
-      "Un channel-loader destiné aux sandbox sélectionne Dev/Canary pour les comptes autorisés et retombe automatiquement sur Stable sinon.",
-      "Les GitHub prereleases alimentent Canary/Dev sans déplacer le canal Stable.",
-      "L’administration affiche le canal effectif et une section Développement uniquement lorsque le contexte DEV est réellement autorisé.",
-      "Documentation clic par clic ajoutée pour GitHub, GitHub Pages, Koha sandbox, releases et rollback."
+      "Le chargeur initialise le contrôle d’accès avant de filtrer les modules canoniques.",
+      "Le menu Mes outils reste unique après les rafraîchissements et rechargements Koha.",
+      "Les modules désactivés, interdits ou bloqués par un prérequis obligatoire ne sont plus affichés dans les menus.",
+      "Les sous-menus devenus vides ne sont plus rendus.",
+      "Le raccourci Tableau de bord est masqué tant que son loader d’installation n’est pas configuré.",
+      "Le Centre qualité remplace les ouvertures sans effet par un état À configurer explicite.",
+      "La console sépare les modules disponibles des 105 groupes historiques de migration et affiche des compteurs cohérents.",
+      "Les 98 groupes historiques disposant d’une candidate complète peuvent être testés individuellement sur le navigateur du développeur en installation neuve, sans affecter les autres postes.",
+      "Un test CI couvre la disponibilité des modules, les prérequis, les droits, le tableau de bord et l’anti-duplication."
     ],
     "changedModules": [
-      "core/access-control",
-      "core/canary",
-      "core/update-service",
-      "core/module-host",
       "core/navigation",
+      "core/canary",
       "loader",
       "admin/panel",
-      "admin/launcher",
-      "dev/developer-tools",
-      "distribution/channel-loader",
-      "distribution/github-release"
+      "apps/quality/quality-center",
+      "ci/navigation-test",
+      "ci/fresh-install-canary-test"
     ],
     "breaking": false,
     "kohaCompatibility": {
       "branches": [
-        "25.11"
+        "25.11",
+        "26.06"
       ],
-      "tested": [],
+      "tested": [
+        "26.06.00"
+      ],
       "targeted": [
-        "25.11.04"
+        "25.11.04",
+        "26.06"
       ]
     },
-    "runtimeRoot": "https://Mikiflex83.github.io/PimpMyKoha/releases/3.43.1/",
-    "releasePage": "https://github.com/Mikiflex83/PimpMyKoha/releases/tag/v3.43.1",
-    "downloadUrl": "https://github.com/Mikiflex83/PimpMyKoha/releases/download/v3.43.1/pimp-my-koha-3.43.1.zip",
+    "runtimeRoot": "https://Mikiflex83.github.io/PimpMyKoha/releases/3.43.2/",
+    "releasePage": "https://github.com/Mikiflex83/PimpMyKoha/releases/tag/v3.43.2",
+    "downloadUrl": "https://github.com/Mikiflex83/PimpMyKoha/releases/download/v3.43.2/pimp-my-koha-3.43.2.zip",
     "issuesUrl": "https://github.com/Mikiflex83/PimpMyKoha/issues/new",
     "repository": {
       "slug": "Mikiflex83/PimpMyKoha",
       "issuesUrl": "https://github.com/Mikiflex83/PimpMyKoha/issues/new"
     },
-    "sha256": "032565ec3357bf5210cb098bbd99d19f36f8e6d8d87d32daf56d6914a9b826e2",
+    "sha256": "c50c9d84ba930c5e42f57f03d3570df364bc070274ec039d47beecb140f8abb7",
     "impact": {
       "schema": "pimp-my-koha.release-impact.v1",
-      "version": "3.43.1",
-      "previousVersion": "3.43.0",
-      "canonicalModules": [],
+      "version": "3.43.2",
+      "previousVersion": "3.43.1",
+      "canonicalModules": [
+        "quality-center"
+      ],
       "configChangedModules": [],
-      "sourceChangedModules": [],
+      "sourceChangedModules": [
+        "quality-center"
+      ],
       "coreFiles": [
+        "FULL-DIST/kohatools/admin/panel.js",
         "FULL-DIST/kohatools/bootstrap.js",
+        "FULL-DIST/kohatools/core/canary.js",
         "FULL-DIST/kohatools/core/core.js",
         "FULL-DIST/kohatools/core/navigation.js",
         "FULL-DIST/kohatools/loader.js"
@@ -550,10 +654,12 @@
       "configChanged": true,
       "changedFiles": [
         "FULL-DIST/kohatools/README.md",
+        "FULL-DIST/kohatools/admin/panel.js",
         "FULL-DIST/kohatools/apps/collections-tree/index.html",
         "FULL-DIST/kohatools/apps/global/attendance-frequency.html",
         "FULL-DIST/kohatools/apps/quality/quality-authorities.html",
         "FULL-DIST/kohatools/apps/quality/quality-biblios.html",
+        "FULL-DIST/kohatools/apps/quality/quality-center.html",
         "FULL-DIST/kohatools/apps/quality/quality-items.html",
         "FULL-DIST/kohatools/apps/quality/quality-loans.html",
         "FULL-DIST/kohatools/apps/quality/quality-patrons.html",
@@ -566,6 +672,7 @@
         "FULL-DIST/kohatools/config/host-contract.json",
         "FULL-DIST/kohatools/config/manifest.json",
         "FULL-DIST/kohatools/config/product-defaults.json",
+        "FULL-DIST/kohatools/core/canary.js",
         "FULL-DIST/kohatools/core/core.js",
         "FULL-DIST/kohatools/core/navigation.js",
         "FULL-DIST/kohatools/docs/MAINTENANCE.md",
