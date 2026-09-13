@@ -1,0 +1,54 @@
+{
+  "schema": "KohaTools.host.v1",
+  "purpose": "Stable boundary between KohaTools business modules and the current/future host.",
+  "currentMode": "preplugin",
+  "globalObject": "window.KohaToolsBootstrap",
+  "fields": {
+    "mode": {
+      "type": "string",
+      "allowed": [
+        "preplugin",
+        "plugin"
+      ],
+      "default": "preplugin"
+    },
+    "assetRoot": {
+      "type": "string",
+      "default": ""
+    },
+    "manifestUrl": {
+      "type": "string|null",
+      "default": null
+    },
+    "defaultsUrl": {
+      "type": "string|null",
+      "default": null
+    },
+    "installationId": {
+      "type": "string|null",
+      "default": null
+    },
+    "kohaVersion": {
+      "type": "string|null",
+      "default": null
+    },
+    "apiBase": {
+      "type": "string|null",
+      "default": null
+    },
+    "context": {
+      "type": "object",
+      "default": {}
+    },
+    "capabilities": {
+      "type": "object",
+      "default": {}
+    },
+    "security": {
+      "type": "object",
+      "notes": "Browser supplied claims are advisory only unless issued/verified by a backend."
+    }
+  },
+  "futurePluginRule": "A future Koha plugin should inject this contract and serve assets/config/auth; functional modules must not need rewriting.",
+  "suiteVersion": "3.43.1"
+}

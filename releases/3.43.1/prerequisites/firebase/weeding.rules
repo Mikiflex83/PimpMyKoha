@@ -1,0 +1,9 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    // Le module Désherbage ne fait que lire sa taxonomie. Aucun write Firebase n'est requis.
+    match /treeData/{id} { allow read: if signedIn(); allow write: if false; }
+    match /{document=**} { allow read, write: if false; }
+  }
+}

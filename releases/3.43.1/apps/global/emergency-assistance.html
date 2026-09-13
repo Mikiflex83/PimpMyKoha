@@ -1,0 +1,1336 @@
+<script type="module">
+// --- 1. IMPORTS FIREBASE V12 ---
+import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
+import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
+import { 
+    getDatabase, 
+    ref, 
+    push, 
+    set, 
+    update, 
+    remove,
+    onChildAdded,
+    onChildChanged,
+    onChildRemoved,
+    off,
+    serverTimestamp,
+    query, 
+    orderByChild,
+    startAt,
+    limitToLast,
+    goOnline,
+    goOffline,
+    get 
+} from "https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js";
+
+
+/* =========================================================
+    CSS NÉCESSAIRE POUR LA MODALE, LE STATUS BOARD ET LES MESSAGES
+    ET LES NOUVEAUX STYLES POUR LE SELECT DE RECHERCHE
+    ========================================================= */
+(function() {
+    const css = `
+        /* Overlay bloquant */
+        .koha-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.85);
+            z-index: 99999; 
+            display: none;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(3px);
+        }
+
+        /* Contenu de la modale */
+        .koha-modal-content {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+            width: 90%;
+            max-width: 500px;
+            position: relative;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        /* Styles spécifiques pour l'alerte de réception */
+        #koha-modalAlerteReceptionOverlay .koha-modal-content {
+            max-width: 600px;
+            border: 4px solid #e74c3c;
+            /* Animation pulse modifiée pour ne s'exécuter que 3 fois */
+            animation: koha-pulse 1s 3 alternate; 
+        }
+        
+        @keyframes koha-pulse {
+            from { box-shadow: 0 0 10px #c0392b; }
+            to { box-shadow: 0 0 25px #e74c3c; }
+        }
+        
+        .koha-modal-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            margin-top: 20px;
+        }
+        .koha-modal-buttons button {
+            padding: 12px 18px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1em;
+            transition: all 0.2s ease;
+        }
+        .koha-modal-buttons button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        .koha-modal-buttons .koha-btn-primary {
+            background-color: #27ae60; 
+            color: white;
+        }
+        .koha-modal-buttons .koha-btn-secondary {
+            background-color: #95a5a6; 
+            color: white;
+        }
+        .koha-modal-buttons .koha-btn-danger {
+            background-color: #e74c3c; 
+            color: white;
+        }
+        .koha-modal-content select, .koha-modal-content input[type="text"] {
+            width: 100%;
+            box-sizing: border-box; 
+            padding: 12px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 1em;
+        }
+        .koha-modal-content label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #2c3e50;
+        }
+        
+        /* Styles pour le tableau de statut flottant */
+        #koha-alertStatusBoard {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+            width: 350px;
+            max-height: 500px;
+            overflow-y: auto;
+            border: 2px solid #3498db;
+            padding: 15px;
+            border-radius: 10px;
+            background-color: #fff;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .koha-alert-item {
+            padding: 12px;
+            margin-bottom: 10px;
+            border-bottom: 1px dashed #eee;
+            font-size: 0.95em;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-radius: 6px;
+            background-color: #f9f9f9;
+        }
+        .koha-alert-item:last-child {
+            border-bottom: none;
+        }
+        .koha-status-badge {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-weight: bold;
+            white-space: nowrap;
+            font-size: 0.85em;
+        }
+        .koha-status-badge.lancee { 
+            background-color: #e74c3c; 
+            color: white; 
+            animation: koha-blink 2s infinite;
+        }
+        .koha-status-badge.prise-en-charge { 
+            background-color: #2ecc71; 
+            color: white; 
+        }
+        .koha-status-badge.cloturee { 
+            background-color: #7f8c8d; 
+            color: white; 
+        }
+        
+        @keyframes koha-blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0.7; }
+        }
+        
+        .koha-btn-cloture {
+            background-color: #3498db;
+            color: white;
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-left: 10px;
+            font-size: 0.85em;
+            transition: all 0.2s ease;
+        }
+        .koha-btn-cloture:hover {
+            background-color: #2980b9;
+        }
+        
+        /* Message Box Non-Bloquant (remplacement de alert()) */
+        #koha-messageBoxContainer {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 100000;
+        }
+        .koha-message-box {
+            background: #fff;
+            padding: 15px 20px;
+            border-radius: 8px;
+            box-shadow: 0 6px 15px rgba(0,0,0,0.2);
+            margin-bottom: 10px;
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+            min-width: 300px;
+            border-left: 5px solid;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .koha-message-box.info { 
+            border-left-color: #3498db; 
+            background-color: #e8f4fd;
+        }
+        .koha-message-box.success { 
+            border-left-color: #27ae60; 
+            background-color: #eafaf1;
+        }
+        .koha-message-box.error { 
+            border-left-color: #e74c3c; 
+            background-color: #fdedec;
+        }
+        .koha-message-box.show { opacity: 1; }
+        
+        /* Styles pour l'implémentation du Select avec Recherche (custom-select) */
+        .koha-custom-select-container {
+            position: relative;
+            margin-bottom: 15px;
+        }
+        .koha-custom-options-list {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            max-height: 200px;
+            overflow-y: auto;
+            background: white;
+            border: 1px solid #ccc;
+            border-top: none;
+            z-index: 100001; /* Au-dessus de l'overlay */
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            border-radius: 0 0 6px 6px;
+        }
+        .koha-custom-options-list li {
+            padding: 10px;
+            cursor: pointer;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .koha-custom-options-list li:hover {
+            background-color: #f4f4f4;
+        }
+        .koha-custom-options-list li.selected {
+            background-color: #3498db;
+            color: white;
+        }
+        
+        /* Styles pour mettre en valeur les informations importantes */
+        .koha-highlight-info {
+            background-color: #fff9e6;
+            border-left: 4px solid #f39c12;
+            padding: 12px 15px;
+            margin: 15px 0;
+            border-radius: 6px;
+            font-weight: bold;
+        }
+        
+        .koha-urgent-contact {
+            background-color: #e8f4fd;
+            border: 2px solid #3498db;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            text-align: center;
+        }
+        
+        .koha-urgent-contact .koha-phone-number {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #e74c3c;
+            display: block;
+            margin: 8px 0;
+        }
+        
+        .koha-location-info {
+            background-color: #eafaf1;
+            border: 2px solid #2ecc71;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            text-align: center;
+        }
+        
+        .koha-location-info .koha-location-name {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #27ae60;
+            display: block;
+            margin: 8px 0;
+        }
+        
+        .koha-alert-header {
+            text-align: center;
+            color: #e74c3c;
+            margin-bottom: 20px;
+            padding: 10px;
+            border-radius: 8px;
+            background-color: #fdedec;
+            border: 2px solid #e74c3c;
+        }
+        
+        .koha-alert-header h3 {
+            margin: 0;
+            font-size: 1.4em;
+        }
+        
+        /* Styles spécifiques pour le bouton d'alerte */
+        #koha-btnAlerteUrgence {
+            background: linear-gradient(145deg, #00426e, #00426e);
+            color: white;
+            padding: 5px 12px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1em;
+            transition: all 0.3s ease;
+            display: inline-block;
+            width: auto;
+            white-space: nowrap;
+            margin-top: 4px;
+        }
+        #koha-btnAlerteUrgence:hover {
+            transform: translateY(-2px);
+        }
+        
+
+    `;
+    
+    const style = document.createElement('style');
+    style.id = 'koha-alert-styles';
+    document.head.appendChild(style);
+    style.textContent = css; // Ajouter le contenu CSS
+
+    
+    // Créer le conteneur pour les messages non-bloquants
+    const msgContainer = document.createElement('div');
+    msgContainer.id = 'koha-messageBoxContainer';
+    document.body.appendChild(msgContainer);
+
+    // Créer le conteneur flottant pour le status board (il sera affiché/caché par JS)
+    const statusBoard = document.createElement('div');
+    statusBoard.id = 'koha-alertStatusBoard';
+    statusBoard.style.display = 'none'; // Caché par défaut
+    statusBoard.innerHTML = `
+        <p style="font-weight: bold; margin-top: 0; color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 12px; font-size: 1.2em;">📋 Suivi des demandes</p>
+        <div id="koha-alertStatusBoardContent"></div>
+    `;
+    document.body.appendChild(statusBoard);
+})();
+
+
+/* =========================================================
+    DÉFINITION DES CONSTANTES ET VARIABLES GLOBALES
+    ========================================================= */
+
+// Connexion Firebase propre au module.
+const MODULE_ID = 'emergency-assistance';
+const MODULE_CFG = window.KohaTools?.Config?.getCanonical?.(MODULE_ID) || {};
+const FIREBASE_META = window.KohaTools?.getService?.('firebase-module')?.get?.(MODULE_ID, MODULE_CFG.firebase) || null;
+const firebaseConfig = FIREBASE_META ? window.KohaTools?.getService?.('firebase-module')?.publicConfig?.(MODULE_ID, FIREBASE_META) : null;
+
+const POSTES_ALERTES = Array.isArray(MODULE_CFG.installation?.contacts) ? MODULE_CFG.installation.contacts : [];
+
+const INTERVENANTS = Array.isArray(MODULE_CFG.installation?.intervenants) ? MODULE_CFG.installation.intervenants : [];
+
+let db = null;
+let refAlertes = null;
+let isFirebaseReady = false;
+let firebaseApp = null;
+let isFirebaseConnected = false;
+let isFirebaseInitializing = false;
+let firebaseInitPromise = null;
+let firebaseListenersActive = false;
+let sharedAlertQuery = null;
+let sharedAlertCallbacks = null;
+const recentAlertsCache = new Map();
+let budgetListenerStop = null;
+let isDisconnecting = false;
+let reconnectTimeout = null;
+let lastDisconnectTime = 0;
+let pageLoadTime = Date.now();
+let isFirstLoad = true;
+let useOrderedAlertsQuery = true;
+const UNINDEXED_ALERTS_QUERY_LIMIT = 200;
+const FIREBASE_APP_NAME = FIREBASE_META?.appName || 'koha-alerte-urgence';
+const DISCONNECT_DEBOUNCE_MS = 500;
+const RECONNECT_DEBOUNCE_MS = 1000;
+// Stocke la clé de la dernière alerte envoyée par CET utilisateur (pour la persistance du bouton clôturer)
+let derniereAlerteEnvoyeeKey = null;
+
+// Mécanisme local pour les alertes ignorées 
+let ignoredAlertsSet = new Set();
+const IGNORED_ALERTS_STORAGE_KEY = 'koha_ignored_alerts';
+const EMETTEUR_KEY_STORAGE = 'koha_emetteur_key'; // Clé pour persister l'identité de l'émetteur
+
+// Système de son d'alerte
+const ALERT_SOUND_URL = String(window.KohaTools?.Config?.getCanonical?.('emergency-assistance')?.installation?.alertSoundUrl || '');
+let alertAudio = null;
+
+// --- ÉCONOMIE DE QUOTA FIREBASE ---
+// Fenêtre de pertinence d'une alerte : au-delà, elle est ignorée à la connexion
+// et purgée si elle traîne encore en base (poste fermé sans avoir clôturé, etc.)
+const FENETRE_ALERTES_MS = 12 * 60 * 60 * 1000; // 12h
+// Délai de grâce avant suppression définitive après clôture (laisse le temps
+// aux autres postes connectés de voir passer l'état "Clôturée")
+const DELAI_SUPPRESSION_CLOTURE_MS = 15000; // 15s
+
+
+/* =========================================================
+    UTILS / REMPLACEMENT ALERT/CONFIRM
+    ========================================================= */
+
+// Récupère la liste des alertes ignorées localement
+function getIgnoredAlerts() {
+    const stored = localStorage.getItem(IGNORED_ALERTS_STORAGE_KEY);
+    if (stored) {
+        try {
+            const arr = JSON.parse(stored);
+            ignoredAlertsSet = new Set(arr);
+        } catch (e) {
+            ignoredAlertsSet = new Set();
+        }
+    } else {
+        ignoredAlertsSet = new Set();
+    }
+    return ignoredAlertsSet;
+}
+
+// Ajoute une alerte à la liste des ignorées localement
+function addIgnoredAlert(alerteKey) {
+    ignoredAlertsSet.add(alerteKey);
+    // Convert Set back to Array for storage
+    localStorage.setItem(IGNORED_ALERTS_STORAGE_KEY, JSON.stringify(Array.from(ignoredAlertsSet)));
+}
+
+/**
+ * Joue le son d'alerte
+ */
+function playAlertSound() {
+    try {
+        if (!alertAudio) {
+            alertAudio = new Audio(ALERT_SOUND_URL);
+            alertAudio.preload = 'auto';
+            
+            // Gestion des erreurs de chargement audio
+            alertAudio.addEventListener('error', (e) => {
+            });
+        }
+        
+        // Réinitialiser et jouer le son
+        alertAudio.currentTime = 0;
+        alertAudio.play().catch(error => {
+        });
+    } catch (error) {
+    }
+}
+
+/**
+ * Affiche un message non bloquant (remplacement de alert())
+ * @param {string} message 
+ * @param {'info'|'success'|'error'} type 
+ */
+function showMessageBox(message, type = 'info') {
+    const container = document.getElementById('koha-messageBoxContainer');
+    if (!container) return;
+
+    const box = document.createElement('div');
+    box.className = `koha-message-box ${type}`;
+    box.textContent = message;
+    
+    container.appendChild(box);
+    
+    // Afficher le message
+    setTimeout(() => {
+        box.classList.add('show');
+    }, 10);
+
+    // Faire disparaître après 5 secondes
+    setTimeout(() => {
+        box.classList.remove('show');
+        // Supprimer après la transition
+        setTimeout(() => {
+            box.remove();
+        }, 300); 
+    }, 5000);
+}
+
+/**
+ * Affiche une modale de confirmation bloquante (remplacement de confirm())
+ * @param {string} title 
+ * @param {string} message 
+ * @param {function} onConfirm Callback à exécuter si l'utilisateur confirme
+ */
+function showConfirmationModal(title, message, onConfirm) {
+    const existingModal = document.getElementById('koha-confirmationModalOverlay');
+    if (existingModal) existingModal.remove();
+
+    const htmlContent = `
+        <div class="koha-modal-content" style="max-width: 400px; text-align: center;">
+            <h3 style="margin-top:0;">${title}</h3>
+            <p>${message}</p>
+            <div class="koha-modal-buttons" style="justify-content: center;">
+                <button id="koha-btnConfirmCancel" class="koha-btn-secondary">Annuler</button>
+                <button id="koha-btnConfirmAction" class="koha-btn-danger">Confirmer</button>
+            </div>
+        </div>
+    `;
+    
+    const overlay = document.createElement('div');
+    overlay.id = 'koha-confirmationModalOverlay';
+    overlay.className = 'koha-modal-overlay';
+    overlay.innerHTML = htmlContent;
+    document.body.appendChild(overlay);
+    overlay.style.display = 'flex'; 
+
+    document.getElementById('koha-btnConfirmCancel').addEventListener('click', () => {
+        overlay.remove();
+    });
+
+    document.getElementById('koha-btnConfirmAction').addEventListener('click', () => {
+        onConfirm();
+        overlay.remove();
+    });
+}
+
+
+/* =========================================================
+    FONCTION GÉNÉRIQUE DE RECHERCHE DANS LES SELECTS
+    ========================================================= */
+
+/**
+ * Remplace un <select> par un input de recherche couplé à une liste de suggestions.
+ * @param {HTMLElement} containerElement L'élément conteneur pour le nouveau select/input.
+ * @param {Array<Object|string>} data Les données de la liste (ex: POSTES_ALERTES ou INTERVENANTS).
+ * @param {string|null} valueKey La clé pour la valeur (si data est Array<Object>). Nul si Array<string>.
+ * @param {string} initialValue Valeur sélectionnée au départ.
+ * @param {function} onSelect Callback quand un élément est sélectionné.
+ * @param {string} idPrefix Préfixe pour les IDs générés.
+ */
+function setupSearchableSelect(containerElement, data, valueKey, initialValue, onSelect, idPrefix) {
+    const isObjectArray = typeof data[0] === 'object';
+    const options = data.map(item => ({
+        value: isObjectArray ? item[valueKey] : item,
+        label: isObjectArray ? item.nom : item
+    }));
+    
+    const inputId = `koha-${idPrefix}SearchInput`;
+    const listId = `koha-${idPrefix}OptionsList`;
+    let selectedValue = initialValue;
+
+    // Structure HTML du Select de Recherche
+    containerElement.innerHTML = `
+        <input type="text" id="${inputId}" placeholder="Tapez pour rechercher..." autocomplete="off">
+        <ul id="${listId}" class="koha-custom-options-list" style="display:none;"></ul>
+    `;
+    const searchInput = document.getElementById(inputId);
+    const optionsList = document.getElementById(listId);
+
+    // Mettre à jour la liste des suggestions
+    function updateList(filter = '') {
+        optionsList.innerHTML = '';
+        const filteredOptions = options.filter(opt => 
+            opt.label.toLowerCase().includes(filter.toLowerCase())
+        );
+
+        // Afficher seulement si l'utilisateur a tapé quelque chose
+        if (filteredOptions.length > 0 && filter.length > 0) {
+            filteredOptions.forEach(opt => {
+                const li = document.createElement('li');
+                li.textContent = opt.label;
+                li.dataset.value = opt.value;
+                if (opt.value === selectedValue) {
+                    li.classList.add('selected');
+                }
+                li.addEventListener('click', () => {
+                    selectOption(opt.value, opt.label);
+                });
+                optionsList.appendChild(li);
+            });
+            optionsList.style.display = 'block';
+        } else {
+            optionsList.style.display = 'none';
+        }
+    }
+
+    // Sélectionner une option
+    function selectOption(value, label) {
+        selectedValue = value;
+        searchInput.value = label; // Affiche le label sélectionné
+        optionsList.style.display = 'none';
+        onSelect(value); // Appelle le callback
+    }
+
+    // Gestion de l'input
+    searchInput.addEventListener('input', (e) => {
+        // Si l'utilisateur tape, la sélection est considérée comme perdue jusqu'à la sélection manuelle
+        onSelect(''); 
+        selectedValue = '';
+        updateList(e.target.value);
+    });
+
+    // Cacher la liste lors d'un clic extérieur (hors modal)
+    document.addEventListener('click', (e) => {
+        // Vérifie si le clic est sur l'overlay pour éviter de fermer la liste par erreur lors d'un clic sur le fond de la modale
+        if (!containerElement.contains(e.target) && !e.target.closest('.koha-modal-overlay')) {
+            optionsList.style.display = 'none';
+        }
+    });
+    
+    // Si une valeur initiale existe, la définir
+    if (initialValue) {
+        const initialOpt = options.find(opt => opt.value === initialValue);
+        if (initialOpt) {
+            searchInput.value = initialOpt.label;
+        }
+    }
+}
+
+
+/* =========================================================
+    FONCTIONS FIREBASE ET INITIALISATION
+    ========================================================= */
+
+async function initialiserFirebase() {
+    if (isFirebaseConnected && isFirebaseReady) {
+        return firebaseInitPromise || Promise.resolve();
+    }
+
+    if (isFirebaseInitializing && firebaseInitPromise) {
+        return firebaseInitPromise;
+    }
+
+    isFirebaseInitializing = true;
+    firebaseInitPromise = (async () => {
+        try {
+            if (!firebaseConfig) throw new Error(window.KohaTools?.getService?.('firebase-module')?.problem?.(MODULE_ID, MODULE_CFG.firebase) || 'Connexion Firebase Assistance non configurée.');
+
+            getIgnoredAlerts(); // 1. Charger la liste des alertes ignorées au démarrage
+
+            // CORRECTION: Récupérer la clé d'émetteur stockée localement (pour le bouton Clôturer)
+            derniereAlerteEnvoyeeKey = localStorage.getItem(EMETTEUR_KEY_STORAGE);
+
+            // Précharger le son d'alerte
+            try {
+                alertAudio = new Audio(ALERT_SOUND_URL);
+                alertAudio.preload = 'auto';
+            } catch (audioError) {
+            }
+
+            const appName = FIREBASE_APP_NAME;
+            let app;
+
+            const existingApp = getApps().find(a => a.name === appName);
+            if (existingApp) {
+                app = existingApp;
+            } else {
+                app = initializeApp(firebaseConfig, appName);
+            }
+
+            firebaseApp = app;
+            db = getDatabase(app);
+            const auth = getAuth(app);
+            const credential = auth.currentUser ? { user: auth.currentUser } : await signInAnonymously(auth);
+            const uid = credential.user.uid;
+            const accessRef = ref(db, `assistance_access/${uid}`);
+            const accessSnap = await get(accessRef);
+            if (!accessSnap.exists()) {
+                await set(accessRef, { approved: false, role: 'pending', createdAt: Date.now() });
+                throw new Error(`Poste Assistance non approuvé. UID Firebase : ${uid}. Approuvez assistance_access/${uid} dans Firebase.`);
+            }
+            const access = accessSnap.val() || {};
+            if (access.approved !== true || !['member','admin'].includes(String(access.role || ''))) {
+                throw new Error(`Poste Assistance en attente d’approbation. UID Firebase : ${uid}.`);
+            }
+            refAlertes = ref(db, 'koha_urgency_alerts');
+
+            if (!isFirebaseConnected) {
+                goOnline(db);
+            }
+
+            // Test de connexion rapide avec un seul enregistrement
+            try {
+                await get(query(refAlertes, orderByChild('heure'), limitToLast(1)));
+            } catch (error) {
+                if (/index.*heure/i.test(error.message)) {
+                    useOrderedAlertsQuery = false;
+                    await get(query(refAlertes, limitToLast(1)));
+                } else {
+                    throw error;
+                }
+            }
+
+            isFirebaseReady = true;
+            isFirebaseConnected = true;
+
+            attachFirebaseListeners();
+        } catch (error) {
+            throw error;
+        } finally {
+            isFirebaseInitializing = false;
+        }
+    })();
+
+    return firebaseInitPromise;
+}
+
+function attachFirebaseListeners() {
+    if (!isFirebaseReady || firebaseListenersActive) {
+        return;
+    }
+    startSharedAlertListeners();
+    firebaseListenersActive = true;
+}
+
+function createRecentAlertesQuery() {
+    const cutoffTime = Date.now() - FENETRE_ALERTES_MS;
+    if (useOrderedAlertsQuery) {
+        return query(refAlertes, orderByChild('heure'), startAt(cutoffTime), limitToLast(100));
+    }
+    return query(refAlertes, limitToLast(UNINDEXED_ALERTS_QUERY_LIMIT));
+}
+
+function filterRecentAlertes(snapshot) {
+    const data = snapshot.val();
+    if (!data || useOrderedAlertsQuery) {
+        return data || {};
+    }
+
+    const cutoffTime = Date.now() - FENETRE_ALERTES_MS;
+    const filtered = {};
+    Object.keys(data).forEach((key) => {
+        const entry = data[key];
+        if (entry && typeof entry.heure === 'number' && entry.heure >= cutoffTime) {
+            filtered[key] = entry;
+        }
+    });
+    return filtered;
+}
+
+function detachFirebaseListeners() {
+    if (sharedAlertQuery && sharedAlertCallbacks) {
+        try { off(sharedAlertQuery, 'child_added', sharedAlertCallbacks.added); } catch (_) {}
+        try { off(sharedAlertQuery, 'child_changed', sharedAlertCallbacks.changed); } catch (_) {}
+        try { off(sharedAlertQuery, 'child_removed', sharedAlertCallbacks.removed); } catch (_) {}
+    }
+    sharedAlertQuery = null;
+    sharedAlertCallbacks = null;
+    if (typeof budgetListenerStop === 'function') budgetListenerStop();
+    budgetListenerStop = null;
+    recentAlertsCache.clear();
+    firebaseListenersActive = false;
+}
+
+function disconnectFirebase() {
+    if (isFirstLoad && Date.now() - pageLoadTime < 3000) {
+        return;
+    }
+
+    if (isDisconnecting) {
+        return;
+    }
+
+    const now = Date.now();
+    if (now - lastDisconnectTime < DISCONNECT_DEBOUNCE_MS) {
+        return;
+    }
+    lastDisconnectTime = now;
+    isDisconnecting = true;
+
+    detachFirebaseListeners();
+
+    if (db && isFirebaseConnected) {
+        try {
+            goOffline(db);
+            isFirebaseConnected = false;
+            isFirebaseReady = false;
+        } catch (error) {
+        }
+    }
+
+    isDisconnecting = false;
+}
+
+function setupDisconnectHandlers() {
+    window.addEventListener('beforeunload', function () {
+        isFirstLoad = false;
+        disconnectFirebase();
+    });
+
+    document.addEventListener('visibilitychange', function () {
+        if (document.hidden) {
+            isFirstLoad = false;
+            disconnectFirebase();
+        } else if (!isFirebaseConnected && !isFirebaseInitializing) {
+            if (reconnectTimeout) {
+                clearTimeout(reconnectTimeout);
+            }
+            reconnectTimeout = setTimeout(async function () {
+                reconnectTimeout = null;
+                try {
+                    await initialiserFirebase();
+                } catch (error) {
+                }
+            }, RECONNECT_DEBOUNCE_MS);
+        }
+    });
+
+    window.addEventListener('pagehide', function () {
+        isFirstLoad = false;
+        disconnectFirebase();
+    });
+
+    window.addEventListener('unload', function () {
+        isFirstLoad = false;
+        disconnectFirebase();
+    });
+}
+
+
+// Fonction pour attacher l'événement au bouton
+function attacherEvenementBouton() {
+    const btn = document.getElementById('koha-btnAlerteUrgence');
+    if (!btn) {
+        return;
+    }
+
+    btn.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        afficherModalSelectionPoste();
+    });
+}
+
+/**
+ * 🔌 Teste la connexion à Firebase sans écrire de données.
+ */
+async function testerConnexionFirebase() {
+    if (!refAlertes) {
+        showMessageBox('⚠️ Firebase non initialisé — rechargez la page et réessayez.', 'error');
+        return;
+    }
+    try {
+        const debut = Date.now();
+        await get(query(refAlertes, limitToLast(1)));
+        const duree = Date.now() - debut;
+        if (!isFirebaseReady) {
+            isFirebaseReady = true;
+            ecouterAlertes();
+            ecouterStatusBoard();
+        }
+        showMessageBox(`✅ Connexion Firebase OK (${duree} ms)`, 'success');
+    } catch (error) {
+        const hint = error.message.includes('PERMISSION_DENIED')
+            ? ' — Vérifiez les règles de sécurité dans la console Firebase.'
+            : '';
+        showMessageBox(`❌ Erreur Firebase : ${error.message}${hint}`, 'error');
+    }
+}
+
+/**
+ * 🧪 Teste l'alerte uniquement en local, sans écrire dans Firebase.
+ * Simule la réception d'une alerte sur la machine courante.
+ */
+function testerSystemeLocal() {
+    const alerteTest = {
+        nom_emetteur: '⚙️ TEST — Ce poste',
+        tel_contact: 'TEST',
+        motif: 'Ceci est un test local. Aucune alerte réelle n\'a été envoyée.'
+    };
+    // Clé fictive qui n'existe pas dans Firebase
+    const alerteKeyTest = 'TEST_LOCAL_' + Date.now();
+    
+    playAlertSound();
+    afficherAlerteBloquante(alerteTest, alerteKeyTest, true);
+    showMessageBox('Test local déclenché — seul ce navigateur voit cette alerte.', 'info');
+}
+
+
+/* =========================================================
+    LOGIQUE DE BASE DE DONNÉES
+    ========================================================= */
+
+async function lancerAlerte(poste, motif) {
+    if (!isFirebaseReady) {
+        showMessageBox(`ALERTE SIMULÉE (Hors ligne)\nPoste: ${poste.nom}\nMotif: ${motif}\nContact: ${poste.tel}`, 'info');
+        return;
+    }
+
+    try {
+        const nouvelleAlerteRef = push(refAlertes);
+        const alerteKey = nouvelleAlerteRef.key;
+        
+        // CORRECTION: Stocker la clé de l'alerte pour la persistance du bouton "Clôturer"
+        derniereAlerteEnvoyeeKey = alerteKey;
+        localStorage.setItem(EMETTEUR_KEY_STORAGE, alerteKey); 
+        
+        await set(nouvelleAlerteRef, {
+            site_id: poste.id,
+            nom_emetteur: poste.nom,
+            tel_contact: poste.tel,
+            motif: motif || 'Pas de détails fournis', 
+            heure: serverTimestamp(),
+            etat: 'Lancée', 
+            intervenant: '', 
+            // Stocke la clé de l'alerte pour identifier l'émetteur
+            emetteur_key: alerteKey 
+        });
+
+        showMessageBox("Alerte d'urgence envoyée avec succès !", 'success');
+        
+        setTimeout(() => {
+            // Permet à l'utilisateur de recevoir des alertes par la suite, 
+            // MAIS MAINTIENT l'identité d'émetteur stockée dans localStorage.
+            derniereAlerteEnvoyeeKey = null; 
+        }, 3000);
+        
+    } catch (error) {
+        showMessageBox("Erreur lors de l'envoi de l'alerte: " + error.message, 'error');
+        derniereAlerteEnvoyeeKey = null;
+        localStorage.removeItem(EMETTEUR_KEY_STORAGE); // Nettoyer en cas d'échec
+    }
+}
+
+async function prendreEnCharge(alerteKey, intervenant) {
+    if (!isFirebaseReady) {
+        showMessageBox(`Prise en charge simulée par: ${intervenant}`, 'info');
+        return;
+    }
+
+    try {
+        const alertePath = `koha_urgency_alerts/${alerteKey}`;
+        
+        // Mise à jour de l'état
+        await update(ref(db, alertePath), {
+            etat: 'Prise en Charge',
+            intervenant: intervenant
+        });
+
+        showMessageBox(`Alerte ${alerteKey} prise en charge par ${intervenant}.`, 'success');
+        
+    } catch (error) {
+        showMessageBox("Erreur lors de la confirmation de prise en charge: " + error.message, 'error');
+    }
+}
+
+async function cloturerAlerte(alerteKey) {
+    if (!isFirebaseReady) {
+        showMessageBox(`Clôture simulée pour l'alerte ${alerteKey}.`, 'info');
+        return;
+    }
+    
+    // Remplacement de confirm() par une modale personnalisée
+    showConfirmationModal(
+        "Clôturer l'Alerte",
+        "Êtes-vous sûr de vouloir CLÔTURER cette alerte ? Seul l'émetteur est autorisé à le faire.",
+        async () => {
+            try {
+                const alertePath = `koha_urgency_alerts/${alerteKey}`;
+                
+                await update(ref(db, alertePath), {
+                    etat: 'Clôturée',
+                    heure_cloture: serverTimestamp()
+                });
+                
+                // Nettoyage de la clé d'émetteur locale (car l'alerte est finie)
+                if (derniereAlerteEnvoyeeKey === alerteKey) {
+                    derniereAlerteEnvoyeeKey = null;
+                    localStorage.removeItem(EMETTEUR_KEY_STORAGE);
+                }
+                
+                // Si l'alerte était ignorée localement, la retirer de la liste d'ignorance
+                if (ignoredAlertsSet.has(alerteKey)) {
+                    ignoredAlertsSet.delete(alerteKey);
+                    localStorage.setItem(IGNORED_ALERTS_STORAGE_KEY, JSON.stringify(Array.from(ignoredAlertsSet)));
+                }
+
+                showMessageBox("Alerte clôturée avec succès.", 'success');
+
+                // --- ÉCONOMIE DE QUOTA : suppression définitive après un court délai de grâce.
+                // Sans ça, chaque alerte clôturée reste en base pour toujours et est
+                // retéléchargée en entier à chaque nouvelle connexion, sur tous les sites.
+                setTimeout(() => {
+                    remove(ref(db, alertePath)).catch(() => { /* déjà supprimée, on ignore */ });
+                }, DELAI_SUPPRESSION_CLOTURE_MS);
+
+            } catch (error) {
+                showMessageBox("Erreur lors de la clôture de l'alerte: " + error.message, 'error');
+            }
+        }
+    );
+}
+
+/**
+ * Flux RTDB unique : un même cache local alimente la modale et le status board.
+ * Évite le doublon historique child_added + value qui retéléchargeait le jeu complet.
+ */
+function renderStatusBoardFromCache() {
+    const board = document.getElementById('koha-alertStatusBoardContent');
+    if (!board) return;
+    board.innerHTML = '';
+    let hasActiveAlerts = false;
+    const entries = [...recentAlertsCache.entries()].sort((a,b) => Number(b[1]?.heure||0) - Number(a[1]?.heure||0));
+    for (const [alerteKey, alerte] of entries) {
+        const estActive = alerte?.etat === 'Lancée' || alerte?.etat === 'Prise en Charge';
+        const heureAlerte = typeof alerte?.heure === 'number' ? alerte.heure : 0;
+        const estObsolete = heureAlerte > 0 && (Date.now() - heureAlerte) > FENETRE_ALERTES_MS;
+        if (estActive && estObsolete) {
+            recentAlertsCache.delete(alerteKey);
+            remove(ref(db, `koha_urgency_alerts/${alerteKey}`)).catch(() => {});
+            continue;
+        }
+        if (estActive) {
+            hasActiveAlerts = true;
+            board.appendChild(creerElementAlerteBoard(alerte, alerteKey));
+        }
+    }
+    document.getElementById('koha-alertStatusBoard').style.display = hasActiveAlerts ? 'block' : 'none';
+    const receptionModal = document.getElementById('koha-modalAlerteReceptionOverlay');
+    if (receptionModal) {
+        const key = receptionModal.dataset.alerteKey;
+        if (recentAlertsCache.get(key)?.etat !== 'Lancée') receptionModal.remove();
+    }
+}
+function handleSharedAlert(snapshot, isNew) {
+    const alerte=snapshot.val(), alerteKey=snapshot.key;
+    if (!alerte) return;
+    if (!useOrderedAlertsQuery && typeof alerte.heure === 'number' && alerte.heure < Date.now()-FENETRE_ALERTES_MS) return;
+    recentAlertsCache.set(alerteKey, alerte);
+    if (isNew && alerteKey !== derniereAlerteEnvoyeeKey && !ignoredAlertsSet.has(alerteKey) && alerte.etat === 'Lancée') {
+        const receptionModal=document.getElementById('koha-modalAlerteReceptionOverlay');
+        if (!(receptionModal && receptionModal.style.display === 'flex')) { playAlertSound(); afficherAlerteBloquante(alerte, alerteKey); }
+    }
+    renderStatusBoardFromCache();
+}
+function startSharedAlertListeners() {
+    if (!isFirebaseReady || sharedAlertCallbacks) return;
+    sharedAlertQuery=createRecentAlertesQuery();
+    try { budgetListenerStop = window.KohaTools?.getService?.('firebase-budget')?.listenerStart?.(FIREBASE_META?.projectId||'unconfigured','recent-alerts','rtdb') || null; } catch (_) {}
+    sharedAlertCallbacks={
+        added:s=>handleSharedAlert(s,true),
+        changed:s=>handleSharedAlert(s,false),
+        removed:s=>{recentAlertsCache.delete(s.key);renderStatusBoardFromCache();}
+    };
+    onChildAdded(sharedAlertQuery, sharedAlertCallbacks.added);
+    onChildChanged(sharedAlertQuery, sharedAlertCallbacks.changed);
+    onChildRemoved(sharedAlertQuery, sharedAlertCallbacks.removed);
+}
+function ecouterAlertes(){ startSharedAlertListeners(); }
+function ecouterStatusBoard(){ startSharedAlertListeners(); }
+
+/* =========================================================
+    FONCTIONS DE RENDU (UI)
+    ========================================================= */
+
+function creerElementAlerteBoard(alerte, alerteKey) {
+    const item = document.createElement('div');
+    item.className = 'koha-alert-item';
+    
+    let statusClass = alerte.etat.toLowerCase().replace(/\s+/g, '-');
+    let statusText = alerte.etat;
+    const motifAffiche = alerte.motif.length > 30 ? alerte.motif.substring(0, 30) + '...' : alerte.motif;
+    let details = `${alerte.nom_emetteur} (${motifAffiche})`;
+    let actions = '';
+    
+    // Vérification de l'émetteur : utilise la clé persistée dans localStorage pour le bouton Clôturer
+    const localEmetteurKey = localStorage.getItem(EMETTEUR_KEY_STORAGE);
+    const isEmetteur = localEmetteurKey && localEmetteurKey === alerte.emetteur_key;
+
+    // CORRECTION: Afficher le bouton Clôturer pour l'émetteur dans TOUS les états actifs
+    // (Lancée ET Prise en Charge)
+    if ((alerte.etat === 'Lancée' || alerte.etat === 'Prise en Charge') && isEmetteur) {
+        actions = `<button class="koha-btn-cloture" data-key="${alerteKey}">Clôturer</button>`;
+    }
+    
+    // Affichage des informations
+    if (alerte.etat === 'Prise en Charge') {
+        details = `${alerte.nom_emetteur} (Géré par: ${alerte.intervenant})`;
+    }
+    
+    item.innerHTML = `
+        <div style="flex-grow: 1; margin-right: 10px;">
+            ${details}
+        </div>
+        <div>
+            <span class="koha-status-badge ${statusClass}">${statusText}</span>
+            ${actions}
+        </div>
+    `;
+    
+    // Attacher l'événement de clôture
+    const btnCloture = item.querySelector('.koha-btn-cloture');
+    if (btnCloture) {
+        btnCloture.addEventListener('click', () => cloturerAlerte(alerteKey));
+    }
+
+    return item;
+}
+
+// Fonction modifiée pour intégrer le Select de Recherche (Poste)
+function afficherModalSelectionPoste() {
+    const existingModal = document.getElementById('koha-modalAlerteDeclenchementOverlay');
+    if (existingModal) existingModal.remove();
+    
+    const htmlContent = `
+        <div class="koha-modal-content">
+            <div class="koha-alert-header">
+                <h3>Lancer une demande d'assistance d'urgence</h3>
+            </div>
+            <p><strong>Identifiez votre poste</strong> et décrivez l'urgence (optionnel).</p>
+            
+            <div class="koha-highlight-info">
+                <strong>Information importante :</strong> Cette alerte sera visible par tous les postes connectés à Koha. 
+                Utilisez-la uniquement pour des situations nécessitant une assistance immédiate.
+            </div>
+            
+            <label for="koha-selectPosteContainer">Poste/Site :</label>
+            <div id="koha-selectPosteContainer" class="koha-custom-select-container">
+                </div>
+            <label for="koha-inputMotif">Motif de l'urgence (optionnel) :</label>
+            <input type="text" id="koha-inputMotif" placeholder="Ex: Problème d'impression / Usager difficile">
+            <div class="koha-modal-buttons">
+                <button id="koha-btnAnnulerDeclenchement" class="koha-btn-secondary">Annuler</button>
+                <button id="koha-btnLancerAlerte" class="koha-btn-danger">Envoyer ma demande à tous</button>
+            </div>
+            <div style="margin-top: 15px; padding-top: 12px; border-top: 1px dashed #ddd; display: flex; gap: 8px; justify-content: flex-start;">
+                <button id="koha-btnTesterBDDModal" style="background:transparent;color:#7f8c8d;padding:3px 8px;border:1px dashed #95a5a6;border-radius:6px;cursor:pointer;font-size:0.78em;opacity:0.7;" title="Tester la connexion Firebase">🔌 Tester BDD</button>
+                <button id="koha-btnTesterSystemeModal" style="background:transparent;color:#7f8c8d;padding:3px 8px;border:1px dashed #95a5a6;border-radius:6px;cursor:pointer;font-size:0.78em;opacity:0.7;" title="Tester le son et la modale d'alerte localement">🧪 Tester alerte</button>
+            </div>
+        </div>
+    `;
+    
+    const overlay = document.createElement('div');
+    overlay.id = 'koha-modalAlerteDeclenchementOverlay';
+    overlay.className = 'koha-modal-overlay';
+    overlay.innerHTML = htmlContent;
+    document.body.appendChild(overlay);
+    overlay.style.display = 'flex'; 
+    
+    let posteChoisi = null;
+
+    // INITIALISATION DU SELECT DE RECHERCHE POUR LE POSTE
+    setupSearchableSelect(
+        document.getElementById('koha-selectPosteContainer'),
+        POSTES_ALERTES,
+        'id',
+        '', // Valeur initiale vide
+        (selectedId) => {
+            posteChoisi = POSTES_ALERTES.find(p => p.id === selectedId);
+        },
+        'poste'
+    );
+
+
+    document.getElementById('koha-btnAnnulerDeclenchement').addEventListener('click', () => {
+        overlay.remove();
+    });
+
+    document.getElementById('koha-btnTesterBDDModal').addEventListener('click', () => {
+        overlay.remove();
+        testerConnexionFirebase();
+    });
+
+    document.getElementById('koha-btnTesterSystemeModal').addEventListener('click', () => {
+        overlay.remove();
+        testerSystemeLocal();
+    });
+
+    document.getElementById('koha-btnLancerAlerte').addEventListener('click', () => {
+        const motif = document.getElementById('koha-inputMotif').value.trim();
+        
+        if (!posteChoisi) {
+            showMessageBox('Veuillez sélectionner votre poste/site dans la liste.', 'error'); 
+            return;
+        }
+        
+        lancerAlerte(posteChoisi, motif);
+        overlay.remove();
+    });
+
+    overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) {
+            overlay.remove();
+        }
+    });
+}
+
+// Fonction modifiée pour intégrer le Select de Recherche (Intervenant)
+function afficherAlerteBloquante(alerte, alerteKey, isTest = false) {
+    const existingModal = document.getElementById('koha-modalAlerteReceptionOverlay');
+    if (existingModal) existingModal.remove();
+
+    const htmlContent = `
+        <div class="koha-modal-content">
+            <div class="koha-alert-header">
+                <h3>🚨 ALERTE URGENCE - ASSISTANCE REQUISE ! 🚨</h3>
+            </div>
+            
+            <div class="koha-location-info">
+                <strong>Lieu d'intervention :</strong>
+                <span class="koha-location-name">${alerte.nom_emetteur}</span>
+            </div>
+            
+            <div class="koha-urgent-contact">
+                <strong>Contact direct :</strong>
+                <span class="koha-phone-number">${alerte.tel_contact}</span>
+                <em>Appelez immédiatement pour connaître la situation</em>
+            </div>
+            
+            <div class="koha-highlight-info">
+                <strong>Motif de l'alerte :</strong> ${alerte.motif}
+            </div>
+            
+            <hr>
+            <label for="koha-selectIntervenantContainer">Je prends en charge (Qui êtes-vous ?) :</label>
+            <div id="koha-selectIntervenantContainer" class="koha-custom-select-container">
+                </div>
+            <div class="koha-modal-buttons">
+                <button id="koha-btnIgnorerAlerte" class="koha-btn-secondary">Ignorer (Pas ma zone)</button>
+                <button id="koha-btnConfirmerPrise" class="koha-btn-primary">✅ Confirmer Prise en Charge</button>
+            </div>
+        </div>
+    `;
+
+    const overlay = document.createElement('div');
+    overlay.id = 'koha-modalAlerteReceptionOverlay';
+    overlay.className = 'koha-modal-overlay';
+    overlay.dataset.alerteKey = alerteKey; 
+    overlay.innerHTML = htmlContent;
+    document.body.appendChild(overlay);
+    overlay.style.display = 'flex'; 
+    
+    let intervenantChoisi = '';
+    
+    // INITIALISATION DU SELECT DE RECHERCHE POUR L'INTERVENANT
+    setupSearchableSelect(
+        document.getElementById('koha-selectIntervenantContainer'),
+        INTERVENANTS,
+        null, // Nul car la liste est un Array<string>
+        '',
+        (selectedValue) => {
+            intervenantChoisi = selectedValue;
+        },
+        'intervenant'
+    );
+
+
+    document.getElementById('koha-btnIgnorerAlerte').addEventListener('click', () => {
+        if (!isTest) addIgnoredAlert(alerteKey);
+        overlay.remove();
+    });
+
+    document.getElementById('koha-btnConfirmerPrise').addEventListener('click', () => {
+        if (isTest) {
+            showMessageBox('Test terminé — aucune donnée envoyée.', 'info');
+            overlay.remove();
+            return;
+        }
+        const intervenant = intervenantChoisi;
+        if (!intervenant) {
+            showMessageBox('Veuillez sélectionner qui prend en charge dans la liste.', 'error'); 
+            return;
+        }
+        prendreEnCharge(alerteKey, intervenant);
+        overlay.remove();
+    });
+
+    // CRITIQUE: Désactiver la fermeture par clic sur l'overlay pour forcer l'action
+    overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) {
+            // Empêche la fermeture de la modale pour forcer l'utilisateur à choisir
+            // entre "Prise en Charge" ou "Ignorer".
+        }
+    });
+}
+
+
+/* =========================================================
+    DÉMARRAGE
+    ========================================================= */
+
+function insererBoutonDynamiquement() {
+    // Trouver le menu utilisateur existant
+    const userMenu = document.getElementById('user-menu');
+    
+    if (!userMenu) {
+        setTimeout(insererBoutonDynamiquement, 1000);
+        return;
+    }
+
+    // Créer l'élément li pour contenir le bouton
+    const boutonItem = document.createElement('li');
+    boutonItem.className = 'nav-item';
+    boutonItem.style.marginRight = '15px';
+    boutonItem.style.display = 'flex';
+    boutonItem.style.alignItems = 'center';
+
+    // Insérer le bouton existant dans le li
+    const boutonContainer = document.getElementById('koha-alertAppContainer');
+    if (boutonContainer) {
+        boutonItem.appendChild(boutonContainer);
+        
+        // Insérer au début du menu utilisateur (à gauche)
+        userMenu.insertBefore(boutonItem, userMenu.firstChild);
+        
+    } else {
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    initialiserFirebase();
+    attacherEvenementBouton();
+    setupDisconnectHandlers();
+    setTimeout(insererBoutonDynamiquement, 100);
+});
+
+
+</script>
+
+<div id="koha-alertAppContainer" style="text-align: right; display: flex; justify-content: flex-end; align-items: center; gap: 10px;">
+    <button id="koha-btnAlerteUrgence">
+        Assistance
+    </button>
+</div>
+

@@ -1,0 +1,93 @@
+:root {
+  --kt-accent: #408540;
+  --kt-radius: 8px;
+  --kt-border: #d9dee3;
+  --kt-bg-soft: #f6f8f9;
+  --kt-text-muted: #667085;
+  --kt-space-xs: 4px;
+  --kt-space-sm: 8px;
+  --kt-space-md: 12px;
+  --kt-space-lg: 18px;
+}
+
+.kt-card {
+  border: 1px solid var(--kt-border);
+  border-radius: var(--kt-radius);
+  background: #fff;
+  padding: var(--kt-space-md);
+}
+
+.kt-toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--kt-space-sm);
+  flex-wrap: wrap;
+}
+
+.kt-setting-row {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) minmax(240px, 2fr);
+  gap: var(--kt-space-md);
+  padding: var(--kt-space-sm) 0;
+  border-bottom: 1px solid var(--kt-border);
+}
+
+.kt-muted { color: var(--kt-text-muted); }
+
+.kt-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border-radius: 999px;
+  padding: 0.2rem 0.55rem;
+  font-size: 0.85em;
+  background: var(--kt-bg-soft);
+}
+
+.kt-diagnostics {
+  position: fixed;
+  right: 12px;
+  bottom: 12px;
+  z-index: 99999;
+  width: min(560px, calc(100vw - 24px));
+  max-height: 70vh;
+  overflow: auto;
+  border: 1px solid var(--kt-border);
+  border-radius: var(--kt-radius);
+  background: #fff;
+  box-shadow: 0 8px 26px rgba(0,0,0,.18);
+  padding: 8px 10px;
+  font-size: 12px;
+}
+.kt-diagnostics > summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+.kt-diagnostics-actions {
+  display: flex;
+  gap: 8px;
+  margin: 8px 0;
+}
+.kt-diagnostics pre {
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 50vh;
+  overflow: auto;
+  margin: 0;
+}
+
+
+/* v0.5 common UI primitives */
+.kt-toast{
+  position:fixed; right:20px; bottom:20px; z-index:10050;
+  background:#333; color:#fff; padding:8px 12px; border-radius:var(--kt-radius,8px);
+  box-shadow:0 4px 16px rgba(0,0,0,.22); opacity:0; transform:translateY(5px);
+  transition:opacity .15s ease, transform .15s ease; pointer-events:none;
+}
+.kt-toast.is-visible{opacity:1;transform:none}
+.kt-tooltip{
+  position:absolute; z-index:10040; background:#333; color:#fff; padding:8px 10px;
+  border-radius:var(--kt-radius,8px); line-height:1.35; box-shadow:0 4px 15px rgba(0,0,0,.2);
+}
+.kt-action i{margin-right:2px}
+.kt-age{color:var(--kt-age-color,#555);font-size:var(--kt-age-size,.85em);margin-top:var(--kt-age-margin-top,4px)}

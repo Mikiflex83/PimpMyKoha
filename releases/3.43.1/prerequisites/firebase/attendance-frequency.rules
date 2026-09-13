@@ -1,0 +1,18 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function accessPath() { return /databases/$(database)/documents/attendance_access/$(request.auth.uid); }
+    function approved() { return signedIn() && exists(accessPath()) && get(accessPath()).data.approved == true; }
+    function admin() { return approved() && get(accessPath()).data.role == 'admin'; }
+    match /attendance_access/{uid} {
+      allow create: if signedIn() && request.auth.uid == uid
+        && request.resource.data.approved == false && request.resource.data.role == 'pending';
+      allow read: if signedIn() && request.auth.uid == uid;
+      allow update, delete: if false;
+    }
+    match /locations/{id} { allow read: if approved(); allow write: if admin(); }
+    match /counts/{id} { allow read, create, update: if approved(); allow delete: if admin(); }
+    match /{document=**} { allow read, write: if false; }
+  }
+}

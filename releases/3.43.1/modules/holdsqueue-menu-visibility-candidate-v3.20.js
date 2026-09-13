@@ -1,0 +1,6 @@
+(function(global){"use strict";const KT=global.KohaTools;if(!KT||!KT.Config)return;const ID="holdsqueue-menu-visibility",Scope=KT.getService&&KT.getService("scope");let changed=[];
+function C(){return KT.Config.getCanonical(ID)}function ready(f){document.readyState==="loading"?document.addEventListener("DOMContentLoaded",f,{once:true}):f()}
+function matches(c){const out=[];for(const r of c.targets||[])for(const a of document.querySelectorAll(r.linkSelector||"li a"))if(String(a.href||"").includes(r.hrefIncludes||"")&&String(a.textContent||"").includes(r.textIncludes||"")){const x=a.closest(r.closestSelector||"li");if(x)out.push(x)}return [...new Set(out)]}
+function run(){const c=C();if(!c?.enabled||!["shadow","live"].includes(c.mode))return;if(Scope&&!Scope.match(c.general?.scope).ok)return;const xs=matches(c);if(c.mode==="shadow"){KT.record({module:ID,level:"info",kind:"shadow-configurable-parity",matches:xs.length});return}for(const x of xs){changed.push({x,display:x.style.display});x.style.display=c.action?.display||"none"}}
+function init(){ready(run)}function destroy(){for(const o of changed)if(o.x?.isConnected)o.x.style.display=o.display;changed=[]}function onConfigChange(){destroy();run()}const runtime={id:ID,init,destroy,onConfigChange};KT.initModule?KT.initModule(runtime):init();
+})(window);

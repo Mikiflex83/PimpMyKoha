@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "KohaTools canonical module config",
+  "type": "object",
+  "required": [
+    "enabled",
+    "configSchemaVersion",
+    "prerequisites"
+  ],
+  "properties": {
+    "enabled": {
+      "type": "boolean"
+    },
+    "configSchemaVersion": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "prerequisites": {
+      "type": "array"
+    },
+    "installation": {
+      "type": "object"
+    }
+  }
+}

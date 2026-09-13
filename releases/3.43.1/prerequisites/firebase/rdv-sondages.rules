@@ -1,0 +1,55 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function accessDoc() { return get(/databases/$(database)/documents/rdv_access/$(request.auth.uid)); }
+    function member() { return signedIn() && accessDoc().data.approved == true && accessDoc().data.role in ['member','admin']; }
+    function admin() { return signedIn() && accessDoc().data.approved == true && accessDoc().data.role == 'admin'; }
+    function ownsIncoming() { return signedIn() && request.resource.data.ownerUid == request.auth.uid; }
+    function ownsExisting() { return signedIn() && resource.data.ownerUid == request.auth.uid; }
+
+    match /rdv_access/{uid} {
+      allow read: if signedIn() && request.auth.uid == uid;
+      allow write: if false; // approbation uniquement dans Firebase Console / backend administrateur
+    }
+
+    match /themes/{id} { allow read: if signedIn(); allow write: if admin(); }
+    match /recurrenceRules/{id} { allow read, write: if admin(); }
+    match /settings/{id} { allow read: if signedIn(); allow write: if admin(); }
+    match /polls/{id} { allow read: if signedIn(); allow write: if admin(); }
+    match /participants/{id} { allow read: if member(); allow write: if admin(); }
+
+    match /slots/{id} {
+      allow read: if signedIn();
+      allow create, delete: if admin();
+      allow update: if admin() || (
+        signedIn()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['confirmedCount','updatedAt'])
+        && request.resource.data.confirmedCount is int
+        && resource.data.confirmedCount is int
+        && request.resource.data.confirmedCount == resource.data.confirmedCount - 1
+        && request.resource.data.confirmedCount >= 0
+      );
+    }
+
+    match /bookings/{id} {
+      allow create: if ownsIncoming();
+      allow read: if admin() || ownsExisting();
+      allow update: if admin() || (
+        ownsExisting() && ownsIncoming()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status','cancelledAt','updatedAt'])
+        && request.resource.data.status == 'cancelled'
+      );
+      allow delete: if admin();
+    }
+
+    match /pollResponses/{id} {
+      allow create: if ownsIncoming();
+      allow read: if admin() || ownsExisting();
+      allow update: if admin() || (ownsExisting() && ownsIncoming());
+      allow delete: if admin() || ownsExisting();
+    }
+
+    match /{document=**} { allow read, write: if false; }
+  }
+}
