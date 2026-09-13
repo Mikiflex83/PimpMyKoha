@@ -1227,7 +1227,7 @@
         const accessRef = doc(db, 'collections_tree_access', firebaseUser.uid);
         let accessSnap = await getDoc(accessRef);
         if (!accessSnap.exists()) {
-            await setDoc(accessRef, { approved:false, role:'pending', createdAt:serverTimestamp(), clientVersion:'3.43.0' });
+            await setDoc(accessRef, { approved:false, role:'pending', createdAt:serverTimestamp(), clientVersion:'3.43.1' });
             accessSnap = await getDoc(accessRef);
         }
         const accessRole = accessSnap.data()?.approved === true ? String(accessSnap.data()?.role || 'member') : 'pending';

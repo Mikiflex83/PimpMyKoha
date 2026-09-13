@@ -1,6 +1,6 @@
 {
   "schema": "pimp-my-koha.release-metadata.v1",
-  "version": "3.43.0",
+  "version": "3.43.1",
   "channel": "stable",
   "releasedAt": "2026-09-12",
   "summary": "Distribution GitHub multi-canaux et contrôle d’accès : Stable / Canary / Dev, outils DEV réservés explicitement, Canary module isolé par compte Koha et modules filtrés par audience.",

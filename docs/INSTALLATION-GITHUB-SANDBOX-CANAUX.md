@@ -53,7 +53,7 @@ La méthode la plus simple graphiquement est GitHub Desktop.
 7. Copier **le contenu** de `GITHUB-PUBLIC` dans le dossier cloné, pas le dossier `GITHUB-PUBLIC` lui-même.
 8. Vérifier notamment la présence de `.github`, `FULL-DIST`, `scripts`, `release`, `install`, `README.md`.
 9. Revenir dans GitHub Desktop.
-10. Dans **Summary**, saisir `Pimp My Koha 3.43.0`.
+10. Dans **Summary**, saisir `Pimp My Koha 3.43.1`.
 11. Cliquer **Commit to main**.
 12. Cliquer **Push origin**.
 
@@ -77,8 +77,8 @@ La méthode la plus simple graphiquement est GitHub Desktop.
 1. Ouvrir **Releases** dans le dépôt.
 2. Cliquer **Draft a new release**.
 3. **Choose a tag → Create new tag**.
-4. Saisir exactement `v3.43.0`.
-5. Titre : `Pimp My Koha 3.43.0`.
+4. Saisir exactement `v3.43.1`.
+5. Titre : `Pimp My Koha 3.43.1`.
 6. Ne pas cocher **Set as a pre-release**.
 7. Cliquer **Publish release**.
 8. Aller dans **Actions** et vérifier que **Publish Pimp My Koha release** devient vert.
@@ -100,7 +100,7 @@ Les URLs suivantes doivent ensuite répondre :
 ```text
 https://VOTRE-COMPTE.github.io/pimp-my-koha/latest.json
 https://VOTRE-COMPTE.github.io/pimp-my-koha/channel-loader.js
-https://VOTRE-COMPTE.github.io/pimp-my-koha/releases/3.43.0/bootstrap.js
+https://VOTRE-COMPTE.github.io/pimp-my-koha/releases/3.43.1/bootstrap.js
 ```
 
 ## 7. Installer Stable directement sur un Koha de production
@@ -124,7 +124,7 @@ window.KohaToolsBootstrap = {
 };
 (function () {
   var s = document.createElement("script");
-  s.src = "https://VOTRE-COMPTE.github.io/pimp-my-koha/releases/3.43.0/bootstrap.js";
+  s.src = "https://VOTRE-COMPTE.github.io/pimp-my-koha/releases/3.43.1/bootstrap.js";
   s.async = false;
   document.head.appendChild(s);
 })();
@@ -133,7 +133,7 @@ window.KohaToolsBootstrap = {
 6. Cliquer **Save all** / **Enregistrer toutes les préférences**.
 7. Recharger le staff Koha avec un rechargement forcé.
 
-Cette installation est **épinglée en 3.43.0** : une nouvelle release GitHub ne remplace rien automatiquement.
+Cette installation est **épinglée en 3.43.1** : une nouvelle release GitHub ne remplace rien automatiquement.
 
 ## 8. Installer la sandbox avec sélection Stable / Canary / Dev
 
@@ -145,7 +145,7 @@ Dans `IntranetUserJS` :
 window.PimpMyKohaChannelBootstrap = {
   manifestUrl: "https://VOTRE-COMPTE.github.io/pimp-my-koha/latest.json",
   channel: "dev",
-  stableVersion: "3.43.0",
+  stableVersion: "3.43.1",
   installationId: "sandbox-koha",
   adminUsers: ["VOTRE_IDENTIFIANT_KOHA"],
   developerUsers: ["VOTRE_IDENTIFIANT_KOHA"],
@@ -230,7 +230,7 @@ Ces rôles **n’ajoutent aucun droit Koha**. Pimp My Koha peut aussi utiliser, 
 Dans `IntranetUserJS`, remettre simplement l’ancienne URL versionnée, par exemple :
 
 ```text
-.../releases/3.43.0/bootstrap.js
+.../releases/3.43.1/bootstrap.js
 ```
 
 ### Sandbox par canal

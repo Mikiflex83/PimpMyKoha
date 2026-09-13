@@ -1,10 +1,10 @@
 (function(global){
 "use strict";
-if(global.__KohaToolsV3430Loaded)return;
-global.__KohaToolsV3430Loaded=true;
+if(global.__KohaToolsV3431Loaded)return;
+global.__KohaToolsV3431Loaded=true;
 global.__KohaToolsBootStarted=performance.now();
 
-const VERSION="3.43.0";
+const VERSION="3.43.1";
 const BOOT=(global.KohaToolsBootstrap&&typeof global.KohaToolsBootstrap==="object")?global.KohaToolsBootstrap:{};
 const ROOT=String(BOOT.assetRoot||new URL("./",document.currentScript?.src||location.href).href).replace(/\/?$/,"/");
 const MANIFEST_URL=BOOT.manifestUrl||null,DEFAULTS_URL=BOOT.defaultsUrl||null;
@@ -94,7 +94,7 @@ function finishCandidateTelemetry(ctx,ok,error){
 async function boot(){
  loadCss(ROOT+"ui/koha-tools.css");loadCss(ROOT+"admin/panel.css");
  for(const f of [
-   "core/core.js","core/update-service.js","core/config-origin.js","core/maintenance.js","core/performance.js","core/discovery.js","core/installation-profile.js","core/compatibility.js","core/late-ready-compat.js","core/platform.js","core/storage.js","core/gateway.js","core/architecture-audit.js","core/config.js","core/prerequisites.js","core/koha-adapter.js","core/config-migrations.js","core/firebase-module.js","core/firestore.js","core/firestore-auth.js","core/firebase-budget.js","core/taxonomy.js","core/remote-config.js","core/production.js","core/lifecycle.js","core/canary.js","core/validation.js","core/testing-workspace.js","core/retirement-report.js","core/validation-dashboard.js","core/recipe.js","core/health.js",
+   "core/core.js","core/access-control.js","core/update-service.js","core/config-origin.js","core/maintenance.js","core/performance.js","core/discovery.js","core/installation-profile.js","core/compatibility.js","core/late-ready-compat.js","core/platform.js","core/storage.js","core/gateway.js","core/architecture-audit.js","core/config.js","core/prerequisites.js","core/koha-adapter.js","core/config-migrations.js","core/firebase-module.js","core/firestore.js","core/firestore-auth.js","core/firebase-budget.js","core/taxonomy.js","core/remote-config.js","core/production.js","core/lifecycle.js","core/canary.js","core/validation.js","core/testing-workspace.js","core/retirement-report.js","core/validation-dashboard.js","core/recipe.js","core/health.js",
    "core/dom.js","core/date.js","core/table.js","core/serials.js","core/cataloging-assistant.js","core/scope.js","core/targets.js","core/clipboard.js","core/actions.js","core/ui.js","core/assets.js","core/capabilities.js","core/observe.js","core/sidebar.js","core/home-layout.js","core/module-host.js","core/navigation.js",
    "admin/panel.js"
  ])await loadScript(ROOT+f);
@@ -171,5 +171,5 @@ async function boot(){
  global.__KohaToolsBootTelemetry={startedAtMs:global.__KohaToolsBootStarted,finishedAtMs:performance.now(),durationMs:Math.round((performance.now()-global.__KohaToolsBootStarted)*10)/10,at:new Date().toISOString()};KohaTools.emit("koha-tools:ready",{version:KohaTools.version});
  setTimeout(()=>KohaTools.getService("health")?.scanCurrentPage?.({passive:true}),1200);
 }
-boot().catch(e=>{document.documentElement.dataset.kohaToolsV3430BootError="1";console.error("KohaTools boot",e)});
+boot().catch(e=>{document.documentElement.dataset.kohaToolsV3431BootError="1";console.error("KohaTools boot",e)});
 })(window);
