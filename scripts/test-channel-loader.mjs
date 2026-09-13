@@ -34,7 +34,7 @@ let r=await run({username:'alice',channel:'dev',developerUsers:['alice']});
 assert.equal(r.resolution.selected,'dev');
 assert.equal(r.resolution.version,'3.44.0-dev.2');
 assert.equal(r.bootstrap.distributionChannel,'dev');
-assert.match(r.loaded[0],/3\.44\.0-dev\.1\/bootstrap\.js$/);
+assert.match(r.loaded[0],/3\.44\.0-dev\.2\/bootstrap\.js$/);
 
 r=await run({username:'bob',channel:'dev',developerUsers:['alice']});
 assert.equal(r.resolution.selected,'stable');
