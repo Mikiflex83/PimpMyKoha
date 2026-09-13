@@ -7,6 +7,7 @@ const navigation=fs.readFileSync('FULL-DIST/kohatools/core/navigation.js','utf8'
 const recipe=fs.readFileSync('FULL-DIST/kohatools/core/recipe.js','utf8');
 const config=fs.readFileSync('FULL-DIST/kohatools/core/config.js','utf8');
 const launcher=fs.readFileSync('FULL-DIST/kohatools/modules/admin-launcher.js','utf8');
+const loader=fs.readFileSync('FULL-DIST/kohatools/loader.js','utf8');
 const quality=fs.readFileSync('FULL-DIST/kohatools/apps/quality/quality-center.html','utf8');
 const restoration=fs.readFileSync('FULL-DIST/kohatools/apps/restoration/index.html','utf8');
 const preflight=fs.readFileSync('FULL-DIST/kohatools/admin/preflight-app.html','utf8');
@@ -18,6 +19,9 @@ assert.ok(protectedIds.has('admin-console-launcher'),'le point d’entrée Pimp 
 assert.equal(canonical['admin-console-launcher']?.access?.audience,'admin');
 assert.equal(canonical['installation-preflight']?.access?.audience,'admin');
 assert.equal(canonical['installation-preflight']?.freshInstallCore,true,'l’assistant doit rester disponible avant certification');
+const accessLoad=loader.indexOf('"core/access-control.js"');
+const accessInit=loader.indexOf('access?.init?.(defaults)');
+assert.ok(accessLoad>=0&&accessInit>accessLoad,'le contrôle d’accès doit être chargé avant son initialisation');
 
 const adminOnly=['user-menu-manager','intranet-nav-manager','home-layout-manager','quality-rule-lab'];
 for(const id of adminOnly) assert.equal(canonical[id]?.access?.audience,'admin',`${id} doit être réservé à l’administration`);

@@ -6529,7 +6529,7 @@
       "appearance": {}
     }
   },
-  "suiteVersion": "3.44.0-dev.1",
+  "suiteVersion": "3.44.0-dev.2",
   "diagnostics": {
     "enabled": false,
     "showPanel": false,

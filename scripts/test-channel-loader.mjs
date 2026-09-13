@@ -5,11 +5,11 @@ import assert from 'node:assert/strict';
 const source=fs.readFileSync('install/channel-loader.js','utf8');
 const index={
   schema:'pimp-my-koha.release-index.v1',
-  channels:{stable:'3.43.0',canary:'3.44.0-canary.1',dev:'3.44.0-dev.1'},
+  channels:{stable:'3.43.0',canary:'3.44.0-canary.1',dev:'3.44.0-dev.2'},
   releases:{
     '3.43.0':{version:'3.43.0',runtimeRoot:'https://example.test/releases/3.43.0/'},
     '3.44.0-canary.1':{version:'3.44.0-canary.1',runtimeRoot:'https://example.test/releases/3.44.0-canary.1/'},
-    '3.44.0-dev.1':{version:'3.44.0-dev.1',runtimeRoot:'https://example.test/releases/3.44.0-dev.1/'}
+    '3.44.0-dev.2':{version:'3.44.0-dev.2',runtimeRoot:'https://example.test/releases/3.44.0-dev.2/'}
   }
 };
 
@@ -32,7 +32,7 @@ async function run({username,channel,adminUsers=[],developerUsers=[],published=i
 
 let r=await run({username:'alice',channel:'dev',developerUsers:['alice']});
 assert.equal(r.resolution.selected,'dev');
-assert.equal(r.resolution.version,'3.44.0-dev.1');
+assert.equal(r.resolution.version,'3.44.0-dev.2');
 assert.equal(r.bootstrap.distributionChannel,'dev');
 assert.match(r.loaded[0],/3\.44\.0-dev\.1\/bootstrap\.js$/);
 
@@ -45,7 +45,7 @@ r=await run({username:'admin',channel:'canary',adminUsers:['admin']});
 assert.equal(r.resolution.selected,'canary');
 assert.equal(r.resolution.version,'3.44.0-canary.1');
 
-const noDev=structuredClone(index);delete noDev.channels.dev;delete noDev.releases['3.44.0-dev.1'];
+const noDev=structuredClone(index);delete noDev.channels.dev;delete noDev.releases['3.44.0-dev.2'];
 r=await run({username:'alice',channel:'dev',developerUsers:['alice'],published:noDev});
 assert.equal(r.resolution.selected,'stable');
 assert.equal(r.resolution.reason,'channel-unpublished');

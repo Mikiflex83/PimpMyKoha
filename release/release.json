@@ -1,6 +1,6 @@
 {
   "schema": "pimp-my-koha.release-metadata.v1",
-  "version": "3.44.0-dev.1",
+  "version": "3.44.0-dev.2",
   "channel": "dev",
   "releasedAt": "2026-09-13",
   "summary": "Préproduction sandbox de Pimp My Koha 3.44.0 : version DEV réservée aux comptes développeur pour recette réelle avant Stable.",

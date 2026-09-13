@@ -2,7 +2,7 @@
   "use strict";
 
   const KT = global.KohaTools = global.KohaTools || {};
-  KT.version = "3.44.0-dev.1";
+  KT.version = "3.44.0-dev.2";
   KT.services = KT.services || {};
   KT.modules = KT.modules || new Map();
   KT.events = KT.events || new EventTarget();
