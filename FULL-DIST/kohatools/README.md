@@ -1,4 +1,4 @@
-# Pimp My Koha / KohaTools — V3.44.0-dev.2
+# Pimp My Koha / KohaTools — V3.44.0-dev.3
 
 Distribution pré-plugin multi-installations.
 
@@ -15,6 +15,6 @@ Le mode `fresh-install` ne charge jamais silencieusement un module legacy. Un pr
 
 ## Distribution, accès et mises à jour
 
-V3.44.0-dev.2 consolide le parcours de mise en production : modules normaux séparés de la migration, configuration simplifiée, droits alignés sur Koha, tests et validation communs à tous les types de modules, prérequis isolés par fonction et première installation guidée. Le rôle `developer` reste explicitement associé à un compte Koha et les essais locaux restent limités au navigateur du mainteneur.
+V3.44.0-dev.3 consolide le parcours de mise en production : modules normaux séparés de la migration, configuration simplifiée, droits alignés sur Koha, tests et validation communs à tous les types de modules, prérequis isolés par fonction et première installation guidée. Le rôle `developer` reste explicitement associé à un compte Koha et les essais locaux restent limités au navigateur du mainteneur.
 
 Une release n’est jamais installée silencieusement : la production GitHub Pages reste épinglée à une version et l’auto-hébergement conserve la maîtrise de ses fichiers. Voir `docs/UPDATE.md`, `docs/ACCESS-CONTROL.md` et `docs/CHANNELS.md`.

@@ -34,7 +34,7 @@ function scopeKind(scope){
   const constrainedDom=(scope.requireSelectors||[]).length>0;
   return (!wildcardOnly||constrainedQuery||constrainedDom)?"page":"global";
 }
-function canonicalOf(m){return defaults?.modules?.[m.id]?.config?.canonicalModule||null}
+function canonicalOf(m){return defaults?.modules?.[m.id]?.config?.canonicalModule||m?.canonicalModule||null}
 function canonicalCfg(cid){return KT.Config?.getCanonical?.(cid)||defaults?.canonicalModules?.[cid]||{}}
 function allMappings(cid){return (manifest?.modules||[]).filter(m=>canonicalOf(m)===cid)}
 function isNativeApplication(cid){return defaults?.canonicalModules?.[cid]?.nativeApplication===true||allMappings(cid).some(m=>m.applicationModule===true)}

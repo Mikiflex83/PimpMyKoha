@@ -193,12 +193,12 @@ Même principe :
 
 ```json
 {
-  "version": "3.44.0-dev.2",
+  "version": "3.44.0-dev.3",
   "channel": "dev"
 }
 ```
 
-Créer la release `v3.44.0-dev.2` en cochant **pre-release**.
+Créer la release `v3.44.0-dev.3` en cochant **pre-release**.
 
 Seuls les usernames présents dans `developerUsers` peuvent sélectionner DEV via le sélecteur de sandbox. Le code du dépôt reste public puisque le projet est public ; c’est l’exécution et l’interface DEV qui sont réservées.
 

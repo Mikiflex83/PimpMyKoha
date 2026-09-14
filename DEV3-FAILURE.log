@@ -1,0 +1,76 @@
+=== Pimp My Koha 3.44.0-dev.3 : correctif fresh-install ===
+
+1/5 - Reprise propre depuis GitHub main
+From https://github.com/Mikiflex83/PimpMyKoha
+ * branch            main       -> FETCH_HEAD
+Already on 'main'
+M	FULL-DIST/kohatools/README.md
+M	FULL-DIST/kohatools/admin/panel.js
+M	FULL-DIST/kohatools/bootstrap.js
+M	FULL-DIST/kohatools/config/host-contract.json
+M	FULL-DIST/kohatools/config/manifest.json
+M	FULL-DIST/kohatools/config/product-defaults.json
+M	FULL-DIST/kohatools/core/canary.js
+M	FULL-DIST/kohatools/core/config.js
+M	FULL-DIST/kohatools/core/core.js
+M	FULL-DIST/kohatools/core/lifecycle.js
+M	FULL-DIST/kohatools/core/module-host.js
+M	FULL-DIST/kohatools/core/production.js
+M	FULL-DIST/kohatools/core/recipe.js
+M	FULL-DIST/kohatools/core/validation.js
+M	FULL-DIST/kohatools/docs/MAINTENANCE.md
+M	FULL-DIST/kohatools/loader.js
+M	FULL-DIST/kohatools/profiles/example.json
+M	SANDBOX-DEV-3.44.0.md
+M	docs/INSTALLATION-GITHUB-SANDBOX-CANAUX.md
+M	release/release.json
+M	scripts/test-channel-loader.mjs
+M	scripts/test-fresh-install-native-gates.mjs
+M	scripts/test-user-workflows.mjs
+Your branch is up to date with 'origin/main'.
+HEAD is now at 475da21 Fix dev.2 channel loader test assertion
+2/5 - Application du correctif
+OK : résolution canonique depuis le manifeste
+OK : prévisualisation native réservée au développeur DEV
+OK : manifest transmis au résolveur
+OK : canonicalId natif dans le loader
+OK : mapping cohérent dans recipe.js
+OK : mapping cohérent dans validation.js
+OK : mapping cohérent dans lifecycle.js
+OK : mapping cohérent dans canary.js
+OK : mapping cohérent dans production.js
+OK : distinction supporté / certifié
+OK : catalogue fresh-install visible au développeur
+OK : ouverture sûre d'une application native
+OK : refus explicite d'un module non enregistré
+OK : test fresh-install renforcé
+OK : test user-workflows renforcé
+OK : version 3.44.0-dev.3 (13 fichier(s) actualisé(s))
+
+3/5 - Tests locaux identiques au CI
+PASS Pimp My Koha 3.44.0-dev.3
+- AVERTISSEMENT: licence publique encore à valider (voir docs/LICENCE-AVANT-PUBLICATION.md)
+- 188 JS contrôlés
+- 27 scripts HTML contrôlés
+- 165 entrées manifeste
+- 160 configurations canoniques
+- canal release dev
+- contrôle accès/DEV public fail-closed
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: The input did not match the regular expression /3\.44\.0-dev\.2\/bootstrap\.js$/. Input:
+
+'https://example.test/releases/3.44.0-dev.3/bootstrap.js'
+
+    at file:///workspaces/PimpMyKoha/scripts/test-channel-loader.mjs:37:8 {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: 'https://example.test/releases/3.44.0-dev.3/bootstrap.js',
+  expected: /3\.44\.0-dev\.2\/bootstrap\.js$/,
+  operator: 'match',
+  diff: 'simple'
+}
+
+Node.js v24.20.0

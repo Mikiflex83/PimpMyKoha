@@ -13,7 +13,7 @@ function key(){
 }
 function read(){try{return parse(localStorage.getItem(key()))||{version:1,user:currentUser(),modules:{}}}catch(_){return {version:1,user:currentUser(),modules:{}}}}
 function write(v){try{localStorage.setItem(key(),JSON.stringify(v));return true}catch(_){return false}}
-function canonicalOf(m){return defaults?.modules?.[m.id]?.config?.canonicalModule||null}
+function canonicalOf(m){return defaults?.modules?.[m.id]?.config?.canonicalModule||m?.canonicalModule||null}
 function mapped(canonicalId){
  return (manifest?.modules||[]).filter(m=>
    canonicalOf(m)===canonicalId &&

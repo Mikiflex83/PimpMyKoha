@@ -4,7 +4,7 @@ if(global.__KohaToolsV3430Loaded)return;
 global.__KohaToolsV3430Loaded=true;
 global.__KohaToolsBootStarted=performance.now();
 
-const VERSION="3.44.0-dev.2";
+const VERSION="3.44.0-dev.3";
 const BOOT=(global.KohaToolsBootstrap&&typeof global.KohaToolsBootstrap==="object")?global.KohaToolsBootstrap:{};
 const ROOT=String(BOOT.assetRoot||new URL("./",document.currentScript?.src||location.href).href).replace(/\/?$/,"/");
 const MANIFEST_URL=BOOT.manifestUrl||null,DEFAULTS_URL=BOOT.defaultsUrl||null;
@@ -128,9 +128,9 @@ async function boot(){
 
  const loaded=new Set();
  for(const mod of manifest.modules){
-   const mode=KohaTools.Config.modeForManifestModule?KohaTools.Config.modeForManifestModule(mod.id):KohaTools.Config.mode(mod.id);
+   const mode=KohaTools.Config.modeForManifestModule?KohaTools.Config.modeForManifestModule(mod.id,mod):KohaTools.Config.mode(mod.id);
    if(KohaTools.deploymentMode==="fresh-install"&&mod.freshInstall?.supported!==true)continue; if(!mod.nextModule||!["shadow","live"].includes(mode))continue;
-   const moduleCfg=KohaTools.Config.getModule(mod.id)?.config||{},canonicalId=moduleCfg.canonicalModule,canonicalCfg=canonicalId?KohaTools.Config.getCanonical(canonicalId):null;
+   const moduleCfg=KohaTools.Config.getModule(mod.id)?.config||{},canonicalId=moduleCfg.canonicalModule||mod.canonicalModule||null,canonicalCfg=canonicalId?KohaTools.Config.getCanonical(canonicalId):null;
    if(canonicalId&&!KohaTools.getService("access-control")?.moduleAllowed?.(canonicalId)){KohaTools.record?.({module:mod.id,level:"info",kind:"module-blocked-access",canonicalId});continue;}
    const effectiveScope=canonicalCfg?.general?.scope||moduleCfg.scope||mod.scope||{include:["*"]}; if(KohaTools.deploymentMode==="fresh-install"&&canonicalId){const gate=KohaTools.getService("prerequisites")?.status?.(canonicalId);if(gate&&!gate.ok){KohaTools.record?.({module:mod.id,level:"info",kind:"module-blocked-prerequisites",blocking:gate.blocking.map(x=>x.id)});continue;}}
    if(!scopeAllows(effectiveScope))continue;

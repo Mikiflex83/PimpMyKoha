@@ -62,6 +62,8 @@
           if(gate&&!gate.ok)return deepMerge(result,{enabled:true,mode:"blocked",blockedByPrerequisites:gate.blocking});
           if(result?.freshInstallCore===true)return deepMerge(result,{enabled:true,mode:"live",freshInstallCore:true});
           if(global.__KohaToolsFreshInstallCertified?.[moduleId]===true)return deepMerge(result,{enabled:true,mode:"live",freshInstallCertified:true});
+          const access=KT.getService?.("access-control");
+          if(access?.can?.("developer")&&access?.channel?.()==="dev")return deepMerge(result,{enabled:true,mode:"live",freshInstallDeveloperPreview:true});
           return deepMerge(result,{enabled:true,mode:"blocked",blockedByCertification:true});
         }
         return deepMerge(result,{enabled:true,mode:"live"});
@@ -89,9 +91,9 @@
     },
 
 
-    modeForManifestModule(moduleId) {
+    modeForManifestModule(moduleId, manifestModule) {
       const legacy = this.getModule(moduleId);
-      const canonicalId = legacy?.config?.canonicalModule;
+      const canonicalId = legacy?.config?.canonicalModule || manifestModule?.canonicalModule || null;
       if (canonicalId) {
         const canonical = this.getCanonical(canonicalId);
         const life=String(canonical?.lifecycle?.status||"active").toLowerCase();
