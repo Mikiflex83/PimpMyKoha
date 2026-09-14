@@ -1,10 +1,10 @@
 {
   "schema": "pimp-my-koha.release-index.v1",
   "product": "pimp-my-koha",
-  "generatedAt": "2026-09-13T22:12:02.634Z",
+  "generatedAt": "2026-09-14T05:43:53.021Z",
   "channels": {
     "stable": "3.43.2",
-    "dev": "3.44.0-dev.2"
+    "dev": "3.44.0-dev.3"
   },
   "releases": {
     "3.43.0": {
@@ -913,6 +913,178 @@
           "FULL-DIST/kohatools/profiles/example.json"
         ]
       }
+    },
+    "3.44.0-dev.3": {
+      "schema": "pimp-my-koha.release-metadata.v1",
+      "version": "3.44.0-dev.3",
+      "channel": "dev",
+      "releasedAt": "2026-09-14",
+      "summary": "Préproduction sandbox de Pimp My Koha 3.44.0 : version DEV réservée aux comptes développeur pour recette réelle avant Stable.",
+      "highlights": [
+        "Séparation nette entre les modules disponibles et la migration des anciens scripts.",
+        "Configuration d’un module simplifiée autour de quatre étapes : Activer, Préparer, Régler, Enregistrer.",
+        "Les applications natives passent désormais par la même validation métier avant diffusion sur une nouvelle installation.",
+        "Le point d’entrée Pimp My Koha est protégé contre une désactivation accidentelle.",
+        "Les applications sensibles réutilisent les droits Koha existants et les menus masquent les outils non autorisés ou indisponibles.",
+        "L’assistant de première installation utilise un parcours compréhensible sans URL ou nom de paramètre technique.",
+        "Les anciens scripts sans remplaçant reçoivent une décision explicite : reprendre, remplacer ou retirer volontairement.",
+        "La restauration choisit automatiquement le mécanisme natif à partir de Koha 26.05 et limite le plugin historique aux versions antérieures.",
+        "Le fichier de validation embarque la configuration réellement testée et distingue les réglages produit des valeurs propres à l’installation.",
+        "Les prérequis peuvent bloquer une fonction précise sans rendre tout le module inutilisable."
+      ],
+      "changedModules": [
+        "core/config",
+        "core/prerequisites",
+        "core/canary",
+        "core/production",
+        "core/recipe",
+        "core/navigation",
+        "core/access-control",
+        "core/lifecycle",
+        "loader",
+        "admin/panel",
+        "admin/preflight",
+        "admin/launcher",
+        "apps/restoration",
+        "apps/quality",
+        "distribution/certification"
+      ],
+      "breaking": false,
+      "kohaCompatibility": {
+        "branches": [
+          "25.11",
+          "26.05+"
+        ],
+        "tested": [],
+        "targeted": [
+          "25.11.04",
+          "26.05+"
+        ]
+      },
+      "runtimeRoot": "https://Mikiflex83.github.io/PimpMyKoha/releases/3.44.0-dev.3/",
+      "releasePage": "https://github.com/Mikiflex83/PimpMyKoha/releases/tag/v3.44.0-dev.3",
+      "downloadUrl": "https://github.com/Mikiflex83/PimpMyKoha/releases/download/v3.44.0-dev.3/pimp-my-koha-3.44.0-dev.3.zip",
+      "issuesUrl": "https://github.com/Mikiflex83/PimpMyKoha/issues/new",
+      "repository": {
+        "slug": "Mikiflex83/PimpMyKoha",
+        "issuesUrl": "https://github.com/Mikiflex83/PimpMyKoha/issues/new"
+      },
+      "sha256": "62c067371e67fe7c1ce841470d982fb8d75f55b62558eeacafe91a1e91c8d42f",
+      "impact": {
+        "schema": "pimp-my-koha.release-impact.v1",
+        "version": "3.44.0-dev.3",
+        "previousVersion": "3.43.2",
+        "canonicalModules": [
+          "admin-console-launcher",
+          "dashboard-analytics",
+          "home-layout-manager",
+          "installation-preflight",
+          "intranet-nav-manager",
+          "inventory",
+          "patron-map",
+          "quality-authorities",
+          "quality-biblios",
+          "quality-center",
+          "quality-items",
+          "quality-loans",
+          "quality-patrons",
+          "quality-reservations",
+          "quality-rule-lab",
+          "quality-serials",
+          "quality-transfers",
+          "restoration",
+          "user-menu-manager",
+          "weeding"
+        ],
+        "configChangedModules": [
+          "admin-console-launcher",
+          "dashboard-analytics",
+          "home-layout-manager",
+          "installation-preflight",
+          "intranet-nav-manager",
+          "inventory",
+          "patron-map",
+          "quality-authorities",
+          "quality-biblios",
+          "quality-center",
+          "quality-items",
+          "quality-loans",
+          "quality-patrons",
+          "quality-reservations",
+          "quality-rule-lab",
+          "quality-serials",
+          "quality-transfers",
+          "restoration",
+          "user-menu-manager",
+          "weeding"
+        ],
+        "sourceChangedModules": [
+          "admin-console-launcher",
+          "installation-preflight",
+          "quality-center",
+          "restoration"
+        ],
+        "coreFiles": [
+          "FULL-DIST/kohatools/admin/panel.css",
+          "FULL-DIST/kohatools/admin/panel.js",
+          "FULL-DIST/kohatools/admin/preflight-app.html",
+          "FULL-DIST/kohatools/bootstrap.js",
+          "FULL-DIST/kohatools/core/canary.js",
+          "FULL-DIST/kohatools/core/config.js",
+          "FULL-DIST/kohatools/core/core.js",
+          "FULL-DIST/kohatools/core/lifecycle.js",
+          "FULL-DIST/kohatools/core/module-host.js",
+          "FULL-DIST/kohatools/core/navigation.js",
+          "FULL-DIST/kohatools/core/prerequisites.js",
+          "FULL-DIST/kohatools/core/production.js",
+          "FULL-DIST/kohatools/core/recipe.js",
+          "FULL-DIST/kohatools/core/validation.js",
+          "FULL-DIST/kohatools/loader.js"
+        ],
+        "prerequisites": [],
+        "configChanged": true,
+        "changedFiles": [
+          "FULL-DIST/kohatools/LICENSE",
+          "FULL-DIST/kohatools/README.md",
+          "FULL-DIST/kohatools/admin/panel.css",
+          "FULL-DIST/kohatools/admin/panel.js",
+          "FULL-DIST/kohatools/admin/preflight-app.html",
+          "FULL-DIST/kohatools/apps/collections-tree/index.html",
+          "FULL-DIST/kohatools/apps/global/attendance-frequency.html",
+          "FULL-DIST/kohatools/apps/quality/quality-authorities.html",
+          "FULL-DIST/kohatools/apps/quality/quality-biblios.html",
+          "FULL-DIST/kohatools/apps/quality/quality-center.html",
+          "FULL-DIST/kohatools/apps/quality/quality-items.html",
+          "FULL-DIST/kohatools/apps/quality/quality-loans.html",
+          "FULL-DIST/kohatools/apps/quality/quality-patrons.html",
+          "FULL-DIST/kohatools/apps/quality/quality-reservations.html",
+          "FULL-DIST/kohatools/apps/quality/quality-rule-lab.html",
+          "FULL-DIST/kohatools/apps/quality/quality-serials.html",
+          "FULL-DIST/kohatools/apps/quality/quality-transfers.html",
+          "FULL-DIST/kohatools/apps/quality/shared/quality-memory-firebase.js",
+          "FULL-DIST/kohatools/apps/restoration/index.html",
+          "FULL-DIST/kohatools/bootstrap.js",
+          "FULL-DIST/kohatools/config/host-contract.json",
+          "FULL-DIST/kohatools/config/manifest.json",
+          "FULL-DIST/kohatools/config/product-defaults.json",
+          "FULL-DIST/kohatools/core/canary.js",
+          "FULL-DIST/kohatools/core/config.js",
+          "FULL-DIST/kohatools/core/core.js",
+          "FULL-DIST/kohatools/core/lifecycle.js",
+          "FULL-DIST/kohatools/core/module-host.js",
+          "FULL-DIST/kohatools/core/navigation.js",
+          "FULL-DIST/kohatools/core/prerequisites.js",
+          "FULL-DIST/kohatools/core/production.js",
+          "FULL-DIST/kohatools/core/recipe.js",
+          "FULL-DIST/kohatools/core/validation.js",
+          "FULL-DIST/kohatools/docs/INSTALLATION.md",
+          "FULL-DIST/kohatools/docs/MAINTENANCE.md",
+          "FULL-DIST/kohatools/docs/THIRD-PARTY.md",
+          "FULL-DIST/kohatools/loader.js",
+          "FULL-DIST/kohatools/modules/admin-launcher.js",
+          "FULL-DIST/kohatools/profiles/example.json"
+        ]
+      }
     }
   },
   "stable": {
@@ -1016,9 +1188,9 @@
   },
   "dev": {
     "schema": "pimp-my-koha.release-metadata.v1",
-    "version": "3.44.0-dev.2",
+    "version": "3.44.0-dev.3",
     "channel": "dev",
-    "releasedAt": "2026-09-13",
+    "releasedAt": "2026-09-14",
     "summary": "Préproduction sandbox de Pimp My Koha 3.44.0 : version DEV réservée aux comptes développeur pour recette réelle avant Stable.",
     "highlights": [
       "Séparation nette entre les modules disponibles et la migration des anciens scripts.",
@@ -1061,18 +1233,18 @@
         "26.05+"
       ]
     },
-    "runtimeRoot": "https://Mikiflex83.github.io/PimpMyKoha/releases/3.44.0-dev.2/",
-    "releasePage": "https://github.com/Mikiflex83/PimpMyKoha/releases/tag/v3.44.0-dev.2",
-    "downloadUrl": "https://github.com/Mikiflex83/PimpMyKoha/releases/download/v3.44.0-dev.2/pimp-my-koha-3.44.0-dev.2.zip",
+    "runtimeRoot": "https://Mikiflex83.github.io/PimpMyKoha/releases/3.44.0-dev.3/",
+    "releasePage": "https://github.com/Mikiflex83/PimpMyKoha/releases/tag/v3.44.0-dev.3",
+    "downloadUrl": "https://github.com/Mikiflex83/PimpMyKoha/releases/download/v3.44.0-dev.3/pimp-my-koha-3.44.0-dev.3.zip",
     "issuesUrl": "https://github.com/Mikiflex83/PimpMyKoha/issues/new",
     "repository": {
       "slug": "Mikiflex83/PimpMyKoha",
       "issuesUrl": "https://github.com/Mikiflex83/PimpMyKoha/issues/new"
     },
-    "sha256": "7b4ba488e047bb8315cf284de6def8efbf6eb18b2c1f1d741be8d9a084e13b52",
+    "sha256": "62c067371e67fe7c1ce841470d982fb8d75f55b62558eeacafe91a1e91c8d42f",
     "impact": {
       "schema": "pimp-my-koha.release-impact.v1",
-      "version": "3.44.0-dev.2",
+      "version": "3.44.0-dev.3",
       "previousVersion": "3.43.2",
       "canonicalModules": [
         "admin-console-launcher",
@@ -1132,10 +1304,13 @@
         "FULL-DIST/kohatools/core/canary.js",
         "FULL-DIST/kohatools/core/config.js",
         "FULL-DIST/kohatools/core/core.js",
+        "FULL-DIST/kohatools/core/lifecycle.js",
+        "FULL-DIST/kohatools/core/module-host.js",
         "FULL-DIST/kohatools/core/navigation.js",
         "FULL-DIST/kohatools/core/prerequisites.js",
         "FULL-DIST/kohatools/core/production.js",
         "FULL-DIST/kohatools/core/recipe.js",
+        "FULL-DIST/kohatools/core/validation.js",
         "FULL-DIST/kohatools/loader.js"
       ],
       "prerequisites": [],
@@ -1167,10 +1342,13 @@
         "FULL-DIST/kohatools/core/canary.js",
         "FULL-DIST/kohatools/core/config.js",
         "FULL-DIST/kohatools/core/core.js",
+        "FULL-DIST/kohatools/core/lifecycle.js",
+        "FULL-DIST/kohatools/core/module-host.js",
         "FULL-DIST/kohatools/core/navigation.js",
         "FULL-DIST/kohatools/core/prerequisites.js",
         "FULL-DIST/kohatools/core/production.js",
         "FULL-DIST/kohatools/core/recipe.js",
+        "FULL-DIST/kohatools/core/validation.js",
         "FULL-DIST/kohatools/docs/INSTALLATION.md",
         "FULL-DIST/kohatools/docs/MAINTENANCE.md",
         "FULL-DIST/kohatools/docs/THIRD-PARTY.md",

@@ -1,0 +1,613 @@
+<div id="koha-carto-container" style="position: relative; width: 100%; font-family: 'Segoe UI', Arial, sans-serif; color: #333; background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px solid #ced4da;">
+<div style="background: #004085; color: white; padding: 15px; border-radius: 6px; margin-bottom: 20px;">
+<h3 style="margin: 0 0 5px 0;">🗺️ Observatoire Cartographique du R&eacute;seau (Anonymis&eacute; RGPD)</h3>
+<p style="margin: 0; font-size: 14px; opacity: 0.9;">Outil d'aide &agrave; la d&eacute;cision pour l'analyse de l'activit&eacute; du r&eacute;seau de lecture publique (hors MBA et ATP) et l'am&eacute;nagement du territoire.</p>
+</div>
+<div id="wizard-container" style="background: #fff; border: 1px solid #b8daff; padding: 15px; margin-bottom: 20px; border-radius: 6px;"><b style="color: #004085; font-size: 15px;">⚙️ Panneau de Configuration et Mise &agrave; Jour des Donn&eacute;es</b>
+<p style="margin: 5px 0 15px 0; font-size: 13px; color: #6c757d;">Pour une utilisation quotidienne fluide, chargez votre fichier de carte pr&eacute;-calcul&eacute;. Pour mettre &agrave; jour la carte, suivez les &eacute;tapes 1, 2 et 3.</p>
+<div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap; background: #f1f3f5; padding: 10px; border-radius: 4px;">
+<div><label for="file-input" style="display: block; font-size: 12px; font-weight: bold; margin-bottom: 3px;">🚀 CHARGEMENT RAPIDE :</label> <input type="file" id="file-input" accept=".json" style="font-size: 13px;" /></div>
+<div style="border-left: 1px solid #dee2e6; height: 35px; margin: 0 10px;"></div>
+<div style="display: flex; gap: 8px;"><button id="btn-step1" style="padding: 6px 12px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold;">&Eacute;tape 1 : Lire Koha (Rapport 5210)</button> <button id="btn-step2" style="padding: 6px 12px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: not-allowed; font-size: 12px;" disabled="disabled">&Eacute;tape 2 : G&eacute;ocoder les Adresses</button> <button id="btn-step3" style="padding: 6px 12px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: not-allowed; font-size: 12px;" disabled="disabled">&Eacute;tape 3 : Exporter le Fichier Carte</button></div>
+</div>
+<div id="carto-loader" style="margin-top: 10px; font-weight: bold; color: #0056b3; font-size: 13px;">Statut : En attente d'une action.</div>
+<div id="carto-debug-box" style="margin-top: 10px; background: #222; color: #7fee1d; padding: 10px; border-radius: 4px; font-family: monospace; font-size: 11px; max-height: 100px; overflow-y: auto;">[DEBUG SYSTEM] En attente d'une action pour analyser la structure...</div>
+<div id="error-console" style="display: none; background: #fff3cd; border: 1px solid #ffeeba; color: #856404; padding: 10px; border-radius: 4px; margin-top: 10px; max-height: 120px; overflow-y: auto; font-family: monospace; font-size: 12px;"><b>⚠️ Avertissements (adresses/sites non localis&eacute;s &mdash; ignor&eacute;s sur la carte) :</b>
+<ul id="error-list" style="margin: 5px 0 0 20px; padding: 0;"></ul>
+</div>
+</div>
+<div style="display: flex; background: #dee2e6; padding: 5px 5px 0 5px; border-radius: 6px 6px 0 0; gap: 5px;"><button id="tab-usagers" style="padding: 10px 20px; border: none; background: #fff; font-weight: bold; border-radius: 5px 5px 0 0; cursor: pointer; border-bottom: 3px solid #007bff;">👥 Analyse des Usagers Actuels</button> <button id="tab-circulation" style="padding: 10px 20px; border: none; background: #e9ecef; font-weight: bold; border-radius: 5px 5px 0 0; cursor: pointer; color: #495057;">📦 Logistique &amp; Circulation des Livres (RGPD Safe)</button></div>
+<div id="filter-bar" style="background: #fff; padding: 15px; border-left: 1px solid #ccc; border-right: 1px solid #ccc; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; border-bottom: 1px solid #dee2e6;">
+<div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
+<div><label for="site-filter" style="font-weight: bold; font-size: 13px;">Filtrer l'affichage par M&eacute;diath&egrave;que :</label><select id="site-filter" style="padding: 6px; min-width: 180px; margin-left: 5px;">
+<option value="all">Toutes les m&eacute;diath&egrave;ques</option>
+</select></div>
+<div id="container-subflux"><label for="flux-type" style="font-weight: bold; font-size: 13px;">Axe de d&eacute;placement :</label><select id="flux-type" style="padding: 6px; margin-left: 5px;">
+<option value="inscription">Domiciles ➔ Sites d'Inscription historique</option>
+<option value="transaction">Domiciles ➔ Sites de Consommation r&eacute;elle (Pr&ecirc;ts majoritaires)</option>
+</select></div>
+</div>
+<div id="carto-legend" style="background: #f8f9fa; padding: 8px 12px; border-radius: 4px; border: 1px solid #dee2e6; font-size: 12px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap;"><span style="color: #999;">Intensit&eacute; des flux : en attente d'affichage&hellip;</span></div>
+</div>
+<div id="layers-control-bar" style="background: #f1f3f5; padding: 10px 15px; border-left: 1px solid #ccc; border-right: 1px solid #ccc; border-bottom: 1px solid #dee2e6; display: flex; flex-wrap: wrap; gap: 20px; align-items: center; font-size: 13px;"><span style="font-weight: bold; color: #495057;">👁️ Affichage des couches :</span> <label style="display: inline-flex; align-items: center; gap: 5px; cursor: pointer; font-weight: 600;"> <input type="checkbox" id="chk-layer-communes" checked="checked" /> Couleurs des Communes </label> <label style="display: inline-flex; align-items: center; gap: 5px; cursor: pointer; font-weight: 600;"> <input type="checkbox" id="chk-layer-flux" checked="checked" /> Lignes de Flux </label> <label id="lbl-layer-clusters" style="display: inline-flex; align-items: center; gap: 5px; cursor: pointer; font-weight: 600;"> <input type="checkbox" id="chk-layer-clusters" checked="checked" /> Secteurs / Camemberts (Usagers) </label></div>
+<div id="legende-sites" style="background: #fff; padding: 10px 15px; border-left: 1px solid #ccc; border-right: 1px solid #ccc; border-bottom: 1px solid #dee2e6; display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; font-size: 12px;"><span style="color: #999;">Chargement des m&eacute;diath&egrave;ques&hellip;</span></div>
+<div id="map" style="width: 100%; height: 800px; border: 1px solid #ccc; border-top: none; border-radius: 0; background: #e5e5e5;"></div>
+<div id="carto-stats-table-container" style="background: #fff; border: 1px solid #ccc; border-top: none; border-radius: 0 0 6px 6px; padding: 15px; font-size: 13px;">
+<h4 id="stats-table-title" style="margin: 0 0 10px 0; color: #004085;">📊 Donn&eacute;es de la vue actuelle (Mise &agrave; jour dynamique)</h4>
+<div style="overflow-x: auto; max-height: 250px;">
+<table style="width: 100%; border-collapse: collapse; text-align: left;">
+<thead id="stats-table-header"></thead>
+<tbody id="stats-table-body">
+<tr>
+<td style="padding: 8px; color: #999; text-align: center;">Aucune donn&eacute;e charg&eacute;e ou visible &agrave; l'&eacute;cran.</td>
+</tr>
+</tbody>
+<tfoot id="stats-table-footer"></tfoot>
+</table>
+</div>
+</div>
+</div>
+<link href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" rel="stylesheet" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/supercluster@8.0.1/dist/supercluster.min.js"></script>
+<script>
+(function() {
+    const KOHA_REPORT_ID = Number(window.KohaTools?.Config?.getCanonical?.('patron-map')?.installation?.reports?.patronsId || 0);
+    const EXCLUDED_SITES = Array.isArray(window.KohaTools?.Config?.getCanonical?.('patron-map')?.installation?.excludedSites) ? window.KohaTools.Config.getCanonical('patron-map').installation.excludedSites : [];
+
+    const PRECISION_RUE = 4;
+    const RAYON_CLUSTER_PX = 110;
+    const ZOOM_MAX_CLUSTERING = 17;
+    const DIAMETRE_BULLE = 36; 
+    const EPAISSEUR_FLUX_MIN = 2;
+    const EPAISSEUR_FLUX_MAX = 13;
+
+    const DEGRADE_FLUX = [
+        { p: 0,    c: [46, 204, 113] },
+        { p: 0.33, c: [241, 196, 15] },
+        { p: 0.66, c: [230, 126, 34] },
+        { p: 1,    c: [231, 76, 60] }
+    ];
+
+    function interpolerCouleurFlux(t) {
+        t = Math.max(0, Math.min(1, t));
+        let a = DEGRADE_FLUX[0], b = DEGRADE_FLUX[DEGRADE_FLUX.length - 1];
+        for (let i = 0; i < DEGRADE_FLUX.length - 1; i++) {
+            if (t >= DEGRADE_FLUX[i].p && t <= DEGRADE_FLUX[i + 1].p) { a = DEGRADE_FLUX[i]; b = DEGRADE_FLUX[i + 1]; break; }
+        }
+        const local = (b.p - a.p) > 0 ? (t - a.p) / (b.p - a.p) : 0;
+        const rgb = a.c.map((v, i) => Math.round(v + (b.c[i] - v) * local));
+        return `rgb(${rgb[0]},${rgb[1]},${rgb[2]})`;
+    }
+
+    const PATRON_MAP_INSTALL = window.KohaTools?.Config?.getCanonical?.('patron-map')?.installation || {};
+    const SITE_COLORS = PATRON_MAP_INSTALL.siteColors || {};
+    function getSiteColor(id) {
+        if (SITE_COLORS[id]) return SITE_COLORS[id];
+        let h = 0;
+        for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) >>> 0;
+        return '#' + ('000000' + (h & 0xFFFFFF).toString(16)).slice(-6);
+    }
+
+    const COMMUNE_TO_SITE_MAP = PATRON_MAP_INSTALL.branchNameMap || {};
+    const COMMUNE_PALETTE = ['#003f5c', '#1f77b4', '#2ca02c', '#9467bd', '#bcbd22', '#bc5090', '#08519c'];
+    function getCommuneColor(codeInsee, nomCommune) {
+        if (!nomCommune) return '#7f7f7f';
+        const nomNormalise = nomCommune.toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/ST-/g, "SAINT-").trim();
+        if (COMMUNE_TO_SITE_MAP[nomNormalise]) { return getSiteColor(COMMUNE_TO_SITE_MAP[nomNormalise]); }
+        let num = parseInt(codeInsee, 10);
+        if (isNaN(num)) { num = 0; for (let i = 0; i < codeInsee.length; i++) num += codeInsee.charCodeAt(i); }
+        return COMMUNE_PALETTE[num % COMMUNE_PALETTE.length];
+    }
+
+    let map, clustersLayerGroup, flowsLayerGroup, librariesLayerGroup, communesLayerGroup;
+    let currentMode = 'usagers';
+    let mapUpdateTimeout;
+    let patronsRaw = [];
+    let circulationRaw = []; let finalMapData = { patrons: [], circulation: [] };
+    let cellulesInscription = [];
+    let cellulesTransaction = []; let indexActuel = null;
+    let sitesDejaSignales = new Set();
+    let librariesCache = JSON.parse(JSON.stringify(PATRON_MAP_INSTALL.branchCoordinates || {}));
+
+    // Modification ici : Initialisation immédiate sans attendre l'événement 'load' global
+    function initialiserCarto() {
+        const center=PATRON_MAP_INSTALL.mapCenter||{lat:46.5,lon:2.5,zoom:6};
+        map = L.map('map', { preferCanvas: true }).setView([Number(center.lat)||46.5, Number(center.lon)||2.5], Number(center.zoom)||6);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(map);
+
+        communesLayerGroup = L.layerGroup().addTo(map);
+        clustersLayerGroup = L.layerGroup().addTo(map);
+        flowsLayerGroup = L.layerGroup().addTo(map);
+        librariesLayerGroup = L.layerGroup().addTo(map);
+
+        chargerContoursCommunes(); 
+        dessinerIconesBibliotheques();
+        chargerBibliothequesDepuisAPI();
+
+        const tabUsagers = document.getElementById('tab-usagers');
+        const tabCirculation = document.getElementById('tab-circulation');
+        const lblClusters = document.getElementById('lbl-layer-clusters');
+
+        tabUsagers.addEventListener('click', () => {
+            currentMode = 'usagers';
+            tabUsagers.style.background = '#fff'; tabUsagers.style.borderBottom = '3px solid #007bff';
+            tabUsagers.style.color = '#333';
+            tabCirculation.style.background = '#e9ecef'; tabCirculation.style.borderBottom = 'none'; tabCirculation.style.color = '#495057';
+            document.getElementById('container-subflux').style.visibility = 'visible';
+            lblClusters.style.display = 'inline-flex';
+            gererVisibiliteGroupesParCheckboxes();
+            rafraichirAffichageCarte();
+        });
+
+        tabCirculation.addEventListener('click', () => {
+            currentMode = 'circulation';
+            tabCirculation.style.background = '#fff'; tabCirculation.style.borderBottom = '3px solid #007bff'; tabCirculation.style.color = '#333';
+            tabUsagers.style.background = '#e9ecef'; tabUsagers.style.borderBottom = 'none'; tabUsagers.style.color = '#495057';
+            document.getElementById('container-subflux').style.visibility = 'hidden';
+            lblClusters.style.display = 'none';
+            
+            if (map.hasLayer(clustersLayerGroup)) map.removeLayer(clustersLayerGroup);
+            gererVisibiliteGroupesParCheckboxes();
+            rafraichirAffichageCarte();
+        });
+        document.getElementById('chk-layer-communes').addEventListener('change', gererVisibiliteGroupesParCheckboxes);
+        document.getElementById('chk-layer-flux').addEventListener('change', gererVisibiliteGroupesParCheckboxes);
+        document.getElementById('chk-layer-clusters').addEventListener('change', gererVisibiliteGroupesParCheckboxes);
+
+        document.getElementById('btn-step1').addEventListener('click', executerEtape1);
+        document.getElementById('btn-step2').addEventListener('click', executerEtape2);
+        document.getElementById('btn-step3').addEventListener('click', executerEtape3);
+        document.getElementById('file-input').addEventListener('change', chargerFichierDonnees);
+        document.getElementById('site-filter').addEventListener('change', () => rafraichirAffichageCarte());
+        document.getElementById('flux-type').addEventListener('change', () => rafraichirAffichageCarte());
+
+        map.on('zoomend moveend', () => {
+            clearTimeout(mapUpdateTimeout);
+            mapUpdateTimeout = setTimeout(() => {
+                if (currentMode === 'usagers' && indexActuel) { rafraichirClustersEtFlux(); }
+                else { mettreAJourTableauStats(); }
+            }, 120);
+        });
+    }
+
+    // Lancement de l'initialisation dès la lecture du script
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initialiserCarto);
+    } else {
+        initialiserCarto();
+    }
+
+    function gererVisibiliteGroupesParCheckboxes() {
+        if (document.getElementById('chk-layer-communes').checked) { if (!map.hasLayer(communesLayerGroup)) map.addLayer(communesLayerGroup); } 
+        else { if (map.hasLayer(communesLayerGroup)) map.removeLayer(communesLayerGroup); }
+
+        if (document.getElementById('chk-layer-flux').checked) { if (!map.hasLayer(flowsLayerGroup)) map.addLayer(flowsLayerGroup); } 
+        else { if (map.hasLayer(flowsLayerGroup)) map.removeLayer(flowsLayerGroup); }
+
+        if (currentMode === 'usagers' && document.getElementById('chk-layer-clusters').checked) { if (!map.hasLayer(clustersLayerGroup)) map.addLayer(clustersLayerGroup); } 
+        else { if (map.hasLayer(clustersLayerGroup)) map.removeLayer(clustersLayerGroup); }
+    }
+
+    async function chargerContoursCommunes() {
+        try {
+            const response = await fetch('https://geo.api.gouv.fr/departements/83/communes?format=geojson&geometry=contour');
+            if (!response.ok) return;
+            const geojsonData = await response.json();
+            L.geoJSON(geojsonData, {
+                style: (feature) => {
+                    const cInsee = feature.properties ? feature.properties.code : '';
+                    const nomCommune = feature.properties ? feature.properties.nom : '';
+                    return { color: '#444444', weight: 1.5, opacity: 0.7, fillColor: getCommuneColor(cInsee, nomCommune), fillOpacity: 0.35 };
+                },
+                onEachFeature: (feature, layer) => {
+                    if (feature.properties && feature.properties.nom) { layer.bindTooltip(`<b>${feature.properties.nom}</b> (${feature.properties.code})`, { sticky: true }); }
+                }
+            }).addTo(communesLayerGroup);
+            gererVisibiliteGroupesParCheckboxes();
+        } catch (e) { console.error("Erreur lors du chargement des contours des communes :", e); }
+    }
+
+    function mettreAJourTableauStats() {
+        const thead = document.getElementById('stats-table-header');
+        const tbody = document.getElementById('stats-table-body');
+        const tfoot = document.getElementById('stats-table-footer');
+        const titleEl = document.getElementById('stats-table-title');
+        
+        if (!thead || !tbody || !tfoot) return;
+        if (currentMode === 'usagers') {
+            titleEl.innerText = "📊 Répartition des usagers dans la zone visible";
+            const axeText = document.getElementById('flux-type').value === 'inscription' ? "Médiathèque d'inscription" : "Médiathèque de consommation (Prêts)";
+            thead.innerHTML = `<tr style="background: #f1f3f5; border-bottom: 2px solid #dee2e6;">
+                <th style="padding: 8px; font-weight: bold;">${axeText}</th>
+                <th style="padding: 8px; font-weight: bold; text-align: right;">Usagers visibles</th>
+                <th style="padding: 8px; font-weight: bold; text-align: right;">Pourcentage</th>
+            </tr>`;
+            if (!indexActuel) {
+                tbody.innerHTML = '<tr><td colspan="3" style="padding: 8px; color: #999; text-align: center;">Aucune donnée chargée.</td></tr>';
+                tfoot.innerHTML = ''; return;
+            }
+
+            const b = map.getBounds();
+            const bbox = [b.getWest(), b.getSouth(), b.getEast(), b.getNorth()];
+            const zoom = Math.round(map.getZoom()); const clustersVisibles = indexActuel.getClusters(bbox, zoom);
+            const stats = {};
+            let totalVisible = 0;
+
+            clustersVisibles.forEach(c => {
+                const sites = c.properties.sites || {};
+                Object.keys(sites).forEach(site => { stats[site] = (stats[site] || 0) + sites[site]; totalVisible += sites[site]; });
+            });
+            if (totalVisible === 0) {
+                tbody.innerHTML = '<tr><td colspan="3" style="padding: 8px; color: #999; text-align: center;">Aucun usager dans le cadre actuel.</td></tr>';
+                tfoot.innerHTML = ''; return;
+            }
+
+            const sortedSites = Object.keys(stats).sort((a, b) => stats[b] - stats[a]);
+            let htmlRows = '';
+            sortedSites.forEach(site => {
+                const count = stats[site]; const pct = ((count / totalVisible) * 100).toFixed(1);
+                const currentLib = librariesCache[site]; const name = currentLib ? currentLib.name : site; const color = getSiteColor(site);
+                htmlRows += `<tr style="border-bottom: 1px solid #dee2e6;">
+                    <td style="padding: 8px;"><span style="color:${color}; font-weight:bold; margin-right:5px;">■</span>${name} (${site})</td>
+                    <td style="padding: 8px; text-align: right; font-weight: 500;">${count}</td>
+                    <td style="padding: 8px; text-align: right; color: #6c757d;">${pct}%</td>
+                </tr>`;
+            });
+            tbody.innerHTML = htmlRows;
+            tfoot.innerHTML = `<tr style="background: #e9ecef; font-weight: bold; border-top: 2px solid #dee2e6;">
+                <td style="padding: 8px;">Total usagers visibles</td>
+                <td style="padding: 8px; text-align: right;">${totalVisible}</td>
+                <td style="padding: 8px; text-align: right;">100%</td>
+            </tr>`;
+        } else if (currentMode === 'circulation') {
+            titleEl.innerText = "📦 Volume d'échange logistique dans la zone filtrée";
+            thead.innerHTML = `<tr style="background: #f1f3f5; border-bottom: 2px solid #dee2e6;">
+                <th style="padding: 8px; font-weight: bold;">Médiathèque d'Origine (Propriétaire)</th>
+                <th style="padding: 8px; font-weight: bold;">Médiathèque de Destination (Dépôt)</th>
+                <th style="padding: 8px; font-weight: bold; text-align: right;">Documents transférés</th>
+            </tr>`;
+            const siteSelectionne = document.getElementById('site-filter').value;
+            const dataCirculation = finalMapData.circulation || [];
+            let totalDocuments = 0; let htmlRows = '';
+            const fluxFiltres = dataCirculation.filter(c => {
+                if (EXCLUDED_SITES.includes(c.source_bib) || EXCLUDED_SITES.includes(c.dest_bib)) return false;
+                if (siteSelectionne !== 'all' && c.source_bib !== siteSelectionne && c.dest_bib !== siteSelectionne) return false;
+                return parseInt(c.volume_circulation) > 0;
+            }).sort((a, b) => parseInt(b.volume_circulation) - parseInt(a.volume_circulation));
+            if (fluxFiltres.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="3" style="padding: 8px; color: #999; text-align: center;">Aucun échange de document sur cette sélection.</td></tr>';
+                tfoot.innerHTML = ''; return;
+            }
+
+            fluxFiltres.forEach(c => {
+                const vol = parseInt(c.volume_circulation); totalDocuments += vol;
+                const libSrc = librariesCache[c.source_bib] ? librariesCache[c.source_bib].name : c.source_bib;
+                const libDst = librariesCache[c.dest_bib] ? librariesCache[c.dest_bib].name : c.dest_bib;
+                htmlRows += `<tr style="border-bottom: 1px solid #dee2e6;">
+                    <td style="padding: 8px;"><span style="color:${getSiteColor(c.source_bib)}; font-weight:bold; margin-right:5px;">■</span>${libSrc} (${c.source_bib})</td>
+                    <td style="padding: 8px;"><span style="color:${getSiteColor(c.dest_bib)}; font-weight:bold; margin-right:5px;">➔</span>${libDst} (${c.dest_bib})</td>
+                    <td style="padding: 8px; text-align: right; font-weight: 500;">${vol}</td>
+                </tr>`;
+            });
+            tbody.innerHTML = htmlRows;
+            tfoot.innerHTML = `<tr style="background: #e9ecef; font-weight: bold; border-top: 2px solid #dee2e6;">
+                <td colspan="2" style="padding: 8px;">Total des documents en transit</td>
+                <td style="padding: 8px; text-align: right;">${totalDocuments}</td>
+            </tr>`;
+        }
+    }
+
+    async function executerEtape1() {
+        logErreur("", true);
+        document.getElementById('carto-loader').innerText = "Lecture du flux JSON Koha...";
+        patronsRaw = []; circulationRaw = [];
+        try {
+            const r = await fetch(`/cgi-bin/koha/svc/report?id=${KOHA_REPORT_ID}`);
+            if (!r.ok) { document.getElementById('carto-loader').innerText = `Erreur SVC Koha.`; return; }
+            const rows = await r.json();
+            if (!Array.isArray(rows) || rows.length === 0) return;
+            rows.forEach(row => {
+                if (!row || row.length < 8) return;
+                if (row[0] === 'patron') {
+                    patronsRaw.push({
+                        row_type: 'patron', address: row[3] || '', zipcode: row[4] || '', city: row[5] || '',
+                        site_inscription: row[6] || '', site_transaction: (!row[7] || row[7] === 'null') ? row[6] : row[7]
+                    });
+                } else if (row[0] === 'circulation') {
+                    circulationRaw.push({ row_type: 'circulation', source_bib: row[8] || '', dest_bib: row[9] || '', volume_circulation: row[10] || '0' });
+                }
+            });
+            document.getElementById('carto-debug-box').innerText = `[SUCCÈS] Adhérents: ${patronsRaw.length}`;
+            document.getElementById('carto-loader').innerText = `Étape 1 réussie !`;
+            activerBoutonEtape('btn-step2');
+        } catch (e) { document.getElementById('carto-loader').innerText = "Erreur."; }
+    }
+
+    async function executerEtape2() {
+        document.getElementById('carto-loader').innerText = "Géocodage anonyme en cours...";
+        finalMapData.patrons = []; finalMapData.circulation = circulationRaw; logErreur("", true);
+        let csvContent = "id,site_inscription,site_transaction,adresse\n"; let index = 0;
+        patronsRaw.forEach(p => {
+            const adr = `${p.address || ''} ${p.zipcode || ''} ${p.city || ''}`.trim();
+            if (adr) { csvContent += `${index},"${p.site_inscription}","${p.site_transaction}","${adr.replace(/"/g, '""')}"\n`; index++; }
+        });
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const formData = new FormData(); formData.append('data', blob, 'lots_koha.csv'); formData.append('columns', 'adresse');
+        try {
+            const response = await fetch('https://api-adresse.data.gouv.fr/search/csv/', { method: 'POST', body: formData });
+            const resultText = await response.text(); const lignes = resultText.split('\n'); const entetes = lignes[0].split(',');
+            const idxLat = entetes.indexOf('latitude'); const idxLon = entetes.indexOf('longitude');
+            const idxId = entetes.indexOf('id'); const idxInsc = entetes.indexOf('site_inscription'); const idxTrans = entetes.indexOf('site_transaction');
+            for (let i = 1; i < lignes.length; i++) {
+                if (!lignes[i].trim()) continue;
+                const colonnes = lignes[i].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+                const clean = (val) => val ? val.replace(/^"|"$/g, '').trim() : '';
+                const lat = parseFloat(clean(colonnes[idxLat])); const lon = parseFloat(clean(colonnes[idxLon]));
+                if (!isNaN(lat) && !isNaN(lon) && lat !== 0) {
+                    finalMapData.patrons.push({ lat, lon, uid: clean(colonnes[idxId]), site_inscription: clean(colonnes[idxInsc]), site_transaction: clean(colonnes[idxTrans]) || clean(colonnes[idxInsc]) });
+                }
+            }
+            precalculerCellules();
+            document.getElementById('carto-loader').innerText = `Géocodage achevé !`; activerBoutonEtape('btn-step3');
+        } catch (error) { document.getElementById('carto-loader').innerText = "Erreur."; }
+    }
+
+    function executerEtape3() {
+        rafraichirAffichageCarte();
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(finalMapData));
+        const downloadAnchor = document.createElement('a'); downloadAnchor.setAttribute("href", dataStr); downloadAnchor.setAttribute("download", `koha_observatoire_reseau_5228.json`);
+        document.body.appendChild(downloadAnchor);
+        downloadAnchor.click(); downloadAnchor.remove();
+    }
+
+    function chargerFichierDonnees(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            try {
+                finalMapData = JSON.parse(event.target.result);
+                precalculerCellules();
+                document.getElementById('carto-debug-box').innerText = `[IMPORT] Données prêtes.\nAdhérents: ${finalMapData.patrons?.length || 0} → ${cellulesInscription.length} secteurs agrégés.`;
+                dessinerIconesBibliotheques(); rafraichirAffichageCarte();
+            } catch (err) { alert("Erreur format."); }
+        };
+        reader.readAsText(file);
+    }
+
+    function precalculerCellules() {
+        sitesDejaSignales = new Set();
+        cellulesInscription = agregerParRue(finalMapData.patrons || [], 'site_inscription');
+        cellulesTransaction = agregerParRue(finalMapData.patrons || [], 'site_transaction');
+    }
+
+    function agregerParRue(patrons, champDestination) {
+        const cellules = {};
+        patrons.forEach(item => {
+            const dest = item[champDestination]; if (!dest || EXCLUDED_SITES.includes(dest)) return;
+            if (typeof item.lat !== 'number' || typeof item.lon !== 'number') return;
+            const latR = item.lat.toFixed(PRECISION_RUE); const lonR = item.lon.toFixed(PRECISION_RUE);
+            const key = `${latR}_${lonR}_${dest}`;
+            if (!cellules[key]) cellules[key] = { lat: parseFloat(latR), lon: parseFloat(lonR), dest, count: 0 };
+            cellules[key].count++;
+        });
+        return Object.values(cellules);
+    }
+
+    function construireIndex(champFlux, filtreSite) {
+        const cellules = (champFlux === 'inscription') ? cellulesInscription : cellulesTransaction;
+        const points = cellules.filter(c => filtreSite === 'all' || c.dest === filtreSite).map(c => ({
+                type: 'Feature', properties: { count: c.count, sites: { [c.dest]: c.count } }, geometry: { type: 'Point', coordinates: [c.lon, c.lat] }
+            }));
+        const index = new Supercluster({
+            radius: RAYON_CLUSTER_PX, maxZoom: ZOOM_MAX_CLUSTERING, map: (props) => ({ count: props.count, sites: Object.assign({}, props.sites) }),
+            reduce: (acc, props) => { acc.count += props.count; Object.keys(props.sites).forEach(k => { acc.sites[k] = (acc.sites[k] || 0) + props.sites[k]; }); }
+        });
+        index.load(points); return { index, points };
+    }
+
+    function dessinerModeUsagers() {
+        const siteSelectionne = document.getElementById('site-filter').value;
+        const typeFlux = document.getElementById('flux-type').value;
+        const { index, points } = construireIndex(typeFlux, siteSelectionne); indexActuel = index;
+        if (points.length > 0) {
+            const lats = points.map(p => p.geometry.coordinates[1]);
+            const lons = points.map(p => p.geometry.coordinates[0]);
+            map.fitBounds([[Math.min(...lats), Math.min(...lons)], [Math.max(...lats), Math.max(...lons)]], { maxZoom: 14 });
+        }
+        rafraichirClustersEtFlux();
+    }
+
+    function rafraichirClustersEtFlux() {
+        clustersLayerGroup.clearLayers();
+        flowsLayerGroup.clearLayers();
+        if (currentMode !== 'usagers' || !indexActuel) { mettreAJourTableauStats(); return; }
+        const zoom = Math.round(map.getZoom()); const b = map.getBounds();
+        const bbox = [b.getWest(), b.getSouth(), b.getEast(), b.getNorth()];
+        const clusters = indexActuel.getClusters(bbox, zoom); const fluxAgreges = {};
+        const sitesSansPosition = new Set();
+
+        clusters.forEach(feature => {
+            const [lon, lat] = feature.geometry.coordinates; const props = feature.properties; const count = props.count; const sites = props.sites || {};
+            let siteDominant = null, maxVal = -1;
+            Object.keys(sites).forEach(s => { if (sites[s] > maxVal) { maxVal = sites[s]; siteDominant = s; } });
+            if (!siteDominant) return;
+
+            dessinerIconeCluster(lat, lon, count, sites, siteDominant);
+            const bib = librariesCache[siteDominant];
+            if (bib && typeof bib.lat === 'number' && typeof bib.lon === 'number') {
+                const key = `${lat.toFixed(4)}_${lon.toFixed(4)}_vers_${siteDominant}`;
+                fluxAgreges[key] = { from: [lat, lon], to: [bib.lat, bib.lon], count: maxVal, totalCluster: count, siteName: bib.name, sites };
+            } else { sitesSansPosition.add(siteDominant); }
+        });
+        sitesSansPosition.forEach(s => {
+            if (!sitesDejaSignales.has(s)) { sitesDejaSignales.add(s); logErreur(`Aucune ligne de flux tracée vers "${(librariesCache[s] && librariesCache[s].name) || s}" (${s}) : position géographique inconnue.`); }
+        });
+        const typeFlux = document.getElementById('flux-type').value;
+        creerLignesGraphiques(fluxAgreges, (typeFlux === 'inscription') ? "sont inscrits à" : "consomment leurs services à");
+        mettreAJourTableauStats();
+    }
+
+    function dessinerIconeCluster(lat, lon, count, sites, siteDominant) {
+        const diametre = DIAMETRE_BULLE;
+        const total = Object.values(sites).reduce((a, b) => a + b, 0);
+        const sitesTries = Object.keys(sites).sort((a, b) => sites[b] - sites[a]);
+        let acc = 0;
+        const parts = sitesTries.map(site => {
+            const start = (acc / total) * 360; acc += sites[site]; const end = (acc / total) * 360;
+            return `${getSiteColor(site)} ${start}deg ${end}deg`;
+        }).join(', ');
+        const texteCount = count > 999 ? (count / 1000).toFixed(1) + 'k' : count;
+        const html = `<div style="width:${diametre}px;height:${diametre}px;border-radius:50%;background:conic-gradient(${parts});border:2px solid #fff;box-shadow:0 1px 5px rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center;"><span style="background:rgba(255,255,255,0.95);border-radius:9px;padding:1px 5px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#222;line-height:1.2;white-space:nowrap;">${texteCount}</span></div>`;
+        const icon = L.divIcon({ html, className: '', iconSize: [diametre, diametre], iconAnchor: [diametre / 2, diametre / 2] });
+        const marker = L.marker([lat, lon], { icon });
+
+        const pourcentDominant = Math.round((sites[siteDominant] / total) * 100);
+        const detail = sitesTries.slice(0, 6).map(s => `<span style="color:${getSiteColor(s)}; font-weight:bold;">■</span> ${(librariesCache[s] && librariesCache[s].name) || s} : <b>${sites[s]}</b>`).join('<br>');
+        marker.bindTooltip(`${count} usager(s) — ${pourcentDominant}% vers ${(librariesCache[siteDominant] && librariesCache[siteDominant].name) || siteDominant}`, { sticky: true });
+        marker.bindPopup(`<b>📍 Secteur (${count} usager${count > 1 ? 's' : ''})</b><br>${detail}${sitesTries.length > 6 ? '<br>…' : ''}`);
+        marker.addTo(clustersLayerGroup);
+    }
+
+    function dessinerModeCirculation() {
+        const siteSelectionne = document.getElementById('site-filter').value;
+        const dataCirculation = finalMapData.circulation || [];
+        const fluxAgreges = {};
+        dataCirculation.forEach(c => {
+            if (EXCLUDED_SITES.includes(c.source_bib) || EXCLUDED_SITES.includes(c.dest_bib)) return;
+            if (siteSelectionne !== 'all' && c.source_bib !== siteSelectionne && c.dest_bib !== siteSelectionne) return;
+            const bibSource = librariesCache[c.source_bib]; const bibDest = librariesCache[c.dest_bib];
+            const sourceOk = bibSource && typeof bibSource.lat === 'number' && typeof bibSource.lon === 'number';
+            const destOk = bibDest && typeof bibDest.lat === 'number' && typeof bibDest.lon === 'number';
+            if (sourceOk && destOk) {
+                const key = `${bibSource.lat}_${bibSource.lon}_vers_${c.dest_bib}`;
+                fluxAgreges[key] = { from: [bibSource.lat, bibSource.lon], to: [bibDest.lat, bibDest.lon], count: parseInt(c.volume_circulation), siteName: `de [${bibSource.name}] vers [${bibDest.name}]` };
+            } else if (!sourceOk && !sitesDejaSignales.has(c.source_bib)) { sitesDejaSignales.add(c.source_bib); logErreur(`Circulation ignorée : position inconnue pour le site "${c.source_bib}".`); } 
+            else if (!destOk && !sitesDejaSignales.has(c.dest_bib)) { sitesDejaSignales.add(c.dest_bib); logErreur(`Circulation ignorée : position inconnue pour le site "${c.dest_bib}".`); }
+        });
+        creerLignesGraphiques(fluxAgreges, "documents circulent depuis leur site d'origine vers");
+        mettreAJourTableauStats();
+    }
+
+    function creerLignesGraphiques(fluxAgreges, texteLabel) {
+        const flux = Object.values(fluxAgreges).filter(f => f.count > 0);
+        if (flux.length === 0) { mettreAJourLegendeFlux(null, null); return; }
+        const volumes = flux.map(f => f.count);
+        const min = Math.min(...volumes); const max = Math.max(...volumes);
+        mettreAJourLegendeFlux(min, max); const logMin = Math.log(min); const logMax = Math.log(max);
+        flux.forEach(f => {
+            const volume = f.count; const t = (logMax > logMin) ? (Math.log(volume) - logMin) / (logMax - logMin) : 1;
+            const couleur = interpolerCouleurFlux(t); const epaisseur = EPAISSEUR_FLUX_MIN + t * (EPAISSEUR_FLUX_MAX - EPAISSEUR_FLUX_MIN);
+
+            L.polyline([f.from, f.to], { color: '#ffffff', weight: epaisseur + 3, opacity: 0.55, smoothFactor: 2.5 }).addTo(flowsLayerGroup);
+            const detailAutres = f.sites ? construireDetailAutresSites(f.sites, f.siteName) : '';
+            L.polyline([f.from, f.to], { color: couleur, weight: epaisseur, opacity: 0.85, smoothFactor: 2.5 })
+             .bindPopup(`<b>Volume du Flux :</b><br>📊 <b>${volume} usagers</b> ${texteLabel} <b>${f.siteName}</b>${detailAutres}`).addTo(flowsLayerGroup);
+        });
+    }
+
+    function mettreAJourLegendeFlux(min, max) {
+        const legend = document.getElementById('carto-legend');
+        if (!legend) return;
+        if (min === null) { legend.innerHTML = '<span style="color:#999;">Aucun flux à afficher pour cette vue.</span>'; return; }
+        const degrade = 'linear-gradient(to right, rgb(46,204,113), rgb(241,196,15), rgb(230,126,34), rgb(231,76,60))';
+        legend.innerHTML = `<span style="font-weight:bold; color:#555;">Intensité des flux (relative à la vue actuelle) :</span> <span style="font-weight:bold;">${min}</span> <span style="display:inline-block; width:150px; height:11px; border-radius:6px; background:${degrade}; border:1px solid rgba(0,0,0,0.2);"></span> <span style="font-weight:bold;">${max}</span>`;
+    }
+
+    function construireDetailAutresSites(sites, nomSitePrincipal) {
+        const total = Object.values(sites).reduce((a, b) => a + b, 0);
+        const lignes = Object.keys(sites).sort((a, b) => sites[b] - sites[a]).slice(1, 5).map(s => `${(librariesCache[s] && librariesCache[s].name) || s} (${sites[s]})`).join(', ');
+        return `<br><span style="color:#666; font-size:11px;">Reste du secteur (${total - Math.max(...Object.values(sites))} usagers) : ${lignes}</span>`;
+    }
+
+    function dessinerIconesBibliotheques() {
+        librariesLayerGroup.clearLayers();
+        Object.keys(librariesCache).forEach(id => {
+            const lib = librariesCache[id]; if (typeof lib.lat !== 'number' || typeof lib.lon !== 'number') return;
+            const couleur = getSiteColor(id);
+            const html = `<div style="width:26px;height:26px;transform:rotate(45deg);background:${couleur};border:3px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,0.5);"></div>`;
+            const icon = L.divIcon({ html, className: '', iconSize: [26, 26], iconAnchor: [13, 13] });
+           
+            const marker = L.marker([lib.lat, lib.lon], { icon, zIndexOffset: 1000 });
+            marker.bindPopup(`<b style="color:${couleur}; font-size:14px;">🏛️ Médiathèque : ${lib.name} (${id})</b>`);
+            marker.bindTooltip(`<b style="color:${couleur};">${id}</b>`, { permanent: true, direction: 'right', offset: [12, 0], opacity: 0.9 });
+            marker.addTo(librariesLayerGroup);
+        });
+        mettreAJourLegendeSites();
+    }
+
+    function mettreAJourLegendeSites() {
+        const container = document.getElementById('legende-sites');
+        if (!container) return;
+        const ids = Object.keys(librariesCache); if (ids.length === 0) return;
+        ids.sort((a, b) => (librariesCache[a].name || a).localeCompare(librariesCache[b].name || b));
+        let html = '<span style="font-weight:bold; color:#555;">🏛️ Médiathèques du réseau :</span>';
+        ids.forEach(id => {
+            const lib = librariesCache[id]; const couleur = getSiteColor(id);
+            const positionInconnue = !(typeof lib.lat === 'number' && typeof lib.lon === 'number');
+            html += ` <span style="display:inline-flex; align-items:center; gap:5px;${positionInconnue ? ' opacity:0.55;' : ''}"> <span style="width:13px; height:13px; border-radius:3px; background:${couleur}; display:inline-block; border:1px solid rgba(0,0,0,0.2);"></span> ${lib.name || id}</span>`;
+        });
+        container.innerHTML = html;
+    }
+
+    function logErreur(message, reset = false) {
+        const consoleEl = document.getElementById('error-console');
+        const listEl = document.getElementById('error-list');
+        if (reset) { listEl.innerHTML = ""; consoleEl.style.display = "none"; return; }
+        consoleEl.style.display = "block"; const li = document.createElement('li'); li.innerText = message; listEl.appendChild(li);
+    }
+
+    function activerBoutonEtape(idBouton) {
+        const btn = document.getElementById(idBouton);
+        btn.disabled = false; btn.style.background = "#007bff"; btn.style.cursor = "pointer";
+    }
+
+    async function chargerBibliothequesDepuisAPI() {
+        try {
+            const r = await fetch('/api/v1/libraries');
+            const libs = await r.json();
+            const filter = document.getElementById('site-filter'); filter.innerHTML = '<option value="all">Toutes les médiathèques</option>';
+            const aGeocoder = [];
+            libs.forEach(lib => {
+                if (EXCLUDED_SITES.includes(lib.library_id)) return;
+                const opt = document.createElement('option'); opt.value = lib.library_id; opt.innerText = lib.name; filter.appendChild(opt);
+                if (!librariesCache[lib.library_id]) {
+                    const adresse = `${lib.address1 || ''} ${lib.address2 || ''} ${lib.zipcode || ''} ${lib.city || ''}`.trim();
+                    if (adresse) { aGeocoder.push({ id: lib.library_id, name: lib.name, adresse }); }
+                }
+            });
+            if (aGeocoder.length > 0) await geocoderBibliotheques(aGeocoder);
+        } catch (e) { }
+    }
+
+    async function geocoderBibliotheques(liste) {
+        let csv = "id,adresse\n";
+        liste.forEach(l => { csv += `${l.id},"${l.adresse.replace(/"/g, '""')}"\n`; });
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const formData = new FormData(); formData.append('data', blob, 'libs.csv'); formData.append('columns', 'adresse');
+        try {
+            const resp = await fetch('https://api-adresse.data.gouv.fr/search/csv/', { method: 'POST', body: formData });
+            const txt = await resp.text(); const lignes = txt.split('\n'); const entetes = lignes[0].split(',');
+            const idxLat = entetes.indexOf('latitude'); const idxLon = entetes.indexOf('longitude'); const idxId = entetes.indexOf('id');
+            for (let i = 1; i < lignes.length; i++) {
+                if (!lignes[i].trim()) continue;
+                const cols = lignes[i].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+                const clean = v => v ? v.replace(/^"|"$/g, '').trim() : '';
+                const lat = parseFloat(clean(cols[idxLat])); const lon = parseFloat(clean(cols[idxLon]));
+                const id = clean(cols[idxId]);
+                const match = liste.find(l => l.id === id);
+                if (match && !isNaN(lat) && !isNaN(lon) && lat !== 0) { librariesCache[id] = { lat, lon, name: match.name }; }
+            }
+        } catch (e) { }
+        dessinerIconesBibliotheques();
+        rafraichirAffichageCarte();
+    }
+
+    function rafraichirAffichageCarte() {
+        clustersLayerGroup.clearLayers(); flowsLayerGroup.clearLayers();
+        if (currentMode === 'usagers') dessinerModeUsagers();
+        else if (currentMode === 'circulation') dessinerModeCirculation();
+    }
+})();
+</script>

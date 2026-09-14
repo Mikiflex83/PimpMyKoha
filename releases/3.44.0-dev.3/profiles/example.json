@@ -1,0 +1,34 @@
+{
+  "profileSchemaVersion": 1,
+  "suiteVersion": "3.44.0-dev.3",
+  "installationId": "example",
+  "installation": {
+    "id": "example",
+    "label": "Exemple",
+    "allowedHosts": [
+      "koha.example.org"
+    ],
+    "branches": [],
+    "rcr": "",
+    "reportIds": {},
+    "services": {}
+  },
+  "canonicalModules": {},
+  "accessControl": {
+    "roles": {
+      "admin": {
+        "allowedUsernames": [
+          "VOTRE_IDENTIFIANT_KOHA"
+        ]
+      },
+      "developer": {
+        "allowedUsernames": [
+          "VOTRE_IDENTIFIANT_KOHA"
+        ]
+      }
+    },
+    "compatibility": {
+      "allowLegacyOpenAdmin": false
+    }
+  }
+}
