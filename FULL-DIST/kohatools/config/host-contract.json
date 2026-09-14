@@ -50,5 +50,5 @@
     }
   },
   "futurePluginRule": "A future Koha plugin should inject this contract and serve assets/config/auth; functional modules must not need rewriting.",
-  "suiteVersion": "3.44.0-dev.2"
+  "suiteVersion": "3.44.0-dev.3"
 }

@@ -46,6 +46,13 @@ for(const [id,[kind,expected]] of Object.entries(capabilityPolicies)){
 
 assert.match(config,/blockedByCertification:true/,'une application native non certifiée doit être bloquée sur une installation neuve');
 assert.match(config,/freshInstallCore===true/,'le noyau de première installation doit rester accessible');
+assert.ok(config.includes('manifestModule?.canonicalModule'),'le manifeste doit pouvoir fournir directement le canonicalModule');
+assert.ok(config.includes('freshInstallDeveloperPreview:true'),'le DEV développeur doit pouvoir exercer les applications natives avant certification');
+assert.ok(loader.includes('modeForManifestModule(mod.id,mod)'),'le loader doit transmettre le manifeste au résolveur');
+assert.ok(loader.includes('moduleCfg.canonicalModule||mod.canonicalModule||null'),'le loader doit utiliser le canonicalModule natif');
+assert.ok(panel.includes('function freshSupported(m)'),'le panneau doit distinguer module supporté et module certifié');
+assert.ok(panel.includes('devPreview&&freshSupported(m)'),'le développeur DEV doit voir les modules supportés à tester');
+assert.ok(!panel.includes('close();h.open(cid)'),'le panneau ne doit pas se fermer avant de savoir si le module peut être ouvert');
 assert.match(recipe,/revision:"native-application-v1"/);
 assert.match(recipe,/manualValidationRequired:true/,'une application native doit recevoir une vraie validation métier');
 assert.match(recipe,/mode:"direct"/,'une application native doit être testable sans faux mode historique');

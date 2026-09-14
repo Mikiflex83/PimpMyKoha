@@ -6,7 +6,7 @@ function key(){return KT.Config?.effective?.validation?.storageKey||KEY_DEFAULT}
 function parse(v){try{return JSON.parse(v||"null")}catch(_){return null}}
 function read(){try{return parse(localStorage.getItem(key()))||{version:1,modules:{}}}catch(_){return {version:1,modules:{}}}}
 function write(v){try{localStorage.setItem(key(),JSON.stringify(v));return true}catch(_){return false}}
-function canonicalOf(m){return defaults?.modules?.[m.id]?.config?.canonicalModule||null}
+function canonicalOf(m){return defaults?.modules?.[m.id]?.config?.canonicalModule||m?.canonicalModule||null}
 function mappings(canonicalId){return (manifest?.modules||[]).filter(m=>canonicalOf(m)===canonicalId)}
 function get(canonicalId){
  const all=read(),stored=all.modules?.[canonicalId]||{state:"untested",notes:"",updatedAt:null};

@@ -2,7 +2,7 @@
 const KT=global.KohaTools;if(!KT)return;
 let manifest=null,defaults=null;
 function cfg(){return KT.Config?.effective?.lifecycle||KT.Config?.defaults?.lifecycle||{}}
-function canonicalOf(m){return defaults?.modules?.[m.id]?.config?.canonicalModule||null}
+function canonicalOf(m){return defaults?.modules?.[m.id]?.config?.canonicalModule||m?.canonicalModule||null}
 function mapped(cid){return (manifest?.modules||[]).filter(m=>canonicalOf(m)===cid&&(m.applicationModule===true||m.production20260911==="active"||m.production20260911==="production-addition"))}
 function nativeApp(cid){return canonicalCfg(cid)?.nativeApplication===true||mapped(cid).some(m=>m.applicationModule===true)}
 function canonicalIds(){return [...new Set((manifest?.modules||[]).map(canonicalOf).filter(Boolean))]}

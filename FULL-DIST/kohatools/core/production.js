@@ -5,7 +5,7 @@ let manifest=null,defaults=null,remotePreview=null;
 const pageState=()=>global.__KohaToolsProductionState||{version:1,source:"legacy-fallback",modules:{}};
 const bootstrap=()=>global.__KohaToolsProductionBootstrap||null;
 
-function canonicalOf(m){return defaults?.modules?.[m.id]?.config?.canonicalModule||null}
+function canonicalOf(m){return defaults?.modules?.[m.id]?.config?.canonicalModule||m?.canonicalModule||null}
 function currentMappings(cid){return (manifest?.modules||[]).filter(m=>canonicalOf(m)===cid&&(m.production20260911==="active"||m.production20260911==="production-addition"))}
 function pageEntry(cid){return pageState()?.modules?.[cid]||null}
 function isLive(cid){return pageEntry(cid)?.active===true}

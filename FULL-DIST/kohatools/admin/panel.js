@@ -8,8 +8,9 @@ const V=()=>KT.getService("validation"),C=()=>KT.getService("canary"),R=()=>KT.g
 function canonicalOf(m){return defaults?.modules?.[m.id]?.config?.canonicalModule||m?.canonicalModule||null}
 function allManifestModules(){return manifest?.modules||[]}
 function freshCertified(m){return m?.freshInstall?.supported===true&&m?.freshInstall?.certified===true}
+function freshSupported(m){return m?.freshInstall?.supported===true}
 function historicalMapping(m){const cid=canonicalOf(m);return !!cid&&!m?.applicationModule&&!freshCertified(m)&&cid!=="admin-console-launcher"&&cid!=="installation-preflight"&&!!m?.legacyFile}
-function standardManifestModules(){const xs=allManifestModules();return KT.deploymentMode==="fresh-install"?xs.filter(m=>freshCertified(m)||canonicalOf(m)==="admin-console-launcher"):xs.filter(m=>m?.applicationModule===true||freshCertified(m)||canonicalOf(m)==="admin-console-launcher")}
+function standardManifestModules(){const xs=allManifestModules();if(KT.deploymentMode==="fresh-install"){const devPreview=developerAuthorized();return xs.filter(m=>freshCertified(m)||canonicalOf(m)==="admin-console-launcher"||(devPreview&&freshSupported(m)))}return xs.filter(m=>m?.applicationModule===true||freshCertified(m)||canonicalOf(m)==="admin-console-launcher")}
 function visibleManifestModules(){return standardManifestModules()}
 function maps(cid){return allManifestModules().filter(m=>canonicalOf(m)===cid)}
 function standardCanonical(){return [...new Set(standardManifestModules().map(canonicalOf).filter(Boolean))]}
@@ -17,7 +18,7 @@ function historicalCanonical(){return [...new Set(allManifestModules().filter(hi
 function orphanLegacyModules(){return allManifestModules().filter(m=>!canonicalOf(m)&&m?.legacyFile&&m.id!=="installation-preflight")}
 function moduleUi(cid){return defaults?.moduleUi?.modules?.[cid]||{}}
 function isNativeApp(cid){return defaults?.canonicalModules?.[cid]?.nativeApplication===true||maps(cid).some(m=>m.applicationModule===true)}
-function openNativeApp(cid){const h=KT.getService("module-host");if(!h)return alert("Service Pimp My Koha indisponible.");close();h.open(cid)}
+function openNativeApp(cid){const h=KT.getService("module-host");if(!h)return alert("Service Pimp My Koha indisponible.");if(h.open(cid)){close();return true}alert("Ce module n’est pas encore disponible dans le runtime chargé.");return false}
 function moduleTitle(cid,fallback){return moduleUi(cid)?.title||fallback||cid}
 function moduleDescription(cid,fallback){return moduleUi(cid)?.userDescription||fallback||""}
 function categoryLabel(category){
